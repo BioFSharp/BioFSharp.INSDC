@@ -1,106 +1,58 @@
-﻿# BioFSharp.XYZ
+# BioFSharp.INSDC
 
 ![Logo](docs/img/Logo_large.png)
 
-A template repository for creating an extension package for BioFSharp.
+Read/write support for [INSDC](https://www.insdc.org/) XML records — BioProject, Study, Sample, Experiment, Run, Analysis, Submission, Receipt — as a direct dependency of [BioFSharp](https://github.com/CSBiology/BioFSharp).
 
-## Content
+## Packages
 
-- `src/BioFSharp.XYZ`: The main project folder. Contains a library with BioFSharp core dependency.
-- `tests/BioFSharp.XYZ.Tests`: The test project folder. Contains a XUnit test project
-- `build/build.fsproj`: A FAKE build project that handles building, testing, packaging, publishing, etc.
-- `docs`: the docs folder contains an example index.fsx file with simple documentation boilerplate.
+| Package                       | Purpose                                                                                                                                                          |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BioFSharp.FileFormats.INSDC` | C# type model auto-generated from the [ENA SRA XSDs](https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/) via [`dotnet-xscgen`](https://www.nuget.org/packages/dotnet-xscgen). |
+| `BioFSharp.IO.INSDC`          | F# wrapper exposing `read` / `readString` / `write` / `writeString` per INSDC entity.                                                                              |
 
-## Setup
+The C# split exists because there is no F# equivalent of `XmlSchemaClassGenerator`. Both packages target `netstandard2.0`.
 
-Here is a list of things you should/might want to do after setting up a repo with this template:
+## Repo layout
 
-> [!IMPORTANT]  
-> Whenever you change a project file name or folder, make sure to fix the solution registration afterwards.
-
-- Rename some things: Replace `XYZ` with the name of your package
-  - `PackageTemplate.sln`
-  - `src/BioFSharp.XYZ`
-  - `src/BioFSharp.XYZ/BioFSharp.XYZ.fsproj`
-    - Rename and add nuget package metadata
-  - `tests/BioFSharp.XYZ`
-  - `tests/BioFSharp.XYZ.Tests/BioFSharp.XYZ.Tests.fsproj`
-    - Also make sure to fix the project reference to BioFSharp.XYZ when renamed
-  - in `build/ProjectInfo.fs`:
-    - Set project name: 
-      ```fsharp
-      let project = "BioFSharp.XYZ" // replace with the name of your project
-      ```
-    - Set git owner:
-      ```fsharp
-      let gitOwner = "BioFSharp" // replace with github account name or organization where repo is hosted if necessary
-      ```
-    - fix test project path:
-      ```fsharp
-      let testProjects = 
-      [
-          "tests/BioFSharp.XYZ.Tests/BioFSharp.XYZ.Tests.fsproj" // replace with the name of your test project
-      ]
-      ```
-  - in `.github/workflows/build-and-test.yml`: change codecov slug
-- If needed, change the target framework of the project. it currently targets `.netstandard2.0` for maximum backwards compatibility, might want to target a newer `.net` version if you need a specific API.
-
-## Development
-
-### General
-
-BioFSharp repositories usually folllow this structure:
-
-```
-root
-│   📄<project name>.sln
-│   📄build.cmd
-│   📄build.sh
-├───📁build
-├───📁docs
-├───📁src
-|   └───📁<project name>
-└───tests
-    └───📁<testproject name>
+```text
+.
+├── build/                                  FAKE build project
+├── docs/                                   Placeholder — no fsdocs site is published from this repo
+├── plans/implementation.md                 Authoritative implementation plan
+├── src/
+│   ├── BioFSharp.FileFormats.INSDC/        C# generated type model
+│   │   ├── schemas/                          Committed ENA XSDs
+│   │   └── Generated/                          Tool output — do not hand-edit
+│   └── BioFSharp.IO.INSDC/                 F# wrapper
+└── tests/BioFSharp.INSDC.Tests/            xunit tests, with committed ENA fixtures
 ```
 
-- <project name>.sln is the root solution file.
-- `build` contains a [FAKE](https://fake.build/) build project with targets for building, testing and packaging the project.
-- `build/sh` and `build.cmd` in the root are shorthand scripts to execute the buildproject.
-- `docs` contains the documentation in form of literate scripts and notebooks. 
-- `src` contains folders with the source code of the project(s).
-- `tests` contains folders with test projects.
+## Build
 
-### Build
-
-just call `build.sh` or `build.cmd` depending on your OS.
-
-### Test
+First-time setup:
 
 ```bash
-build.sh runtests
+dotnet tool restore     # installs the pinned dotnet-xscgen
 ```
+
+Then:
+
+```bash
+build.cmd               # Windows
+./build.sh              # macOS / Linux
+```
+
+Other targets:
 
 ```bash
 build.cmd runtests
-```
-
-### Create Nuget package
-
-```bash
-build.sh pack
-```
-```bash
 build.cmd pack
+build.cmd regenerateInsdcTypes   # only when the XSDs change
 ```
 
-### Docs
+## Contributing
 
-You can watch locally with hot reload via
+See [`AGENTS.md`](AGENTS.md) for repo conventions and [`plans/implementation.md`](plans/implementation.md) for the implementation roadmap.
 
-```bash
-build.sh watchdocs
-```
-```bash
-build.cmd watchdocs
-```
+Documentation lives in the [base BioFSharp docs](https://csbiology.github.io/BioFSharp/) rather than in this repo.

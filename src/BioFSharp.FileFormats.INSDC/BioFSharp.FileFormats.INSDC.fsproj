@@ -13,19 +13,17 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <Authors></Authors>
-    <Description></Description>
-    <Summary>
-      
-    </Summary>
+    <Authors>Kevin Schneider, BioFSharp contributors</Authors>
+    <Description>Auto-generated C# type model for INSDC (International Nucleotide Sequence Database Collaboration) XML records, used by BioFSharp.IO.INSDC.</Description>
+    <Summary>INSDC XML type model for BioFSharp.</Summary>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://BioFSharp.github.io/BioFSharp.XYZ/</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/BioFSharp/BioFSharp.INSDC</PackageProjectUrl>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageTags>bioinformatics F# fsharp statistic biostatistics datascience</PackageTags>
-    <RepositoryUrl>https://github.com/BioFSharp/BioFSharp.XYZ</RepositoryUrl>
+    <PackageTags>bioinformatics F# fsharp INSDC ENA SRA BioProject Sample Study Experiment Run</PackageTags>
+    <RepositoryUrl>https://github.com/BioFSharp/BioFSharp.INSDC</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <FsDocsLicenseLink>https://github.com/BioFSharp/BioFSharp.XYZ/blob/main/LICENSE</FsDocsLicenseLink>
-    <FsDocsReleaseNotesLink>https://github.com/BioFSharp/BioFSharp.XYZ/blob/main/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
+    <FsDocsLicenseLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/LICENSE</FsDocsLicenseLink>
+    <FsDocsReleaseNotesLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
   </PropertyGroup>
 
 
