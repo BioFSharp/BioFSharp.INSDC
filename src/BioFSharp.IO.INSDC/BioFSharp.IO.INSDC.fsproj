@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -8,8 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
-    <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath=""/>
+    <Compile Include="Internal\XmlSerializer.fs" />
+    <Compile Include="BioProject.fs" />
+    <Compile Include="Study.fs" />
+    <Compile Include="Sample.fs" />
+    <Compile Include="Experiment.fs" />
+    <Compile Include="Run.fs" />
+    <Compile Include="Analysis.fs" />
+    <Compile Include="Submission.fs" />
+    <Compile Include="Receipt.fs" />
+    <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -26,6 +34,9 @@
     <FsDocsReleaseNotesLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BioFSharp.FileFormats.INSDC\BioFSharp.FileFormats.INSDC.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BioFSharp" Version="2.0.0-preview.3" />

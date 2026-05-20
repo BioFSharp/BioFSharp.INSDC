@@ -70,7 +70,7 @@ Do **not** wire generation into every build — the generated `.cs` files are co
 
 Contributors run `build.cmd regenerateInsdcTypes` (or `build.sh regenerateInsdcTypes`) **only when schemas change**. `buildSolution` does *not* depend on this target.
 
-## 3. [ ] `BioFSharp.IO.INSDC` (F# IO wrapper)
+## 3. [x] `BioFSharp.IO.INSDC` (F# IO wrapper)
 
 ### Module files
 
