@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Library.fs" />
+    <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath=""/>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <Authors></Authors>
+    <Description></Description>
+    <Summary>
+      
+    </Summary>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://BioFSharp.github.io/BioFSharp.XYZ/</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageTags>bioinformatics F# fsharp statistic biostatistics datascience</PackageTags>
+    <RepositoryUrl>https://github.com/BioFSharp/BioFSharp.XYZ</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <FsDocsLicenseLink>https://github.com/BioFSharp/BioFSharp.XYZ/blob/main/LICENSE</FsDocsLicenseLink>
+    <FsDocsReleaseNotesLink>https://github.com/BioFSharp/BioFSharp.XYZ/blob/main/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="BioFSharp" Version="2.0.0-preview.3" />
+  </ItemGroup>
+
+</Project>
