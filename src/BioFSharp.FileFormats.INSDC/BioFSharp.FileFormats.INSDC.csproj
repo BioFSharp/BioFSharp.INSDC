@@ -1,15 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- Generated code: silence missing-XML-doc and obsolete-API warnings emitted by xscgen output. -->
+    <NoWarn>$(NoWarn);CS1591;CS0612;CS0618</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
-    <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath=""/>
+    <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
+    <!-- XSDs are source-of-truth for the generated types but are not compiled. -->
+    <None Include="schemas\**\*.xsd" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -26,9 +29,9 @@
     <FsDocsReleaseNotesLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
   </PropertyGroup>
 
-
   <ItemGroup>
-    <PackageReference Include="BioFSharp" Version="2.0.0-preview.3" />
+    <!-- Generated code references System.ComponentModel.DataAnnotations attributes, which need a package reference on netstandard2.0. -->
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
 
 </Project>

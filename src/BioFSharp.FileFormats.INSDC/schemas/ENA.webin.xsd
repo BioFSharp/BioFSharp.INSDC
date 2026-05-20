@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:include schemaLocation="SRA.submission.xsd"/>
+    <xs:include schemaLocation="SRA.study.xsd"/>
+    <xs:include schemaLocation="SRA.sample.xsd"/>
+    <xs:include schemaLocation="SRA.experiment.xsd"/>
+    <xs:include schemaLocation="SRA.run.xsd"/>
+    <xs:include schemaLocation="SRA.analysis.xsd"/>
+    <xs:include schemaLocation="ENA.project.xsd"/>
+    <xs:include schemaLocation="EGA.dac.xsd"/>
+    <xs:include schemaLocation="EGA.dataset.xsd"/>
+    <xs:include schemaLocation="EGA.policy.xsd"/>
+
+    <xs:complexType name="WebinType">
+        <xs:sequence minOccurs="0" maxOccurs="unbounded">
+            <xs:choice>
+                <xs:element name="SUBMISSION" type="SubmissionType"/>
+                <xs:element name="STUDY" type="StudyType"/>
+                <xs:element name="SAMPLE" type="SampleType"/>
+                <xs:element name="EXPERIMENT" type="ExperimentType"/>
+                <xs:element name="RUN" type="RunType"/>
+                <xs:element name="ANALYSIS" type="AnalysisType"/>
+                <xs:element name="PROJECT" type="ProjectType"/>
+                <xs:element name="DAC" type="DacType"/>
+                <xs:element name="DATASET" type="DatasetType"/>
+                <xs:element name="POLICY" type="PolicyType"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="WEBIN" type="WebinType"/>
+</xs:schema>

@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/BioFSharp.FileFormats.INSDC/BioFSharp.FileFormats.INSDC.fsproj" />
+    <Project Path="src/BioFSharp.FileFormats.INSDC/BioFSharp.FileFormats.INSDC.csproj" />
     <Project Path="src/BioFSharp.IO.INSDC/BioFSharp.IO.INSDC.fsproj" />
   </Folder>
   <Folder Name="/tests/">

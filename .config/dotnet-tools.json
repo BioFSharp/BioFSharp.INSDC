@@ -6,7 +6,15 @@
       "version": "20.0.1",
       "commands": [
         "fsdocs"
-      ]
+      ],
+      "rollForward": false
+    },
+    "dotnet-xscgen": {
+      "version": "3.0.1270",
+      "commands": [
+        "xscgen"
+      ],
+      "rollForward": false
     }
   }
 }
