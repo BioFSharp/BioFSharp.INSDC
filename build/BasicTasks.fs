@@ -21,23 +21,24 @@ let clean = BuildTask.create "Clean" [] {
 // Run after touching schemas/ (or after pinning a new dotnet-xscgen version in .config/dotnet-tools.json).
 //
 // Flag choices:
-//   --separateFiles : one .cs per generated class (cleaner diffs than a single 15k-line file)
-//   -n BioFSharp.FileFormats.INSDC : map the default XML namespace to the package's C# namespace
-//   -0  (--nullable) : nullable adapter properties for optional elements w/o defaults (needed for roundtrips)
-//   -i l : map xs:integer to System.Int64
-//
-// TODO: future polish — add --tns / --tnsf substitutions to clean up the cross-schema namespace surface
-// and remove the local rename hack in schemas/ENA.embl.xsd (see schemas/README.md).
+//   --separateFiles      : one .cs per generated class (cleaner diffs than a single 15k-line file)
+//   -n <ns>              : map the default XML namespace to the package's C# namespace
+//   -0  (--nullable)     : nullable adapter properties for optional elements w/o defaults (needed for roundtrips)
+//   -i l                 : map xs:integer to System.Int64
+//   --tnsf <file>        : substitute generated type names per schemas/typename-substitutions.txt
+//                           (strips the Type infix from top-level + child types; cleans Type* enum prefixes)
 let regenerateInsdcTypes = BuildTask.create "regenerateInsdcTypes" [] {
-    let schemasDir  = "src/BioFSharp.FileFormats.INSDC/schemas"
-    let generatedDir = "src/BioFSharp.FileFormats.INSDC/Generated"
+    let schemasDir       = "src/BioFSharp.FileFormats.INSDC/schemas"
+    let generatedDir     = "src/BioFSharp.FileFormats.INSDC/Generated"
+    let substitutionFile = schemasDir + "/typename-substitutions.txt"
     Shell.cleanDir generatedDir
     let schemaArgs =
         !! (schemasDir + "/*.xsd")
         |> Seq.map (fun p -> sprintf "\"%s\"" p)
         |> String.concat " "
     let args =
-        sprintf "--separateFiles -n BioFSharp.FileFormats.INSDC -0 -i l -o \"%s\" %s" generatedDir schemaArgs
+        sprintf "--separateFiles -n BioFSharp.FileFormats.INSDC -0 -i l --tnsf \"%s\" -o \"%s\" %s"
+            substitutionFile generatedDir schemaArgs
     let result = DotNet.exec id "xscgen" args
     if not result.OK then
         failwithf "dotnet xscgen failed (exit %d): %A" result.ExitCode result.Errors

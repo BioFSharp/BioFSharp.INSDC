@@ -9,7 +9,7 @@ This repo ships two packages that together give BioFSharp users an INSDC (Intern
 
 The naming mirrors the base `BioFSharp` namespace layout so both packages can be picked up directly as dependencies of `BioFSharp`. Both target `netstandard2.0` for parity with the rest of the BioFSharp ecosystem.
 
-## 1. Pre-flight cleanup (template residue)
+## 1. [x] Pre-flight cleanup (template residue)
 
 The repo was scaffolded from the `BioFSharp.XYZ` template and still carries placeholder content that must be cleared before the real work lands:
 
@@ -20,7 +20,7 @@ The repo was scaffolded from the `BioFSharp.XYZ` template and still carries plac
 - `tests/BioFSharp.INSDC.Tests/Tests.fs` still references `BioFSharp.XYZ.BioTalk` — drop the test, replace with INSDC tests (section 5).
 - `docs/index.fsx` is left as-is (no docs site for this repo). Confirm `docs/img/icon.png` exists so `pack` does not fail.
 
-## 2. `BioFSharp.FileFormats.INSDC` (C# type model)
+## 2. [x] `BioFSharp.FileFormats.INSDC` (C# type model)
 
 ### Project conversion (F# → C#)
 
@@ -70,7 +70,7 @@ Do **not** wire generation into every build — the generated `.cs` files are co
 
 Contributors run `build.cmd regenerateInsdcTypes` (or `build.sh regenerateInsdcTypes`) **only when schemas change**. `buildSolution` does *not* depend on this target.
 
-## 3. `BioFSharp.IO.INSDC` (F# IO wrapper)
+## 3. [ ] `BioFSharp.IO.INSDC` (F# IO wrapper)
 
 ### Module files
 
@@ -110,7 +110,7 @@ module BioProject =
 - `BioFSharp.IO.INSDC.fsproj` adds a `<ProjectReference>` to `BioFSharp.FileFormats.INSDC.csproj`.
 - Project metadata (`Authors`, `Description`, repo URLs) retargeted to `BioFSharp.INSDC`.
 
-## 4. Tests (`BioFSharp.INSDC.Tests`)
+## 4. [ ] Tests (`BioFSharp.INSDC.Tests`)
 
 ### Test files
 
@@ -137,13 +137,13 @@ Real ENA records, downloaded once and committed:
 
 Tests load fixtures off disk via a small relative-path helper. No network at test time.
 
-## 5. Build / CI touch-ups
+## 5. [ ] Build / CI touch-ups
 
 - Confirm `build/ProjectInfo.fs` `solutionFile` resolves (already `BioFSharp.INSDC.slnx`).
 - Verify `build.cmd` / `build.sh` entry points still work after the `.fsproj` → `.csproj` swap in the slnx.
 - Add the `regenerateInsdcTypes` target. It must not be chained into the default build — generated code is committed precisely so contributors can build without the tool restored.
 
-## 6. Verification
+## 6. [ ] Verification
 
 Each step gates the next:
 
