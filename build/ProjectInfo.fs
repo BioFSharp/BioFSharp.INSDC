@@ -3,14 +3,14 @@
 open Fake.Core
 
 
-let project = "BioFSharp.XYZ"
+let project = "BioFSharp.INSDC"
 
 let testProjects = 
     [
-        "tests/BioFSharp.XYZ.Tests/BioFSharp.XYZ.Tests.fsproj"
+        "tests/BioFSharp.INSDC.Tests/BioFSharp.INSDC.Tests.fsproj"
     ]
 
-let solutionFile  = $"{project}.sln"
+let solutionFile  = $"{project}.slnx"
 
 let configuration = "Release"
 

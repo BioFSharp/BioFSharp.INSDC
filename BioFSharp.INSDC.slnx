@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/BioFSharp.FileFormats.INSDC/BioFSharp.FileFormats.INSDC.fsproj" />
+    <Project Path="src/BioFSharp.IO.INSDC/BioFSharp.IO.INSDC.fsproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BioFSharp.INSDC.Tests/BioFSharp.INSDC.Tests.fsproj" />
+  </Folder>
+  <Project Path="build/build.fsproj" />
+</Solution>
