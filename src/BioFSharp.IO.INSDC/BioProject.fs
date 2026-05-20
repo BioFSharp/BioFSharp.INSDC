@@ -1,14 +1,12 @@
 namespace BioFSharp.IO.INSDC
 
+open BioFSharp.FileFormats.INSDC
 open BioFSharp.IO.INSDC.Internal
 
 /// Read and write INSDC BioProject records (called `Project` in the SRA/ENA
 /// XML schema; `BioProject` is the cross-archive INSDC name used throughout
 /// this library).
 module BioProject =
-
-    /// An INSDC BioProject record. Alias for `BioFSharp.FileFormats.INSDC.BioProject`.
-    type BioProject = BioFSharp.FileFormats.INSDC.BioProject
 
     /// Read an INSDC BioProject XML record from the file at `filePath`.
     let read (filePath: string) : BioProject =

@@ -1,12 +1,10 @@
 namespace BioFSharp.IO.INSDC
 
+open BioFSharp.FileFormats.INSDC
 open BioFSharp.IO.INSDC.Internal
 
 /// Read and write INSDC Submission records.
 module Submission =
-
-    /// An INSDC Submission record. Alias for `BioFSharp.FileFormats.INSDC.Submission`.
-    type Submission = BioFSharp.FileFormats.INSDC.Submission
 
     /// Read an INSDC Submission XML record from the file at `filePath`.
     let read (filePath: string) : Submission =

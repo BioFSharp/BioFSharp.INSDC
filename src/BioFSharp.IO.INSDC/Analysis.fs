@@ -1,12 +1,10 @@
 namespace BioFSharp.IO.INSDC
 
+open BioFSharp.FileFormats.INSDC
 open BioFSharp.IO.INSDC.Internal
 
 /// Read and write INSDC Analysis records.
 module Analysis =
-
-    /// An INSDC Analysis record. Alias for `BioFSharp.FileFormats.INSDC.Analysis`.
-    type Analysis = BioFSharp.FileFormats.INSDC.Analysis
 
     /// Read an INSDC Analysis XML record from the file at `filePath`.
     let read (filePath: string) : Analysis =

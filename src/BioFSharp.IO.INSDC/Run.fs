@@ -1,12 +1,10 @@
 namespace BioFSharp.IO.INSDC
 
+open BioFSharp.FileFormats.INSDC
 open BioFSharp.IO.INSDC.Internal
 
 /// Read and write INSDC Run records.
 module Run =
-
-    /// An INSDC Run record. Alias for `BioFSharp.FileFormats.INSDC.Run`.
-    type Run = BioFSharp.FileFormats.INSDC.Run
 
     /// Read an INSDC Run XML record from the file at `filePath`.
     let read (filePath: string) : Run =

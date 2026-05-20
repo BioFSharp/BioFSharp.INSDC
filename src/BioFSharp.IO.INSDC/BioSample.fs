@@ -1,14 +1,12 @@
 namespace BioFSharp.IO.INSDC
 
+open BioFSharp.FileFormats.INSDC
 open BioFSharp.IO.INSDC.Internal
 
 /// Read and write INSDC BioSample records (called `Sample` in the SRA/ENA
 /// XML schema; `BioSample` is the cross-archive INSDC name used throughout
 /// this library).
 module BioSample =
-
-    /// An INSDC BioSample record. Alias for `BioFSharp.FileFormats.INSDC.BioSample`.
-    type BioSample = BioFSharp.FileFormats.INSDC.BioSample
 
     /// Read an INSDC BioSample XML record from the file at `filePath`.
     let read (filePath: string) : BioSample =

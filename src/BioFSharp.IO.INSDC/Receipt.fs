@@ -1,13 +1,11 @@
 namespace BioFSharp.IO.INSDC
 
+open BioFSharp.FileFormats.INSDC
 open BioFSharp.IO.INSDC.Internal
 
 /// Read and write INSDC Receipt records (the response document returned by the
 /// ENA submission API).
 module Receipt =
-
-    /// An INSDC Receipt record. Alias for `BioFSharp.FileFormats.INSDC.Receipt`.
-    type Receipt = BioFSharp.FileFormats.INSDC.Receipt
 
     /// Read an INSDC Receipt XML record from the file at `filePath`.
     let read (filePath: string) : Receipt =

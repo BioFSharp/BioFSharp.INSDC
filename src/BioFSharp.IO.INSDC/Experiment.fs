@@ -1,12 +1,10 @@
 namespace BioFSharp.IO.INSDC
 
+open BioFSharp.FileFormats.INSDC
 open BioFSharp.IO.INSDC.Internal
 
 /// Read and write INSDC Experiment records.
 module Experiment =
-
-    /// An INSDC Experiment record. Alias for `BioFSharp.FileFormats.INSDC.Experiment`.
-    type Experiment = BioFSharp.FileFormats.INSDC.Experiment
 
     /// Read an INSDC Experiment XML record from the file at `filePath`.
     let read (filePath: string) : Experiment =
