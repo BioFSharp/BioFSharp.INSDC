@@ -19,7 +19,7 @@ namespace BioFSharp.FileFormats.INSDC
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlRootAttribute("PROJECT", Namespace="")]
-    public partial class Project : BioFSharp.FileFormats.INSDC.Object
+    public partial class BioProject : BioFSharp.FileFormats.INSDC.Object
     {
         
         /// <summary>
@@ -83,12 +83,12 @@ namespace BioFSharp.FileFormats.INSDC
         }
         
         /// <summary>
-        /// <para xml:lang="en">Initializes a new instance of the <see cref="Project" /> class.</para>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioProject" /> class.</para>
         /// </summary>
-        public Project()
+        public BioProject()
         {
             this._collaborators = new System.Collections.ObjectModel.Collection<string>();
-            this._relatedProjects = new System.Collections.ObjectModel.Collection<ProjectRelatedProjectsRelatedProject>();
+            this._relatedProjects = new System.Collections.ObjectModel.Collection<BioProjectRelatedProjectsRelatedProject>();
             this._projectLinks = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link>();
             this._projectAttributes = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute>();
         }
@@ -98,17 +98,17 @@ namespace BioFSharp.FileFormats.INSDC
         /// </summary>
         [System.ComponentModel.DescriptionAttribute("A project for grouping submitted data together.")]
         [System.Xml.Serialization.XmlElementAttribute("SUBMISSION_PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public ProjectSubmissionProject SubmissionProject { get; set; }
+        public BioProjectSubmissionProject SubmissionProject { get; set; }
         
         /// <summary>
         /// <para>A project for grouping other projects together.</para>
         /// </summary>
         [System.ComponentModel.DescriptionAttribute("A project for grouping other projects together.")]
         [System.Xml.Serialization.XmlElementAttribute("UMBRELLA_PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public ProjectUmbrellaProject UmbrellaProject { get; set; }
+        public BioProjectUmbrellaProject UmbrellaProject { get; set; }
         
         [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<ProjectRelatedProjectsRelatedProject> _relatedProjects;
+        private System.Collections.ObjectModel.Collection<BioProjectRelatedProjectsRelatedProject> _relatedProjects;
         
         /// <summary>
         /// <para>Other projects related to this project.</para>
@@ -116,7 +116,7 @@ namespace BioFSharp.FileFormats.INSDC
         [System.ComponentModel.DescriptionAttribute("Other projects related to this project.")]
         [System.Xml.Serialization.XmlArrayAttribute("RELATED_PROJECTS", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
         [System.Xml.Serialization.XmlArrayItemAttribute("RELATED_PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<ProjectRelatedProjectsRelatedProject> RelatedProjects
+        public System.Collections.ObjectModel.Collection<BioProjectRelatedProjectsRelatedProject> RelatedProjects
         {
             get
             {

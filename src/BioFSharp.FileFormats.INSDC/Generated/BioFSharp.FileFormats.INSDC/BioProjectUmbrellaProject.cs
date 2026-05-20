@@ -15,35 +15,13 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("SampleSampleAttributes", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("BioProjectUmbrellaProject", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class SampleSampleAttributes
+    public partial class BioProjectUmbrellaProject
     {
         
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute> _sampleAttribute;
-        
-        [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
-        [System.Xml.Serialization.XmlElementAttribute("SAMPLE_ATTRIBUTE", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute> SampleAttribute
-        {
-            get
-            {
-                return _sampleAttribute;
-            }
-            private set
-            {
-                _sampleAttribute = value;
-            }
-        }
-        
-        /// <summary>
-        /// <para xml:lang="en">Initializes a new instance of the <see cref="SampleSampleAttributes" /> class.</para>
-        /// </summary>
-        public SampleSampleAttributes()
-        {
-            this._sampleAttribute = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute>();
-        }
+        [System.Xml.Serialization.XmlElementAttribute("ORGANISM", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public Organism Organism { get; set; }
     }
 }

@@ -15,35 +15,50 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("ProjectRelatedProjects", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("BioSampleDescriptorPool", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class ProjectRelatedProjects
+    public partial class BioSampleDescriptorPool
     {
         
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<ProjectRelatedProjectsRelatedProject> _relatedProject;
+        /// <summary>
+        /// <para>Reference to the sample that is used when read membership cannot be determined. A default member should
+        ///                  be provided if there exists a possibility that some reads will be left over from barcode/MID resolution. A default member
+        ///                  is not needed when defining a true pool (where individual samples are not distinguished in the reads), or the reads have
+        ///                  been partitioned among the pool members (no leftovers).</para>
+        /// </summary>
+        [System.ComponentModel.DescriptionAttribute(@"Reference to the sample that is used when read membership cannot be determined. A default member should be provided if there exists a possibility that some reads will be left over from barcode/MID resolution. A default member is not needed when defining a true pool (where individual samples are not distinguished in the reads), or the reads have been partitioned among the pool members (no leftovers).")]
+        [System.Xml.Serialization.XmlElementAttribute("DEFAULT_MEMBER", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public PoolMember DefaultMember { get; set; }
         
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        private System.Collections.ObjectModel.Collection<PoolMember> _member;
+        
+        /// <summary>
+        /// <para>Reference to the sample as determined from barcode/MID resolution or read partition.</para>
+        /// </summary>
+        [System.ComponentModel.DescriptionAttribute(("Reference to the sample as determined from barcode/MID resolution or read partiti" +
+            "on."))]
         [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
-        [System.Xml.Serialization.XmlElementAttribute("RELATED_PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<ProjectRelatedProjectsRelatedProject> RelatedProject
+        [System.Xml.Serialization.XmlElementAttribute("MEMBER", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Collections.ObjectModel.Collection<PoolMember> Member
         {
             get
             {
-                return _relatedProject;
+                return _member;
             }
             private set
             {
-                _relatedProject = value;
+                _member = value;
             }
         }
         
         /// <summary>
-        /// <para xml:lang="en">Initializes a new instance of the <see cref="ProjectRelatedProjects" /> class.</para>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioSampleDescriptorPool" /> class.</para>
         /// </summary>
-        public ProjectRelatedProjects()
+        public BioSampleDescriptorPool()
         {
-            this._relatedProject = new System.Collections.ObjectModel.Collection<ProjectRelatedProjectsRelatedProject>();
+            this._member = new System.Collections.ObjectModel.Collection<PoolMember>();
         }
     }
 }

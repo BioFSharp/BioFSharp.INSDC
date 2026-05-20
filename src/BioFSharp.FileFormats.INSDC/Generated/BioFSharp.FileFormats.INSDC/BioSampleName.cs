@@ -15,13 +15,41 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("ProjectUmbrellaProject", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("BioSampleName", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class ProjectUmbrellaProject
+    public partial class BioSampleName
     {
         
-        [System.Xml.Serialization.XmlElementAttribute("ORGANISM", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public Organism Organism { get; set; }
+        /// <summary>
+        /// <para>NCBI Taxonomy Identifier.  This is appropriate for individual organisms and
+        ///                  some environmental samples.</para>
+        /// </summary>
+        [System.ComponentModel.DescriptionAttribute(("NCBI Taxonomy Identifier. This is appropriate for individual organisms and some e" +
+            "nvironmental samples."))]
+        [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
+        [System.Xml.Serialization.XmlElementAttribute("TAXON_ID", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public int TaxonId { get; set; }
+        
+        /// <summary>
+        /// <para>Scientific name of sample that distinguishes its taxonomy.  Please use a 
+        ///                  name or synonym that is tracked in the INSDC Taxonomy database. 
+        ///                  Also, this field can be used to confirm the TAXON_ID setting.</para>
+        /// </summary>
+        [System.ComponentModel.DescriptionAttribute(("Scientific name of sample that distinguishes its taxonomy. Please use a name or s" +
+            "ynonym that is tracked in the INSDC Taxonomy database. Also, this field can be u" +
+            "sed to confirm the TAXON_ID setting."))]
+        [System.Xml.Serialization.XmlElementAttribute("SCIENTIFIC_NAME", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public string ScientificName { get; set; }
+        
+        /// <summary>
+        /// <para>GenBank common name of the organism.  Examples: human, mouse.</para>
+        /// </summary>
+        [System.ComponentModel.DescriptionAttribute("GenBank common name of the organism. Examples: human, mouse.")]
+        [System.Xml.Serialization.XmlElementAttribute("COMMON_NAME", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public string CommonName { get; set; }
+        
+        [System.Xml.Serialization.XmlAttributeAttribute("display_name")]
+        public string DisplayName { get; set; }
     }
 }

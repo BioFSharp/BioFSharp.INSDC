@@ -15,35 +15,35 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("SampleSampleLinks", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("BioProjectCollaborators", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class SampleSampleLinks
+    public partial class BioProjectCollaborators
     {
         
         [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link> _sampleLink;
+        private System.Collections.ObjectModel.Collection<string> _collaborator;
         
         [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
-        [System.Xml.Serialization.XmlElementAttribute("SAMPLE_LINK", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link> SampleLink
+        [System.Xml.Serialization.XmlElementAttribute("COLLABORATOR", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Collections.ObjectModel.Collection<string> Collaborator
         {
             get
             {
-                return _sampleLink;
+                return _collaborator;
             }
             private set
             {
-                _sampleLink = value;
+                _collaborator = value;
             }
         }
         
         /// <summary>
-        /// <para xml:lang="en">Initializes a new instance of the <see cref="SampleSampleLinks" /> class.</para>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioProjectCollaborators" /> class.</para>
         /// </summary>
-        public SampleSampleLinks()
+        public BioProjectCollaborators()
         {
-            this._sampleLink = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link>();
+            this._collaborator = new System.Collections.ObjectModel.Collection<string>();
         }
     }
 }

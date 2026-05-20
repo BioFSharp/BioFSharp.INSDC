@@ -15,36 +15,50 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("ProjectSetType", Namespace="")]
+    [System.Xml.Serialization.XmlTypeAttribute("BioProjectSubmissionProject", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlRootAttribute("PROJECT_SET", Namespace="")]
-    public partial class ProjectSet
+    public partial class BioProjectSubmissionProject
     {
         
         [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<Project> _project;
+        private System.Collections.ObjectModel.Collection<string> _sequencingProject;
         
-        [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
-        [System.Xml.Serialization.XmlElementAttribute("PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<Project> Project
+        [System.Xml.Serialization.XmlArrayAttribute("SEQUENCING_PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("LOCUS_TAG_PREFIX", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Collections.ObjectModel.Collection<string> SequencingProject
         {
             get
             {
-                return _project;
+                return _sequencingProject;
             }
             private set
             {
-                _project = value;
+                _sequencingProject = value;
             }
         }
         
         /// <summary>
-        /// <para xml:lang="en">Initializes a new instance of the <see cref="ProjectSet" /> class.</para>
+        /// <para xml:lang="en">Gets a value indicating whether the SequencingProject collection is empty.</para>
         /// </summary>
-        public ProjectSet()
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool SequencingProjectSpecified
         {
-            this._project = new System.Collections.ObjectModel.Collection<Project>();
+            get
+            {
+                return (this.SequencingProject.Count != 0);
+            }
         }
+        
+        /// <summary>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioProjectSubmissionProject" /> class.</para>
+        /// </summary>
+        public BioProjectSubmissionProject()
+        {
+            this._sequencingProject = new System.Collections.ObjectModel.Collection<string>();
+        }
+        
+        [System.Xml.Serialization.XmlElementAttribute("ORGANISM", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public Organism Organism { get; set; }
     }
 }

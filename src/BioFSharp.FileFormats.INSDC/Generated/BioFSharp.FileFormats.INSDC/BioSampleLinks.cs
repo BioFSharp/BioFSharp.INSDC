@@ -15,19 +15,35 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("ProjectRelatedProjectsRelatedProjectPeerProject", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("BioSampleLinks", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class ProjectRelatedProjectsRelatedProjectPeerProject
+    public partial class BioSampleLinks
     {
         
-        /// <summary>
-        /// <para>Identifies the project using
-        ///                                                 an accession number.</para>
-        /// </summary>
-        [System.ComponentModel.DescriptionAttribute("Identifies the project using an accession number.")]
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link> _sampleLink;
+        
         [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
-        [System.Xml.Serialization.XmlAttributeAttribute("accession")]
-        public string Accession { get; set; }
+        [System.Xml.Serialization.XmlElementAttribute("SAMPLE_LINK", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link> SampleLink
+        {
+            get
+            {
+                return _sampleLink;
+            }
+            private set
+            {
+                _sampleLink = value;
+            }
+        }
+        
+        /// <summary>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioSampleLinks" /> class.</para>
+        /// </summary>
+        public BioSampleLinks()
+        {
+            this._sampleLink = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link>();
+        }
     }
 }

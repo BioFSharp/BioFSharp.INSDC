@@ -15,19 +15,36 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("ProjectRelatedProjectsRelatedProject", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("ProjectSetType", Namespace="")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class ProjectRelatedProjectsRelatedProject
+    [System.Xml.Serialization.XmlRootAttribute("PROJECT_SET", Namespace="")]
+    public partial class BioProjectSet
     {
         
-        [System.Xml.Serialization.XmlElementAttribute("PARENT_PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public ProjectRelatedProjectsRelatedProjectParentProject ParentProject { get; set; }
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        private System.Collections.ObjectModel.Collection<BioProject> _project;
         
-        [System.Xml.Serialization.XmlElementAttribute("CHILD_PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public ProjectRelatedProjectsRelatedProjectChildProject ChildProject { get; set; }
+        [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
+        [System.Xml.Serialization.XmlElementAttribute("PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Collections.ObjectModel.Collection<BioProject> Project
+        {
+            get
+            {
+                return _project;
+            }
+            private set
+            {
+                _project = value;
+            }
+        }
         
-        [System.Xml.Serialization.XmlElementAttribute("PEER_PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public ProjectRelatedProjectsRelatedProjectPeerProject PeerProject { get; set; }
+        /// <summary>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioProjectSet" /> class.</para>
+        /// </summary>
+        public BioProjectSet()
+        {
+            this._project = new System.Collections.ObjectModel.Collection<BioProject>();
+        }
     }
 }

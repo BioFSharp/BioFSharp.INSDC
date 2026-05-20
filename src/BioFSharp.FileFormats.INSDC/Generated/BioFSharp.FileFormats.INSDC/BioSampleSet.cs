@@ -13,23 +13,44 @@ namespace BioFSharp.FileFormats.INSDC
 {
     
     
+    /// <summary>
+    /// <para>SAMPLE_SET serves as a container for a set of samples and a name space
+    ///        for establishing referential integrity between them.</para>
+    /// </summary>
+    [System.ComponentModel.DescriptionAttribute(("SAMPLE_SET serves as a container for a set of samples and a name space for establ" +
+        "ishing referential integrity between them."))]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("SampleDescriptorType", Namespace="")]
+    [System.Xml.Serialization.XmlTypeAttribute("SampleSetType", Namespace="")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class SampleDescriptor : BioFSharp.FileFormats.INSDC.RefObject
+    [System.Xml.Serialization.XmlRootAttribute("SAMPLE_SET", Namespace="")]
+    public partial class BioSampleSet
     {
         
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        private System.Collections.ObjectModel.Collection<BioSample> _sample;
+        
+        [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
+        [System.Xml.Serialization.XmlElementAttribute("SAMPLE", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Collections.ObjectModel.Collection<BioSample> Sample
+        {
+            get
+            {
+                return _sample;
+            }
+            private set
+            {
+                _sample = value;
+            }
+        }
+        
         /// <summary>
-        /// <para>Identifies a list of group/pool/multiplex sample members.  This implies that
-        ///            this sample record is a group, pool, or multiplex, but it continues to receive
-        ///            its own accession and can be referenced by an experiment.  By default if
-        ///            no match to any of the listed members can be determined, then the default
-        ///            sample reference is used.</para>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioSampleSet" /> class.</para>
         /// </summary>
-        [System.ComponentModel.DescriptionAttribute(@"Identifies a list of group/pool/multiplex sample members. This implies that this sample record is a group, pool, or multiplex, but it continues to receive its own accession and can be referenced by an experiment. By default if no match to any of the listed members can be determined, then the default sample reference is used.")]
-        [System.Xml.Serialization.XmlElementAttribute("POOL", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public SampleDescriptorPool Pool { get; set; }
+        public BioSampleSet()
+        {
+            this._sample = new System.Collections.ObjectModel.Collection<BioSample>();
+        }
     }
 }

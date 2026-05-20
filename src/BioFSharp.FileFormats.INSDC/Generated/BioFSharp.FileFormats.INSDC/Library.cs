@@ -37,7 +37,7 @@ namespace BioFSharp.FileFormats.INSDC
             "or a pool, depending on how it is specified."))]
         [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
         [System.Xml.Serialization.XmlElementAttribute("SAMPLE_DESCRIPTOR", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public SampleDescriptor SampleDescriptor { get; set; }
+        public BioSampleDescriptor SampleDescriptor { get; set; }
         
         /// <summary>
         /// <para>The LIBRARY_DESCRIPTOR specifies the origin of the material being sequenced and any

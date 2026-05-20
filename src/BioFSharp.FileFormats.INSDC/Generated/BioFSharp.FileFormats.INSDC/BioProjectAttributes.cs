@@ -13,44 +13,37 @@ namespace BioFSharp.FileFormats.INSDC
 {
     
     
-    /// <summary>
-    /// <para>SAMPLE_SET serves as a container for a set of samples and a name space
-    ///        for establishing referential integrity between them.</para>
-    /// </summary>
-    [System.ComponentModel.DescriptionAttribute(("SAMPLE_SET serves as a container for a set of samples and a name space for establ" +
-        "ishing referential integrity between them."))]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("SampleSetType", Namespace="")]
+    [System.Xml.Serialization.XmlTypeAttribute("BioProjectAttributes", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlRootAttribute("SAMPLE_SET", Namespace="")]
-    public partial class SampleSet
+    public partial class BioProjectAttributes
     {
         
         [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<Sample> _sample;
+        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute> _projectAttribute;
         
         [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
-        [System.Xml.Serialization.XmlElementAttribute("SAMPLE", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<Sample> Sample
+        [System.Xml.Serialization.XmlElementAttribute("PROJECT_ATTRIBUTE", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute> ProjectAttribute
         {
             get
             {
-                return _sample;
+                return _projectAttribute;
             }
             private set
             {
-                _sample = value;
+                _projectAttribute = value;
             }
         }
         
         /// <summary>
-        /// <para xml:lang="en">Initializes a new instance of the <see cref="SampleSet" /> class.</para>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioProjectAttributes" /> class.</para>
         /// </summary>
-        public SampleSet()
+        public BioProjectAttributes()
         {
-            this._sample = new System.Collections.ObjectModel.Collection<Sample>();
+            this._projectAttribute = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute>();
         }
     }
 }

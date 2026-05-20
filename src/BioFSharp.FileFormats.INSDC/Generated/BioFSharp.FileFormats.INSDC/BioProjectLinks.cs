@@ -15,46 +15,35 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("ProjectSubmissionProjectSequencingProject", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("BioProjectLinks", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class ProjectSubmissionProjectSequencingProject
+    public partial class BioProjectLinks
     {
         
         [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<string> _locusTagPrefix;
+        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link> _projectLink;
         
-        [System.Xml.Serialization.XmlElementAttribute("LOCUS_TAG_PREFIX", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<string> LocusTagPrefix
+        [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
+        [System.Xml.Serialization.XmlElementAttribute("PROJECT_LINK", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link> ProjectLink
         {
             get
             {
-                return _locusTagPrefix;
+                return _projectLink;
             }
             private set
             {
-                _locusTagPrefix = value;
+                _projectLink = value;
             }
         }
         
         /// <summary>
-        /// <para xml:lang="en">Gets a value indicating whether the LocusTagPrefix collection is empty.</para>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioProjectLinks" /> class.</para>
         /// </summary>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool LocusTagPrefixSpecified
+        public BioProjectLinks()
         {
-            get
-            {
-                return (this.LocusTagPrefix.Count != 0);
-            }
-        }
-        
-        /// <summary>
-        /// <para xml:lang="en">Initializes a new instance of the <see cref="ProjectSubmissionProjectSequencingProject" /> class.</para>
-        /// </summary>
-        public ProjectSubmissionProjectSequencingProject()
-        {
-            this._locusTagPrefix = new System.Collections.ObjectModel.Collection<string>();
+            this._projectLink = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link>();
         }
     }
 }

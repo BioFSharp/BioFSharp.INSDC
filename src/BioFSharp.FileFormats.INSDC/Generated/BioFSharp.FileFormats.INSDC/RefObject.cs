@@ -23,6 +23,7 @@ namespace BioFSharp.FileFormats.INSDC
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(BioFSharp.FileFormats.INSDC.AnalysisRunRef))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(BioFSharp.FileFormats.INSDC.AnalysisSampleRef))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(BioFSharp.FileFormats.INSDC.AnalysisStudyRef))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(BioFSharp.FileFormats.INSDC.BioSampleDescriptor))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(BioFSharp.FileFormats.INSDC.DatasetAnalysisRef))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(BioFSharp.FileFormats.INSDC.DatasetPolicyRef))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(BioFSharp.FileFormats.INSDC.DatasetRunRef))]
@@ -30,7 +31,6 @@ namespace BioFSharp.FileFormats.INSDC
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(BioFSharp.FileFormats.INSDC.PolicyDacRef))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(BioFSharp.FileFormats.INSDC.PoolMember))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(BioFSharp.FileFormats.INSDC.RunExperimentRef))]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(BioFSharp.FileFormats.INSDC.SampleDescriptor))]
     public partial class RefObject
     {
         

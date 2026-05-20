@@ -11,7 +11,7 @@
     <Compile Include="Internal\XmlSerializer.fs" />
     <Compile Include="BioProject.fs" />
     <Compile Include="Study.fs" />
-    <Compile Include="Sample.fs" />
+    <Compile Include="BioSample.fs" />
     <Compile Include="Experiment.fs" />
     <Compile Include="Run.fs" />
     <Compile Include="Analysis.fs" />

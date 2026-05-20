@@ -15,35 +15,19 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("ProjectProjectAttributes", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("BioProjectRelatedProjectsRelatedProjectParentProject", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class ProjectProjectAttributes
+    public partial class BioProjectRelatedProjectsRelatedProjectParentProject
     {
         
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute> _projectAttribute;
-        
-        [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
-        [System.Xml.Serialization.XmlElementAttribute("PROJECT_ATTRIBUTE", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute> ProjectAttribute
-        {
-            get
-            {
-                return _projectAttribute;
-            }
-            private set
-            {
-                _projectAttribute = value;
-            }
-        }
-        
         /// <summary>
-        /// <para xml:lang="en">Initializes a new instance of the <see cref="ProjectProjectAttributes" /> class.</para>
+        /// <para>Identifies the project using
+        ///                                                 an accession number.</para>
         /// </summary>
-        public ProjectProjectAttributes()
-        {
-            this._projectAttribute = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute>();
-        }
+        [System.ComponentModel.DescriptionAttribute("Identifies the project using an accession number.")]
+        [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
+        [System.Xml.Serialization.XmlAttributeAttribute("accession")]
+        public string Accession { get; set; }
     }
 }

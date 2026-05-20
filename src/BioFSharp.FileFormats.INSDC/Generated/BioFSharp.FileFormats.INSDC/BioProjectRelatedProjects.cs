@@ -15,19 +15,35 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("ProjectRelatedProjectsRelatedProjectParentProject", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("BioProjectRelatedProjects", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class ProjectRelatedProjectsRelatedProjectParentProject
+    public partial class BioProjectRelatedProjects
     {
         
-        /// <summary>
-        /// <para>Identifies the project using
-        ///                                                 an accession number.</para>
-        /// </summary>
-        [System.ComponentModel.DescriptionAttribute("Identifies the project using an accession number.")]
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        private System.Collections.ObjectModel.Collection<BioProjectRelatedProjectsRelatedProject> _relatedProject;
+        
         [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
-        [System.Xml.Serialization.XmlAttributeAttribute("accession")]
-        public string Accession { get; set; }
+        [System.Xml.Serialization.XmlElementAttribute("RELATED_PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Collections.ObjectModel.Collection<BioProjectRelatedProjectsRelatedProject> RelatedProject
+        {
+            get
+            {
+                return _relatedProject;
+            }
+            private set
+            {
+                _relatedProject = value;
+            }
+        }
+        
+        /// <summary>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioProjectRelatedProjects" /> class.</para>
+        /// </summary>
+        public BioProjectRelatedProjects()
+        {
+            this._relatedProject = new System.Collections.ObjectModel.Collection<BioProjectRelatedProjectsRelatedProject>();
+        }
     }
 }

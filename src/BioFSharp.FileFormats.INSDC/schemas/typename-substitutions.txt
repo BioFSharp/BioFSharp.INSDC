@@ -1,11 +1,19 @@
 # typename-substitutions.txt
 # Passed to `dotnet xscgen --tnsf` to clean up auto-generated C# type names.
 # Rules:
-#   A) Top-level <X>Type   -> <X>            (e.g. ProjectType -> Project)
+#   A) Top-level <X>Type   -> <X>            (e.g. StudyType -> Study)
 #   B) Set container <X>SetType -> <X>Set    (same shape as A)
 #   C) Type<X>             -> <X>            (enum prefixes, e.g. TypeIlluminaModel -> IlluminaModel)
 #       special: Type454Model -> Model454    (digit-prefix would be invalid)
 #   D) Child <Parent>Type<...> -> <Parent><...>  (mechanical infix strip)
+#   E) Project/Sample -> BioProject/BioSample to match cross-archive INSDC terminology.
+#      Every name starting with `Project` becomes `BioProject*`; every name starting
+#      with `Sample` becomes `BioSample*`, EXCEPT names starting with `SampleGroup`
+#      which name a distinct entity (the ENA.sample_group.xsd schema).
+#   F) Collapse trivially duplicated stems before the Bio prefix:
+#         <X><X>(Attributes|Links|Name) -> <X>(Attributes|Links|Name)
+#      e.g. ProjectProjectAttributes -> BioProjectAttributes,
+#           SampleSampleName -> BioSampleName.
 #
 # Skipped (would collide with an existing distinct class):
 #   EntrySetType (anonymous root EntrySet already exists)
@@ -160,19 +168,19 @@ A:PolicyTypePolicyLinks=PolicyPolicyLinks
 A:PoolMemberType=PoolMember
 A:PoolMemberTypeReadLabel=PoolMemberReadLabel
 A:ProcessingType=Processing
-A:ProjectSetType=ProjectSet
-A:ProjectType=Project
-A:ProjectTypeCollaborators=ProjectCollaborators
-A:ProjectTypeProjectAttributes=ProjectProjectAttributes
-A:ProjectTypeProjectLinks=ProjectProjectLinks
-A:ProjectTypeRelatedProjects=ProjectRelatedProjects
-A:ProjectTypeRelatedProjectsRelatedProject=ProjectRelatedProjectsRelatedProject
-A:ProjectTypeRelatedProjectsRelatedProjectChildProject=ProjectRelatedProjectsRelatedProjectChildProject
-A:ProjectTypeRelatedProjectsRelatedProjectParentProject=ProjectRelatedProjectsRelatedProjectParentProject
-A:ProjectTypeRelatedProjectsRelatedProjectPeerProject=ProjectRelatedProjectsRelatedProjectPeerProject
-A:ProjectTypeSubmissionProject=ProjectSubmissionProject
-A:ProjectTypeSubmissionProjectSequencingProject=ProjectSubmissionProjectSequencingProject
-A:ProjectTypeUmbrellaProject=ProjectUmbrellaProject
+A:ProjectSetType=BioProjectSet
+A:ProjectType=BioProject
+A:ProjectTypeCollaborators=BioProjectCollaborators
+A:ProjectTypeProjectAttributes=BioProjectAttributes
+A:ProjectTypeProjectLinks=BioProjectLinks
+A:ProjectTypeRelatedProjects=BioProjectRelatedProjects
+A:ProjectTypeRelatedProjectsRelatedProject=BioProjectRelatedProjectsRelatedProject
+A:ProjectTypeRelatedProjectsRelatedProjectChildProject=BioProjectRelatedProjectsRelatedProjectChildProject
+A:ProjectTypeRelatedProjectsRelatedProjectParentProject=BioProjectRelatedProjectsRelatedProjectParentProject
+A:ProjectTypeRelatedProjectsRelatedProjectPeerProject=BioProjectRelatedProjectsRelatedProjectPeerProject
+A:ProjectTypeSubmissionProject=BioProjectSubmissionProject
+A:ProjectTypeSubmissionProjectSequencingProject=BioProjectSubmissionProjectSequencingProject
+A:ProjectTypeUmbrellaProject=BioProjectUmbrellaProject
 A:QualifiedNameType=QualifiedName
 A:ReferenceAssemblyType=ReferenceAssembly
 A:ReferenceAssemblyTypeCustom=ReferenceAssemblyCustom
@@ -197,8 +205,8 @@ A:RunTypeExperimentRef=RunExperimentRef
 A:RunTypeRunAttributes=RunRunAttributes
 A:RunTypeRunLinks=RunRunLinks
 A:RunTypeRunType=RunRunType
-A:SampleDescriptorType=SampleDescriptor
-A:SampleDescriptorTypePool=SampleDescriptorPool
+A:SampleDescriptorType=BioSampleDescriptor
+A:SampleDescriptorTypePool=BioSampleDescriptorPool
 A:SampleGroupSetType=SampleGroupSet
 A:SampleGroupType=SampleGroup
 A:SampleGroupTypeDescriptor=SampleGroupDescriptor
@@ -206,11 +214,11 @@ A:SampleGroupTypeDescriptorChecklistAttribute=SampleGroupDescriptorChecklistAttr
 A:SampleGroupTypeDescriptorChecklistRef=SampleGroupDescriptorChecklistRef
 A:SampleGroupTypeDescriptorSampleRef=SampleGroupDescriptorSampleRef
 A:SampleGroupTypeDescriptorStudyRef=SampleGroupDescriptorStudyRef
-A:SampleSetType=SampleSet
-A:SampleType=Sample
-A:SampleTypeSampleAttributes=SampleSampleAttributes
-A:SampleTypeSampleLinks=SampleSampleLinks
-A:SampleTypeSampleName=SampleSampleName
+A:SampleSetType=BioSampleSet
+A:SampleType=BioSample
+A:SampleTypeSampleAttributes=BioSampleAttributes
+A:SampleTypeSampleLinks=BioSampleLinks
+A:SampleTypeSampleName=BioSampleName
 A:SequencingDirectivesType=SequencingDirectives
 A:SequencingDirectivesTypeSampleDemuxDirective=SequencingDirectivesSampleDemuxDirective
 A:SpotDescriptorType=SpotDescriptor

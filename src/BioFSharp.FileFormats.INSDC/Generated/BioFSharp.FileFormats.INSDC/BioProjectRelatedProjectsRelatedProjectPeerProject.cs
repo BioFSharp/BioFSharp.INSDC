@@ -15,10 +15,10 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("ProjectRelatedProjectsRelatedProjectChildProject", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("BioProjectRelatedProjectsRelatedProjectPeerProject", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class ProjectRelatedProjectsRelatedProjectChildProject
+    public partial class BioProjectRelatedProjectsRelatedProjectPeerProject
     {
         
         /// <summary>

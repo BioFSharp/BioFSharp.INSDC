@@ -15,50 +15,46 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("SampleDescriptorPool", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("BioProjectSubmissionProjectSequencingProject", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class SampleDescriptorPool
+    public partial class BioProjectSubmissionProjectSequencingProject
     {
         
-        /// <summary>
-        /// <para>Reference to the sample that is used when read membership cannot be determined. A default member should
-        ///                  be provided if there exists a possibility that some reads will be left over from barcode/MID resolution. A default member
-        ///                  is not needed when defining a true pool (where individual samples are not distinguished in the reads), or the reads have
-        ///                  been partitioned among the pool members (no leftovers).</para>
-        /// </summary>
-        [System.ComponentModel.DescriptionAttribute(@"Reference to the sample that is used when read membership cannot be determined. A default member should be provided if there exists a possibility that some reads will be left over from barcode/MID resolution. A default member is not needed when defining a true pool (where individual samples are not distinguished in the reads), or the reads have been partitioned among the pool members (no leftovers).")]
-        [System.Xml.Serialization.XmlElementAttribute("DEFAULT_MEMBER", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public PoolMember DefaultMember { get; set; }
-        
         [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<PoolMember> _member;
+        private System.Collections.ObjectModel.Collection<string> _locusTagPrefix;
         
-        /// <summary>
-        /// <para>Reference to the sample as determined from barcode/MID resolution or read partition.</para>
-        /// </summary>
-        [System.ComponentModel.DescriptionAttribute(("Reference to the sample as determined from barcode/MID resolution or read partiti" +
-            "on."))]
-        [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
-        [System.Xml.Serialization.XmlElementAttribute("MEMBER", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<PoolMember> Member
+        [System.Xml.Serialization.XmlElementAttribute("LOCUS_TAG_PREFIX", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Collections.ObjectModel.Collection<string> LocusTagPrefix
         {
             get
             {
-                return _member;
+                return _locusTagPrefix;
             }
             private set
             {
-                _member = value;
+                _locusTagPrefix = value;
             }
         }
         
         /// <summary>
-        /// <para xml:lang="en">Initializes a new instance of the <see cref="SampleDescriptorPool" /> class.</para>
+        /// <para xml:lang="en">Gets a value indicating whether the LocusTagPrefix collection is empty.</para>
         /// </summary>
-        public SampleDescriptorPool()
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool LocusTagPrefixSpecified
         {
-            this._member = new System.Collections.ObjectModel.Collection<PoolMember>();
+            get
+            {
+                return (this.LocusTagPrefix.Count != 0);
+            }
+        }
+        
+        /// <summary>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioProjectSubmissionProjectSequencingProject" /> class.</para>
+        /// </summary>
+        public BioProjectSubmissionProjectSequencingProject()
+        {
+            this._locusTagPrefix = new System.Collections.ObjectModel.Collection<string>();
         }
     }
 }

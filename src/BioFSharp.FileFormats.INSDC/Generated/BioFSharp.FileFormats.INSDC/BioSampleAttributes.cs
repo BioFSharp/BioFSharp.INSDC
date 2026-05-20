@@ -15,35 +15,35 @@ namespace BioFSharp.FileFormats.INSDC
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("XmlSchemaClassGenerator", "3.0.1270.0")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute("ProjectProjectLinks", Namespace="", AnonymousType=true)]
+    [System.Xml.Serialization.XmlTypeAttribute("BioSampleAttributes", Namespace="", AnonymousType=true)]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
-    public partial class ProjectProjectLinks
+    public partial class BioSampleAttributes
     {
         
         [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link> _projectLink;
+        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute> _sampleAttribute;
         
         [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
-        [System.Xml.Serialization.XmlElementAttribute("PROJECT_LINK", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link> ProjectLink
+        [System.Xml.Serialization.XmlElementAttribute("SAMPLE_ATTRIBUTE", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute> SampleAttribute
         {
             get
             {
-                return _projectLink;
+                return _sampleAttribute;
             }
             private set
             {
-                _projectLink = value;
+                _sampleAttribute = value;
             }
         }
         
         /// <summary>
-        /// <para xml:lang="en">Initializes a new instance of the <see cref="ProjectProjectLinks" /> class.</para>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioSampleAttributes" /> class.</para>
         /// </summary>
-        public ProjectProjectLinks()
+        public BioSampleAttributes()
         {
-            this._projectLink = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link>();
+            this._sampleAttribute = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute>();
         }
     }
 }

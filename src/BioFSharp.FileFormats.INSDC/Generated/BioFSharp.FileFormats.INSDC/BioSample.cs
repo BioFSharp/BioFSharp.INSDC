@@ -26,7 +26,7 @@ namespace BioFSharp.FileFormats.INSDC
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlRootAttribute("SAMPLE", Namespace="")]
-    public partial class Sample : BioFSharp.FileFormats.INSDC.Object
+    public partial class BioSample : BioFSharp.FileFormats.INSDC.Object
     {
         
         /// <summary>
@@ -39,7 +39,7 @@ namespace BioFSharp.FileFormats.INSDC
         
         [System.ComponentModel.DataAnnotations.RequiredAttribute(AllowEmptyStrings=true)]
         [System.Xml.Serialization.XmlElementAttribute("SAMPLE_NAME", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public SampleSampleName SampleName { get; set; }
+        public BioSampleName SampleName { get; set; }
         
         /// <summary>
         /// <para>Free-form text describing the sample, its origin, and its method of isolation.</para>
@@ -83,9 +83,9 @@ namespace BioFSharp.FileFormats.INSDC
         }
         
         /// <summary>
-        /// <para xml:lang="en">Initializes a new instance of the <see cref="Sample" /> class.</para>
+        /// <para xml:lang="en">Initializes a new instance of the <see cref="BioSample" /> class.</para>
         /// </summary>
-        public Sample()
+        public BioSample()
         {
             this._sampleLinks = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Link>();
             this._sampleAttributes = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Attribute>();

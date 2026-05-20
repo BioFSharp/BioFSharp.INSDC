@@ -9,16 +9,16 @@ open BioFSharp.IO.INSDC
 type IoSurfaceSmokeTests() =
 
     [<Fact>]
-    let ``BioProject.Project aliases the generated INSDC Project type`` () =
-        Assert.Equal(typeof<BioProject.Project>, typeof<BioFSharp.FileFormats.INSDC.Project>)
+    let ``BioProject.BioProject aliases the generated INSDC BioProject type`` () =
+        Assert.Equal(typeof<BioProject.BioProject>, typeof<BioFSharp.FileFormats.INSDC.BioProject>)
 
     [<Fact>]
     let ``Every entity module exposes a writeString function over its type alias`` () =
         // Constructing a default-initialised record and round-tripping it through
         // writeString is the cheapest sanity check that XmlSerializer can handle each entity.
-        let project    = BioProject.Project()
+        let project    = BioProject.BioProject()
         let study      = Study.Study()
-        let sample     = Sample.Sample()
+        let sample     = BioSample.BioSample()
         let experiment = Experiment.Experiment()
         let run        = Run.Run()
         let analysis   = Analysis.Analysis()
@@ -27,7 +27,7 @@ type IoSurfaceSmokeTests() =
         // None of these should throw; we don't assert on the XML body shape here.
         BioProject.writeString  project    |> ignore
         Study.writeString       study      |> ignore
-        Sample.writeString      sample     |> ignore
+        BioSample.writeString   sample     |> ignore
         Experiment.writeString  experiment |> ignore
         Run.writeString         run        |> ignore
         Analysis.writeString    analysis   |> ignore

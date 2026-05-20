@@ -57,11 +57,11 @@ namespace BioFSharp.FileFormats.INSDC
         {
             this._submission = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Submission>();
             this._study = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Study>();
-            this._sample = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Sample>();
+            this._sample = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.BioSample>();
             this._experiment = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Experiment>();
             this._run = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Run>();
             this._analysis = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Analysis>();
-            this._project = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Project>();
+            this._project = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.BioProject>();
             this._dac = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Dac>();
             this._dataset = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Dataset>();
             this._policy = new System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Policy>();
@@ -96,10 +96,10 @@ namespace BioFSharp.FileFormats.INSDC
         }
         
         [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Sample> _sample;
+        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.BioSample> _sample;
         
         [System.Xml.Serialization.XmlElementAttribute("SAMPLE", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Sample> Sample
+        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.BioSample> Sample
         {
             get
             {
@@ -208,10 +208,10 @@ namespace BioFSharp.FileFormats.INSDC
         }
         
         [System.Xml.Serialization.XmlIgnoreAttribute()]
-        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Project> _project;
+        private System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.BioProject> _project;
         
         [System.Xml.Serialization.XmlElementAttribute("PROJECT", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.Project> Project
+        public System.Collections.ObjectModel.Collection<BioFSharp.FileFormats.INSDC.BioProject> Project
         {
             get
             {

@@ -2,26 +2,26 @@ namespace BioFSharp.IO.INSDC
 
 open BioFSharp.IO.INSDC.Internal
 
-/// Read and write INSDC BioProject records. Note that the SRA / ENA schema
-/// names this entity simply `Project`; `BioProject` is the cross-archive
-/// INSDC name used in this module to match colloquial usage.
+/// Read and write INSDC BioProject records (called `Project` in the SRA/ENA
+/// XML schema; `BioProject` is the cross-archive INSDC name used throughout
+/// this library).
 module BioProject =
 
-    /// An INSDC BioProject record. Alias for `BioFSharp.FileFormats.INSDC.Project`.
-    type Project = BioFSharp.FileFormats.INSDC.Project
+    /// An INSDC BioProject record. Alias for `BioFSharp.FileFormats.INSDC.BioProject`.
+    type BioProject = BioFSharp.FileFormats.INSDC.BioProject
 
     /// Read an INSDC BioProject XML record from the file at `filePath`.
-    let read (filePath: string) : Project =
-        XmlSerializer.read<Project> filePath
+    let read (filePath: string) : BioProject =
+        XmlSerializer.read<BioProject> filePath
 
     /// Parse an INSDC BioProject XML record from an in-memory string.
-    let readString (xml: string) : Project =
-        XmlSerializer.readString<Project> xml
+    let readString (xml: string) : BioProject =
+        XmlSerializer.readString<BioProject> xml
 
     /// Write an INSDC BioProject `project` to the file at `filePath` as XML.
-    let write (filePath: string) (project: Project) : unit =
+    let write (filePath: string) (project: BioProject) : unit =
         XmlSerializer.write filePath project
 
     /// Serialize an INSDC BioProject `project` to an XML string.
-    let writeString (project: Project) : string =
+    let writeString (project: BioProject) : string =
         XmlSerializer.writeString project
