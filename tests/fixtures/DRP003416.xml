@@ -1,0 +1,50 @@
+<STUDY_SET>
+<STUDY accession="DRP003416" alias="DRP003416" center_name="NIG" broker_name="DDBJ">
+  <IDENTIFIERS>
+    <PRIMARY_ID>DRP003416</PRIMARY_ID>
+    <SECONDARY_ID>PRJDB5192</SECONDARY_ID>
+    <EXTERNAL_ID label="primary" namespace="BioProject">PRJDB5192</EXTERNAL_ID>
+    <SUBMITTER_ID namespace="NIG">DRP003416</SUBMITTER_ID>
+  </IDENTIFIERS>
+  <DESCRIPTOR>
+    <STUDY_TITLE>The gene-body chromatin modifications dynamics mediates epigenome differentiation in Arabidopsis</STUDY_TITLE>
+    <STUDY_TYPE existing_study_type="Whole Genome Sequencing"/>
+    <STUDY_ABSTRACT>Constitutively silent heterochromatin is marked by methylation of lysine 9 on histone H3 (H3K9me). A puzzling feature of H3K9me is that this modification generally localizes not only in promoters but also in internal regions (bodies) of silent transcription units. Despite its prevalence, biological significance of gene-body H3K9me remains enigmatic. Here we show that H3K9me-directed removal of H3K4 monomethylation (H3K4me1) in the gene-bodies mediates transcriptional silencing. Mutations in an Arabidopsis H3K9 demethylase gene IBM1 induce ectopic H3K9me2 accumulation in gene-bodies, which is associated with severe developmental defects. Through suppressor screening of the ibm1- induced developmental defects, we identified LDL2 gene, which encodes a homolog of conserved H3K4 demethylases. The ldl2 mutation suppressed the developmental defects, but it did not suppress the ibm1-induced ectopic H3K9me2. The ectopic H3K9m2 directed reduced body H3K4me1 and transcriptional repression, which depend on the LDL2 function. Furthermore, mutations of H3K9 methylases induced drastic increases in H3K4me1 in the bodies of diverse transposable elements. Our results uncovered an unexpected role of gene-body H3K9me2/H3K4me1 dynamics as a mediator of heterochromatin silencing and epigenome differentiation.</STUDY_ABSTRACT>
+    <CENTER_PROJECT_NAME>Arabidopsis thaliana strain:Col-0</CENTER_PROJECT_NAME>
+  </DESCRIPTOR>
+  <STUDY_LINKS>
+    <STUDY_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMISSION</DB>
+        <ID>DRA005154</ID>
+      </XREF_LINK>
+    </STUDY_LINK>
+    <STUDY_LINK>
+      <XREF_LINK>
+        <DB>ENA-FASTQ-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRP003416&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>
+      </XREF_LINK>
+    </STUDY_LINK>
+    <STUDY_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMITTED-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRP003416&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>
+      </XREF_LINK>
+    </STUDY_LINK>
+  </STUDY_LINKS>
+  <STUDY_ATTRIBUTES>
+    <STUDY_ATTRIBUTE>
+      <TAG>ENA-STATUS</TAG>
+      <VALUE>PUBLIC</VALUE>
+    </STUDY_ATTRIBUTE>
+    <STUDY_ATTRIBUTE>
+      <TAG>ENA-FIRST-PUBLIC</TAG>
+      <VALUE>2017-01-28</VALUE>
+    </STUDY_ATTRIBUTE>
+    <STUDY_ATTRIBUTE>
+      <TAG>ENA-LAST-UPDATE</TAG>
+      <VALUE>2017-01-28</VALUE>
+    </STUDY_ATTRIBUTE>
+  </STUDY_ATTRIBUTES>
+</STUDY>
+</STUDY_SET>

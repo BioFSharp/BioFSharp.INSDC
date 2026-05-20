@@ -8,13 +8,13 @@ open BioFSharp.IO.INSDC.Internal
 /// this library).
 module BioProject =
 
-    /// Read an INSDC BioProject XML record from the file at `filePath`.
-    let read (filePath: string) : BioProject =
-        XmlSerializer.read<BioProject> filePath
+    /// Read INSDC BioProject XML records from the file at `filePath`.
+    let read (filePath: string) : seq<BioProject> =
+        XmlSerializer.readOrSet<BioProject, BioProjectSet> "PROJECT_SET" (fun set -> set.Project) filePath
 
-    /// Parse an INSDC BioProject XML record from an in-memory string.
-    let readString (xml: string) : BioProject =
-        XmlSerializer.readString<BioProject> xml
+    /// Parse INSDC BioProject XML records from an in-memory string.
+    let readString (xml: string) : seq<BioProject> =
+        XmlSerializer.readStringOrSet<BioProject, BioProjectSet> "PROJECT_SET" (fun set -> set.Project) xml
 
     /// Write an INSDC BioProject `project` to the file at `filePath` as XML.
     let write (filePath: string) (project: BioProject) : unit =

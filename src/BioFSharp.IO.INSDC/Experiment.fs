@@ -6,13 +6,13 @@ open BioFSharp.IO.INSDC.Internal
 /// Read and write INSDC Experiment records.
 module Experiment =
 
-    /// Read an INSDC Experiment XML record from the file at `filePath`.
-    let read (filePath: string) : Experiment =
-        XmlSerializer.read<Experiment> filePath
+    /// Read INSDC Experiment XML records from the file at `filePath`.
+    let read (filePath: string) : seq<Experiment> =
+        XmlSerializer.readOrSet<Experiment, ExperimentSet> "EXPERIMENT_SET" (fun set -> set.Experiment) filePath
 
-    /// Parse an INSDC Experiment XML record from an in-memory string.
-    let readString (xml: string) : Experiment =
-        XmlSerializer.readString<Experiment> xml
+    /// Parse INSDC Experiment XML records from an in-memory string.
+    let readString (xml: string) : seq<Experiment> =
+        XmlSerializer.readStringOrSet<Experiment, ExperimentSet> "EXPERIMENT_SET" (fun set -> set.Experiment) xml
 
     /// Write an INSDC Experiment `experiment` to the file at `filePath` as XML.
     let write (filePath: string) (experiment: Experiment) : unit =

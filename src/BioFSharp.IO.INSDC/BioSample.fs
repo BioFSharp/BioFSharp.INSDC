@@ -8,13 +8,13 @@ open BioFSharp.IO.INSDC.Internal
 /// this library).
 module BioSample =
 
-    /// Read an INSDC BioSample XML record from the file at `filePath`.
-    let read (filePath: string) : BioSample =
-        XmlSerializer.read<BioSample> filePath
+    /// Read INSDC BioSample XML records from the file at `filePath`.
+    let read (filePath: string) : seq<BioSample> =
+        XmlSerializer.readOrSet<BioSample, BioSampleSet> "SAMPLE_SET" (fun set -> set.Sample) filePath
 
-    /// Parse an INSDC BioSample XML record from an in-memory string.
-    let readString (xml: string) : BioSample =
-        XmlSerializer.readString<BioSample> xml
+    /// Parse INSDC BioSample XML records from an in-memory string.
+    let readString (xml: string) : seq<BioSample> =
+        XmlSerializer.readStringOrSet<BioSample, BioSampleSet> "SAMPLE_SET" (fun set -> set.Sample) xml
 
     /// Write an INSDC BioSample `sample` to the file at `filePath` as XML.
     let write (filePath: string) (sample: BioSample) : unit =

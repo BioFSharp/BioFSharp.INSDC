@@ -1,0 +1,64 @@
+<RUN_SET>
+<RUN accession="DRR072834" alias="DRR072834" center_name="NIG" broker_name="DDBJ">
+  <IDENTIFIERS>
+    <PRIMARY_ID>DRR072834</PRIMARY_ID>
+    <SUBMITTER_ID namespace="NIG">DRR072834</SUBMITTER_ID>
+  </IDENTIFIERS>
+  <TITLE>WT_H3K4me3_2</TITLE>
+  <EXPERIMENT_REF accession="DRX066772" refcenter="NIG" refname="DRX066772"/>
+  <RUN_LINKS>
+    <RUN_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMISSION</DB>
+        <ID>DRA005154</ID>
+      </XREF_LINK>
+    </RUN_LINK>
+    <RUN_LINK>
+      <XREF_LINK>
+        <DB>ENA-STUDY</DB>
+        <ID>DRP003416</ID>
+      </XREF_LINK>
+    </RUN_LINK>
+    <RUN_LINK>
+      <XREF_LINK>
+        <DB>ENA-SAMPLE</DB>
+        <ID>DRS039895</ID>
+      </XREF_LINK>
+    </RUN_LINK>
+    <RUN_LINK>
+      <XREF_LINK>
+        <DB>ENA-FASTQ-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRR072834&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>
+      </XREF_LINK>
+    </RUN_LINK>
+    <RUN_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMITTED-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRR072834&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>
+      </XREF_LINK>
+    </RUN_LINK>
+  </RUN_LINKS>
+  <RUN_ATTRIBUTES>
+    <RUN_ATTRIBUTE>
+      <TAG>ENA-STATUS</TAG>
+      <VALUE>PUBLIC</VALUE>
+    </RUN_ATTRIBUTE>
+    <RUN_ATTRIBUTE>
+      <TAG>ENA-FIRST-PUBLIC</TAG>
+      <VALUE>2017-01-28</VALUE>
+    </RUN_ATTRIBUTE>
+    <RUN_ATTRIBUTE>
+      <TAG>ENA-LAST-UPDATE</TAG>
+      <VALUE>2017-01-28</VALUE>
+    </RUN_ATTRIBUTE>
+    <RUN_ATTRIBUTE>
+      <TAG>ENA-BASE-COUNT</TAG>
+      <VALUE>1037391408</VALUE>
+    </RUN_ATTRIBUTE>
+    <RUN_ATTRIBUTE>
+      <TAG>ENA-SPOT-COUNT</TAG>
+      <VALUE>20341008</VALUE>
+    </RUN_ATTRIBUTE>
+  </RUN_ATTRIBUTES>
+</RUN>
+</RUN_SET>

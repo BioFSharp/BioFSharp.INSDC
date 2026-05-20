@@ -6,13 +6,13 @@ open BioFSharp.IO.INSDC.Internal
 /// Read and write INSDC Submission records.
 module Submission =
 
-    /// Read an INSDC Submission XML record from the file at `filePath`.
-    let read (filePath: string) : Submission =
-        XmlSerializer.read<Submission> filePath
+    /// Read INSDC Submission XML records from the file at `filePath`.
+    let read (filePath: string) : seq<Submission> =
+        XmlSerializer.readOrSet<Submission, SubmissionSet> "SUBMISSION_SET" (fun set -> set.Submission) filePath
 
-    /// Parse an INSDC Submission XML record from an in-memory string.
-    let readString (xml: string) : Submission =
-        XmlSerializer.readString<Submission> xml
+    /// Parse INSDC Submission XML records from an in-memory string.
+    let readString (xml: string) : seq<Submission> =
+        XmlSerializer.readStringOrSet<Submission, SubmissionSet> "SUBMISSION_SET" (fun set -> set.Submission) xml
 
     /// Write an INSDC Submission `submission` to the file at `filePath` as XML.
     let write (filePath: string) (submission: Submission) : unit =

@@ -1,0 +1,84 @@
+<EXPERIMENT_SET>
+<EXPERIMENT accession="DRX066772" alias="DRX066772" center_name="NIG" broker_name="DDBJ">
+  <IDENTIFIERS>
+    <PRIMARY_ID>DRX066772</PRIMARY_ID>
+    <SUBMITTER_ID namespace="NIG">DRX066772</SUBMITTER_ID>
+  </IDENTIFIERS>
+  <TITLE>WT_H3K4me3_2</TITLE>
+  <STUDY_REF accession="DRP003416" refcenter="NIG" refname="DRP003416">
+    <IDENTIFIERS>
+      <PRIMARY_ID>DRP003416</PRIMARY_ID>
+      <EXTERNAL_ID label="BioProject ID" namespace="BioProject">PRJDB5192</EXTERNAL_ID>
+      <SUBMITTER_ID namespace="NIG">DRP003416</SUBMITTER_ID>
+    </IDENTIFIERS>
+  </STUDY_REF>
+  <DESIGN>
+    <DESIGN_DESCRIPTION/>
+    <SAMPLE_DESCRIPTOR accession="DRS039895" refcenter="NIG" refname="DRS039895">
+      <IDENTIFIERS>
+        <PRIMARY_ID>DRS039895</PRIMARY_ID>
+        <EXTERNAL_ID label="BioSample ID" namespace="BioSample">SAMD00064197</EXTERNAL_ID>
+        <SUBMITTER_ID namespace="NIG">DRS039895</SUBMITTER_ID>
+      </IDENTIFIERS>
+    </SAMPLE_DESCRIPTOR>
+    <LIBRARY_DESCRIPTOR>
+      <LIBRARY_NAME/>
+      <LIBRARY_STRATEGY>ChIP-Seq</LIBRARY_STRATEGY>
+      <LIBRARY_SOURCE>GENOMIC</LIBRARY_SOURCE>
+      <LIBRARY_SELECTION>ChIP</LIBRARY_SELECTION>
+      <LIBRARY_LAYOUT>
+        <SINGLE/>
+      </LIBRARY_LAYOUT>
+      <LIBRARY_CONSTRUCTION_PROTOCOL>KAPA Hyper Prep Kit</LIBRARY_CONSTRUCTION_PROTOCOL>
+    </LIBRARY_DESCRIPTOR>
+    <SPOT_DESCRIPTOR>
+      <SPOT_DECODE_SPEC>
+        <SPOT_LENGTH>51</SPOT_LENGTH>
+        <READ_SPEC>
+          <READ_INDEX>0</READ_INDEX>
+          <READ_CLASS>Application Read</READ_CLASS>
+          <READ_TYPE>Forward</READ_TYPE>
+          <BASE_COORD>1</BASE_COORD>
+        </READ_SPEC>
+      </SPOT_DECODE_SPEC>
+    </SPOT_DESCRIPTOR>
+  </DESIGN>
+  <PLATFORM>
+    <ILLUMINA>
+      <INSTRUMENT_MODEL>Illumina HiSeq 4000</INSTRUMENT_MODEL>
+    </ILLUMINA>
+  </PLATFORM>
+  <EXPERIMENT_LINKS>
+    <EXPERIMENT_LINK>
+      <XREF_LINK>
+        <DB>ENA-SAMPLE</DB>
+        <ID>DRS039895</ID>
+      </XREF_LINK>
+    </EXPERIMENT_LINK>
+    <EXPERIMENT_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMISSION</DB>
+        <ID>DRA005154</ID>
+      </XREF_LINK>
+    </EXPERIMENT_LINK>
+    <EXPERIMENT_LINK>
+      <XREF_LINK>
+        <DB>ENA-FASTQ-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRX066772&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>
+      </XREF_LINK>
+    </EXPERIMENT_LINK>
+    <EXPERIMENT_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMITTED-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRX066772&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>
+      </XREF_LINK>
+    </EXPERIMENT_LINK>
+  </EXPERIMENT_LINKS>
+  <EXPERIMENT_ATTRIBUTES>
+    <EXPERIMENT_ATTRIBUTE>
+      <TAG>ENA-STATUS</TAG>
+      <VALUE>PUBLIC</VALUE>
+    </EXPERIMENT_ATTRIBUTE>
+  </EXPERIMENT_ATTRIBUTES>
+</EXPERIMENT>
+</EXPERIMENT_SET>

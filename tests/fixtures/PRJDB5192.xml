@@ -1,0 +1,65 @@
+<PROJECT_SET>
+<PROJECT accession="PRJDB5192" alias="PRJDB5192" center_name="Kakutani lab, Department of Integrative Genetics, National Institute of Genetics" broker_name="DDBJ">
+  <IDENTIFIERS>
+    <PRIMARY_ID>PRJDB5192</PRIMARY_ID>
+    <SECONDARY_ID>DRP003416</SECONDARY_ID>
+    <SUBMITTER_ID namespace="Kakutani lab, Department of Integrative Genetics, National Institute of Genetics">PRJDB5192</SUBMITTER_ID>
+  </IDENTIFIERS>
+  <NAME>Arabidopsis thaliana strain:Col-0</NAME>
+  <TITLE>The gene-body chromatin modifications dynamics mediates epigenome differentiation in Arabidopsis</TITLE>
+  <DESCRIPTION>Constitutively silent heterochromatin is marked by methylation of lysine 9 on histone H3 (H3K9me). A puzzling feature of H3K9me is that this modification generally localizes not only in promoters but also in internal regions (bodies) of silent transcription units. Despite its prevalence, biological significance of gene-body H3K9me remains enigmatic. Here we show that H3K9me-directed removal of H3K4 monomethylation (H3K4me1) in the gene-bodies mediates transcriptional silencing. Mutations in an Arabidopsis H3K9 demethylase gene IBM1 induce ectopic H3K9me2 accumulation in gene-bodies, which is associated with severe developmental defects. Through suppressor screening of the ibm1- induced developmental defects, we identified LDL2 gene, which encodes a homolog of conserved H3K4 demethylases. The ldl2 mutation suppressed the developmental defects, but it did not suppress the ibm1-induced ectopic H3K9me2. The ectopic H3K9m2 directed reduced body H3K4me1 and transcriptional repression, which depend on the LDL2 function. Furthermore, mutations of H3K9 methylases induced drastic increases in H3K4me1 in the bodies of diverse transposable elements. Our results uncovered an unexpected role of gene-body H3K9me2/H3K4me1 dynamics as a mediator of heterochromatin silencing and epigenome differentiation.</DESCRIPTION>
+  <SUBMISSION_PROJECT>
+    <SEQUENCING_PROJECT/>
+    <ORGANISM>
+      <TAXON_ID>3702</TAXON_ID>
+      <SCIENTIFIC_NAME>Arabidopsis thaliana</SCIENTIFIC_NAME>
+      <STRAIN>Col-0</STRAIN>
+    </ORGANISM>
+  </SUBMISSION_PROJECT>
+  <RELATED_PROJECTS>
+    <RELATED_PROJECT>
+      <PARENT_PROJECT accession="PRJNA9506"/>
+    </RELATED_PROJECT>
+  </RELATED_PROJECTS>
+  <PROJECT_LINKS>
+    <PROJECT_LINK>
+      <XREF_LINK>
+        <DB>ENA-FASTQ-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJDB5192&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>
+      </XREF_LINK>
+    </PROJECT_LINK>
+    <PROJECT_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMITTED-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJDB5192&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>
+      </XREF_LINK>
+    </PROJECT_LINK>
+  </PROJECT_LINKS>
+  <PROJECT_ATTRIBUTES>
+    <PROJECT_ATTRIBUTE>
+      <TAG>ENA-REFSEQ</TAG>
+      <VALUE>N</VALUE>
+    </PROJECT_ATTRIBUTE>
+    <PROJECT_ATTRIBUTE>
+      <TAG>PROJECT-ID</TAG>
+      <VALUE>362567</VALUE>
+    </PROJECT_ATTRIBUTE>
+    <PROJECT_ATTRIBUTE>
+      <TAG>NCBI-PROJECT-TYPE</TAG>
+      <VALUE>SUBMISSION</VALUE>
+    </PROJECT_ATTRIBUTE>
+    <PROJECT_ATTRIBUTE>
+      <TAG>ENA-STATUS</TAG>
+      <VALUE>PUBLIC</VALUE>
+    </PROJECT_ATTRIBUTE>
+    <PROJECT_ATTRIBUTE>
+      <TAG>ENA-FIRST-PUBLIC</TAG>
+      <VALUE>2017-04-19</VALUE>
+    </PROJECT_ATTRIBUTE>
+    <PROJECT_ATTRIBUTE>
+      <TAG>ENA-LAST-UPDATE</TAG>
+      <VALUE>2026-05-04</VALUE>
+    </PROJECT_ATTRIBUTE>
+  </PROJECT_ATTRIBUTES>
+</PROJECT>
+</PROJECT_SET>

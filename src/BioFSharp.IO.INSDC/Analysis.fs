@@ -6,13 +6,13 @@ open BioFSharp.IO.INSDC.Internal
 /// Read and write INSDC Analysis records.
 module Analysis =
 
-    /// Read an INSDC Analysis XML record from the file at `filePath`.
-    let read (filePath: string) : Analysis =
-        XmlSerializer.read<Analysis> filePath
+    /// Read INSDC Analysis XML records from the file at `filePath`.
+    let read (filePath: string) : seq<Analysis> =
+        XmlSerializer.readOrSet<Analysis, AnalysisSet> "ANALYSIS_SET" (fun set -> set.Analysis) filePath
 
-    /// Parse an INSDC Analysis XML record from an in-memory string.
-    let readString (xml: string) : Analysis =
-        XmlSerializer.readString<Analysis> xml
+    /// Parse INSDC Analysis XML records from an in-memory string.
+    let readString (xml: string) : seq<Analysis> =
+        XmlSerializer.readStringOrSet<Analysis, AnalysisSet> "ANALYSIS_SET" (fun set -> set.Analysis) xml
 
     /// Write an INSDC Analysis `analysis` to the file at `filePath` as XML.
     let write (filePath: string) (analysis: Analysis) : unit =

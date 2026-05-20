@@ -6,13 +6,13 @@ open BioFSharp.IO.INSDC.Internal
 /// Read and write INSDC Run records.
 module Run =
 
-    /// Read an INSDC Run XML record from the file at `filePath`.
-    let read (filePath: string) : Run =
-        XmlSerializer.read<Run> filePath
+    /// Read INSDC Run XML records from the file at `filePath`.
+    let read (filePath: string) : seq<Run> =
+        XmlSerializer.readOrSet<Run, RunSet> "RUN_SET" (fun set -> set.Run) filePath
 
-    /// Parse an INSDC Run XML record from an in-memory string.
-    let readString (xml: string) : Run =
-        XmlSerializer.readString<Run> xml
+    /// Parse INSDC Run XML records from an in-memory string.
+    let readString (xml: string) : seq<Run> =
+        XmlSerializer.readStringOrSet<Run, RunSet> "RUN_SET" (fun set -> set.Run) xml
 
     /// Write an INSDC Run `run` to the file at `filePath` as XML.
     let write (filePath: string) (run: Run) : unit =
