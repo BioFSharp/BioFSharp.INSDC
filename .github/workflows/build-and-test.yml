@@ -17,7 +17,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.x.x
+        global-json-file: global.json
     - name: make script executable
       run: chmod u+x build.sh
     - name: Build and test
@@ -27,7 +27,7 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        slug: BioFSharp/BioFSharp.XYZ
+        slug: BioFSharp/BioFSharp.INSDC
 
   build-and-test-windows:
     
@@ -38,7 +38,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.x.x
+        global-json-file: global.json
     - name: Build and test
       working-directory: ./
       run: ./build.cmd runTests

@@ -146,8 +146,11 @@ Tests load fixtures off disk via a small relative-path helper. No network at tes
 - Confirm `build/ProjectInfo.fs` `solutionFile` resolves (already `BioFSharp.INSDC.slnx`).
 - Verify `build.cmd` / `build.sh` entry points still work after the `.fsproj` → `.csproj` swap in the slnx.
 - Add the `regenerateInsdcTypes` target. It must not be chained into the default build — generated code is committed precisely so contributors can build without the tool restored.
+- Audit `.github/workflows/build-and-test.yml` for template residue: SDK pin and the Codecov slug.
 
 The `regenerateInsdcTypes` target lives in `build/BasicTasks.fs`. It is standalone (no dependencies on `clean` / `buildSolution`) and is not referenced by any release pipeline.
+
+CI uses `global-json-file: global.json` so the workflow tracks the SDK version pinned at the repo root (currently 10.0.100). The Codecov slug is retargeted to `BioFSharp/BioFSharp.INSDC`.
 
 ## 6. [ ] Verification
 
