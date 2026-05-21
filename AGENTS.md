@@ -56,6 +56,26 @@ dotnet tool restore     # installs the pinned dotnet-xscgen
 - **The C# type model is generated.** Never hand-edit `src/BioFSharp.FileFormats.INSDC/Generated/`. To change the model, edit the XSDs in `schemas/` (rare) or adjust the generator flags in the `regenerateInsdcTypes` target, then re-run it.
 - **Adding a new INSDC entity** is a four-step recipe: (1) commit the XSD into `schemas/`, (2) run `regenerateInsdcTypes`, (3) add a parallel F# IO module in `BioFSharp.IO.INSDC`, (4) add a parallel test module + fixture.
 
+## Generated type naming (`typename-substitutions.txt`)
+
+`dotnet xscgen` derives verbose C# type names from the XSD structure. We tame them with [`src/BioFSharp.FileFormats.INSDC/schemas/typename-substitutions.txt`](src/BioFSharp.FileFormats.INSDC/schemas/typename-substitutions.txt), passed to the tool via `--tnsf` in the [`regenerateInsdcTypes`](build/BasicTasks.fs) target. This is the single source of truth for friendly type names — never rename generated types by hand.
+
+**File format.** One rule per line, `A:<xscgen-default-name>=<substitute>`. The `A:` prefix means "match any type or member" (xscgen accepts kind-specific prefixes too; we standardise on `A:`). Lines starting with `#` and blank lines are ignored. The header comment block lists the existing rename rules (A–F) the file applies — read it before adding rules so the codebase stays internally consistent.
+
+**Adding or changing a rule:**
+
+1. Edit `typename-substitutions.txt`. The left side is the name xscgen would produce *without any substitution*; the right side is the C# identifier you want. Both must be flat C# identifiers — dotted names like `Foo.Bar` emit invalid C# (`class Foo.Bar`).
+2. Run `build.cmd regenerateInsdcTypes` (or `./build.sh regenerateInsdcTypes`).
+3. Commit both the rule change and every regenerated file under `src/BioFSharp.FileFormats.INSDC/Generated/` so the substitution file matches the checked-in code.
+
+**Removing a rule:** delete the line and regenerate. The type will revert to xscgen's verbose default — only do this when you also intend to rename it via a different rule.
+
+**Pitfalls to avoid:**
+
+- Substitution targets that collide with an *existing* xscgen-default name silently fall back to a generic suffix (`<Name>Item`). If a regenerated file appears with `Item` in its name, your substitute clashed with a sibling type's default — pick a longer-prefixed substitute.
+- Rule keys must match xscgen's default name exactly. When in doubt, regenerate without `--tnsf` once locally to read off the defaults, then write rules against those.
+- The substitution file is not regex-based; every rule is a literal type-name rename.
+
 ## Things to avoid
 
 - Do not add an fsdocs / FsDocs site here — usage examples live in the base BioFSharp docs.

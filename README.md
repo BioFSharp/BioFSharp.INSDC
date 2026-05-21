@@ -51,6 +51,25 @@ build.cmd pack
 build.cmd regenerateInsdcTypes   # only when the XSDs change
 ```
 
+## Generated type naming
+
+`dotnet xscgen` derives C# type names mechanically from the XSDs, which produces verbose names like `AnalysisTypeAnalysisTypeTranscriptomeAssembly`. We clean these up via [`src/BioFSharp.FileFormats.INSDC/schemas/typename-substitutions.txt`](src/BioFSharp.FileFormats.INSDC/schemas/typename-substitutions.txt), passed to the tool with `--tnsf`. The substitution file:
+
+- Has one rule per line in the form `A:<xscgen-default-name>=<substitute>` (the `A:` prefix matches any type/member; lines starting with `#` are comments).
+- Documents its naming rules (A–F) in a header block — read those before adding rules so renames stay consistent.
+- Is the **only** place to change a generated type's name; never hand-edit files under `Generated/`.
+
+To add or change a substitution:
+
+1. Edit `typename-substitutions.txt`. The left side is the name xscgen would emit without any substitution (the original XSD-derived path); the right side is the desired C# identifier. Pick a substitute that does not collide with another type — xscgen falls back to a generic name (e.g. `<Name>Item`) if the substitute clashes with an existing default.
+2. Run `build.cmd regenerateInsdcTypes` (or `./build.sh regenerateInsdcTypes`).
+3. Commit both the updated substitution file and the regenerated files under `src/BioFSharp.FileFormats.INSDC/Generated/`.
+
+Caveats:
+
+- xscgen's substitution file does not accept regex or dotted/nested names — `Foo.Bar` would emit invalid C# (`class Foo.Bar`). Substitutes must be flat C# identifiers.
+- Stay consistent with the rules already documented in the file's header. If a rename does not fit any existing rule, add a new lettered rule alongside the others.
+
 ## Contributing
 
 See [`AGENTS.md`](AGENTS.md) for repo conventions and [`plans/implementation.md`](plans/implementation.md) for the implementation roadmap.
