@@ -30,7 +30,9 @@ let release = ReleaseNotes.load "RELEASE_NOTES.md"
 
 let stableVersion = SemVer.parse release.NugetVersion
 
-let stableVersionTag = (sprintf "%i.%i.%i" stableVersion.Major stableVersion.Minor stableVersion.Patch )
+// Use the full NugetVersion from RELEASE_NOTES.md so prerelease suffixes
+// (e.g. "0.0.0-preview.1") survive into the nupkg version and the git tag.
+let stableVersionTag = release.NugetVersion
 
 let mutable prereleaseSuffix = ""
 

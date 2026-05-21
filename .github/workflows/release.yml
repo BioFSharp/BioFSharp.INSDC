@@ -1,0 +1,85 @@
+name: Release
+
+# Trigger: a push to main that touches RELEASE_NOTES.md.
+# Behavior:
+#   1. Parse the topmost version header from RELEASE_NOTES.md.
+#   2. Skip if the entry is marked `(Unreleased)` — author iterates with that
+#      marker, drops it (and ideally adds a date) to ship.
+#   3. Skip if a git tag for that version already exists (idempotent re-runs).
+#   4. Otherwise: run `./build.sh publishNuget`, which chains
+#      clean -> buildSolution -> runTests -> pack -> publishNuget. Version,
+#      release notes, and pkg metadata all flow from RELEASE_NOTES.md and the
+#      project files. The CI env var auto-accepts the FAKE prompts.
+#   5. Tag the commit with the released version.
+on:
+  push:
+    branches: [main]
+    paths:
+      - RELEASE_NOTES.md
+
+permissions:
+  contents: write   # to push the version tag
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so we can check for an existing tag
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Parse top entry from RELEASE_NOTES.md
+        id: notes
+        run: |
+          set -euo pipefail
+          header=$(grep -m1 -E '^### ' RELEASE_NOTES.md || true)
+          if [ -z "$header" ]; then
+            echo "::error file=RELEASE_NOTES.md::No '### <version>' header found."
+            exit 1
+          fi
+          version=$(printf '%s' "$header" | sed -E 's/^### ([^ ]+).*/\1/')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Top entry: $header"
+          echo "Parsed version: $version"
+          if printf '%s' "$header" | grep -qiE '\(unreleased\)'; then
+            echo "Top entry is marked (Unreleased) — skipping release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git rev-parse "refs/tags/$version" >/dev/null 2>&1; then
+            echo "Tag $version already exists — skipping release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Make build.sh executable
+        if: steps.notes.outputs.skip == 'false'
+        run: chmod u+x build.sh
+
+      - name: Build, test, pack, and publish via FAKE
+        if: steps.notes.outputs.skip == 'false'
+        env:
+          CI: 'true'                                  # auto-accepts FAKE promptYesNo gates
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }} # consumed by ReleaseTasks.publishNuget
+        run: |
+          if [ -z "${NUGET_API_KEY:-}" ]; then
+            echo "::error::NUGET_API_KEY secret is not set."
+            exit 1
+          fi
+          ./build.sh publishNuget
+
+      - name: Tag the release
+        if: steps.notes.outputs.skip == 'false'
+        env:
+          VERSION: ${{ steps.notes.outputs.version }}
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
