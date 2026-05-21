@@ -223,3 +223,88 @@ type RunTests() =
         let fromString = Run.readString (TestFiles.fixtureText "DRR072834.xml") |> Seq.exactlyOne
 
         ObjectGraph.equal fromFile fromString
+
+type AnalysisTests() =
+
+    [<Fact>]
+    member _.``Read Analysis fixture values`` () =
+        let analysis = Analysis.read (TestFiles.fixture "ERZ496533.xml") |> Seq.exactlyOne
+
+        Assert.Equal("ERZ496533", analysis.Accession)
+        Assert.Equal("DNA sequencing ACAN", analysis.Title)
+        Assert.Equal("ERP107353", analysis.StudyRef.Accession)
+        Assert.Equal(2, analysis.Files.Count)
+        Assert.Equal("PUBLIC", analysis.AnalysisAttributes |> Assertions.attributeValue "ENA-STATUS")
+
+    [<Fact>]
+    member _.``Roundtrip Analysis fixture through disk`` () =
+        let analysis = Analysis.read (TestFiles.fixture "ERZ496533.xml") |> Seq.exactlyOne
+        let reparsed = TestFiles.roundtrip Analysis.read Analysis.write analysis
+
+        ObjectGraph.equal analysis reparsed
+
+    [<Fact>]
+    member _.``Analysis read and readString parse the same value`` () =
+        let fromFile = Analysis.read (TestFiles.fixture "ERZ496533.xml") |> Seq.exactlyOne
+        let fromString = Analysis.readString (TestFiles.fixtureText "ERZ496533.xml") |> Seq.exactlyOne
+
+        ObjectGraph.equal fromFile fromString
+
+type SubmissionTests() =
+
+    [<Fact>]
+    member _.``Read Submission fixture values`` () =
+        let submission = Submission.read (TestFiles.fixture "DRA005154.xml") |> Seq.exactlyOne
+
+        Assert.Equal("DRA005154", submission.Accession)
+        Assert.Equal("NIG", submission.CenterName)
+        Assert.Equal("DDBJ", submission.BrokerName)
+        Assert.Equal("Submitted by NIG on 28-JAN-2017", submission.Title)
+        let firstLink = submission.SubmissionLinks |> Seq.head
+        Assert.Equal("ENA-FASTQ-FILES", firstLink.XrefLink.Db)
+
+    [<Fact>]
+    member _.``Roundtrip Submission fixture through disk`` () =
+        let submission = Submission.read (TestFiles.fixture "DRA005154.xml") |> Seq.exactlyOne
+        let reparsed = TestFiles.roundtrip Submission.read Submission.write submission
+
+        ObjectGraph.equal submission reparsed
+
+    [<Fact>]
+    member _.``Submission read and readString parse the same value`` () =
+        let fromFile = Submission.read (TestFiles.fixture "DRA005154.xml") |> Seq.exactlyOne
+        let fromString = Submission.readString (TestFiles.fixtureText "DRA005154.xml") |> Seq.exactlyOne
+
+        ObjectGraph.equal fromFile fromString
+
+type ReceiptTests() =
+
+    [<Fact>]
+    member _.``Read Receipt fixture values`` () =
+        let receipt = Receipt.read (TestFiles.fixture "receipt-sample.xml")
+
+        Assert.True(receipt.Success)
+        Assert.Equal("submission.xml", receipt.SubmissionFile)
+        Assert.Equal("ERA970284", receipt.Submission.Accession)
+        let sample = receipt.Sample |> Seq.exactlyOne
+        Assert.Equal("ERS1838367", sample.Accession)
+        Assert.Equal("SAMEA104174130", sample.ExtId |> Seq.head |> fun ext -> ext.Accession)
+        Assert.Contains(ReceiptActions.Add, receipt.Actions)
+
+    [<Fact>]
+    member _.``Roundtrip Receipt fixture through disk`` () =
+        let original = Receipt.read (TestFiles.fixture "receipt-sample.xml")
+        let filePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"{System.Guid.NewGuid():N}.xml")
+        try
+            Receipt.write filePath original
+            let reparsed = Receipt.read filePath
+            ObjectGraph.equal original reparsed
+        finally
+            if System.IO.File.Exists filePath then System.IO.File.Delete filePath
+
+    [<Fact>]
+    member _.``Receipt read and readString parse the same value`` () =
+        let fromFile = Receipt.read (TestFiles.fixture "receipt-sample.xml")
+        let fromString = Receipt.readString (TestFiles.fixtureText "receipt-sample.xml")
+
+        ObjectGraph.equal fromFile fromString

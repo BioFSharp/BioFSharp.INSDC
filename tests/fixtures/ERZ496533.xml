@@ -1,0 +1,52 @@
+<ANALYSIS_SET>
+<ANALYSIS accession="ERZ496533" alias="DNA sequencing ACAN" broker_name="European Bioinformatics Institute" center_name="European Bioinformatics Institute">
+  <IDENTIFIERS>
+    <PRIMARY_ID>ERZ496533</PRIMARY_ID>
+    <SUBMITTER_ID namespace="European Bioinformatics Institute">DNA sequencing ACAN</SUBMITTER_ID>
+  </IDENTIFIERS>
+  <TITLE>DNA sequencing ACAN</TITLE>
+  <DESCRIPTION>Exon 7 was PCR amplified from dwarf and non-dwarf ponies then sequenced and compared</DESCRIPTION>
+  <STUDY_REF accession="ERP107353">
+    <IDENTIFIERS>
+      <PRIMARY_ID>ERP107353</PRIMARY_ID>
+      <SECONDARY_ID>PRJEB25439</SECONDARY_ID>
+    </IDENTIFIERS>
+  </STUDY_REF>
+  <ANALYSIS_TYPE>
+    <SEQUENCE_VARIATION>
+      <ASSEMBLY>
+        <STANDARD accession="GCA_000002305.1"/>
+      </ASSEMBLY>
+      <EXPERIMENT_TYPE>Exome sequencing</EXPERIMENT_TYPE>
+      <PROGRAM>Vector NTI Advance 10.3</PROGRAM>
+      <PLATFORM>Sanger sequencing: ABI 310</PLATFORM>
+    </SEQUENCE_VARIATION>
+  </ANALYSIS_TYPE>
+  <FILES>
+    <FILE checksum="59c8ff847a438c8e91288fda1610206d" checksum_method="MD5" filename="ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz.tbi" filetype="tabix"/>
+    <FILE checksum="e83207c712242079577aa07566e5e32d" checksum_method="MD5" filename="ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz" filetype="vcf"/>
+  </FILES>
+  <ANALYSIS_LINKS>
+    <ANALYSIS_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMISSION</DB>
+        <ID>ERA1238480</ID>
+      </XREF_LINK>
+    </ANALYSIS_LINK>
+  </ANALYSIS_LINKS>
+  <ANALYSIS_ATTRIBUTES>
+    <ANALYSIS_ATTRIBUTE>
+      <TAG>ENA-STATUS</TAG>
+      <VALUE>PUBLIC</VALUE>
+    </ANALYSIS_ATTRIBUTE>
+    <ANALYSIS_ATTRIBUTE>
+      <TAG>ENA-FIRST-PUBLIC</TAG>
+      <VALUE>2018-03-07</VALUE>
+    </ANALYSIS_ATTRIBUTE>
+    <ANALYSIS_ATTRIBUTE>
+      <TAG>ENA-LAST-UPDATE</TAG>
+      <VALUE>2018-03-07</VALUE>
+    </ANALYSIS_ATTRIBUTE>
+  </ANALYSIS_ATTRIBUTES>
+</ANALYSIS>
+</ANALYSIS_SET>

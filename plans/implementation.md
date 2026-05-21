@@ -92,17 +92,17 @@ Namespace: `BioFSharp.IO.INSDC`. INSDC files are XML, so there is no `readLines`
 
 ```fsharp
 module BioProject =
-    /// Read an INSDC project XML from disk.
-    val read        : filePath: string -> ProjectType
-    /// Parse an INSDC project XML from an in-memory string.
-    val readString  : xml: string -> ProjectType
+    /// Read INSDC project XML records from disk.
+    val read        : filePath: string -> seq<ProjectType>
+    /// Parse INSDC project XML records from an in-memory string.
+    val readString  : xml: string -> seq<ProjectType>
     /// Write an INSDC project to disk as XML.
     val write       : filePath: string -> project: ProjectType -> unit
     /// Serialize an INSDC project to an XML string.
     val writeString : project: ProjectType -> string
 ```
 
-`ProjectType` is the C# type emitted by the generator, re-exported via a type alias so consumers do not need to `open BioFSharp.FileFormats.INSDC`. Same shape for `Study`, `Sample`, `Experiment`, `Run`, `Analysis`, `Submission`, `Receipt`.
+`ProjectType` is the C# type emitted by the generator, re-exported via a type alias so consumers do not need to `open BioFSharp.FileFormats.INSDC`. Same shape for set-backed entities (`BioProject`, `Study`, `Sample`, `Experiment`, `Run`, `Analysis`, `Submission`): `read` and `readString` return `seq<_>` because ENA responses commonly use `*_SET` roots. `Receipt` remains single-record because there is no generated `ReceiptSet` type.
 
 ### Conventions
 
@@ -110,13 +110,16 @@ module BioProject =
 - `BioFSharp.IO.INSDC.fsproj` adds a `<ProjectReference>` to `BioFSharp.FileFormats.INSDC.csproj`.
 - Project metadata (`Authors`, `Description`, repo URLs) retargeted to `BioFSharp.INSDC`.
 
-## 4. [ ] Tests (`BioFSharp.INSDC.Tests`)
+## 4. [x] Tests (`BioFSharp.INSDC.Tests`)
+
+State: fixture-based coverage is complete for every IO module. The old smoke test was replaced with deep object-graph roundtrip tests against committed ENA fixtures.
 
 ### Test files
 
 One test module per IO module:
 
-- `BioProjectTests.fs`, `StudyTests.fs`, `SampleTests.fs`, `ExperimentTests.fs`, `RunTests.fs`, `AnalysisTests.fs`, `SubmissionTests.fs`, `ReceiptTests.fs`
+- Done in `Tests.fs`: `BioProject`, `Study`, `BioSample`, `Experiment`, `Run`, `Analysis`, `Submission`, `Receipt`.
+- Future cleanup: split the current `Tests.fs` into one test module/file per IO module if desired.
 
 Each module covers three cases:
 
@@ -130,18 +133,21 @@ Keep xunit (already wired). Drop the existing `BioTalk` test.
 
 Real ENA records, downloaded once and committed:
 
-- Path: `tests/BioFSharp.INSDC.Tests/fixtures/<entity>/<accession>.xml`
+- Current path: `tests/fixtures/<accession>.xml`
 - Source URL pattern: `https://www.ebi.ac.uk/ena/browser/api/xml/<ACCESSION>` (download by hand; do **not** fetch at test time)
-- Pick stable, well-populated accessions (e.g. `PRJEB12345` for BioProject) so fixtures exercise as many optional elements as possible.
-- Record source URLs and download date in `tests/BioFSharp.INSDC.Tests/fixtures/README.md`.
+- Committed accessions: `PRJDB5192`, `DRP003416`, `SAMD00064197`, `DRX066772`, `DRR072834`, `ERZ496533`, `DRA005154`.
+- `receipt-sample.xml` is hand-crafted because `RECEIPT` is a submission-API response, not a stored record. Shape mirrors the ENA programmatic submission guide example.
+- Source URLs and download date are recorded in `tests/fixtures/README.md`.
 
 Tests load fixtures off disk via a small relative-path helper. No network at test time.
 
-## 5. [ ] Build / CI touch-ups
+## 5. [x] Build / CI touch-ups
 
 - Confirm `build/ProjectInfo.fs` `solutionFile` resolves (already `BioFSharp.INSDC.slnx`).
 - Verify `build.cmd` / `build.sh` entry points still work after the `.fsproj` → `.csproj` swap in the slnx.
 - Add the `regenerateInsdcTypes` target. It must not be chained into the default build — generated code is committed precisely so contributors can build without the tool restored.
+
+The `regenerateInsdcTypes` target lives in `build/BasicTasks.fs`. It is standalone (no dependencies on `clean` / `buildSolution`) and is not referenced by any release pipeline.
 
 ## 6. [ ] Verification
 
@@ -150,7 +156,7 @@ Each step gates the next:
 1. `dotnet tool restore` succeeds.
 2. `build.cmd regenerateInsdcTypes` produces `.cs` files under `src/BioFSharp.FileFormats.INSDC/Generated/`.
 3. `build.cmd` (default `buildSolution`) succeeds with zero `CS1591` (missing-XML-doc) warnings.
-4. `build.cmd runtests` passes locally.
+4. [x] `bash build.sh runtests` passes locally in the devcontainer (`24/24` tests, 2026-05-21).
 5. `build.cmd pack` produces both nupkgs with non-template metadata.
 
 ## 7. Out of scope

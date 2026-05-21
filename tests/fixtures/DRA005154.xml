@@ -1,0 +1,23 @@
+<SUBMISSION_SET>
+<SUBMISSION accession="DRA005154" alias="DRA005154" center_name="NIG" lab_name="Kakutani lab, Department of Integrative Genetics, National Institute of Genetics" broker_name="DDBJ">
+  <IDENTIFIERS>
+    <PRIMARY_ID>DRA005154</PRIMARY_ID>
+    <SUBMITTER_ID namespace="NIG">DRA005154</SUBMITTER_ID>
+  </IDENTIFIERS>
+  <TITLE>Submitted by NIG on 28-JAN-2017</TITLE>
+  <SUBMISSION_LINKS>
+    <SUBMISSION_LINK>
+      <XREF_LINK>
+        <DB>ENA-FASTQ-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRA005154&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>
+      </XREF_LINK>
+    </SUBMISSION_LINK>
+    <SUBMISSION_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMITTED-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=DRA005154&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>
+      </XREF_LINK>
+    </SUBMISSION_LINK>
+  </SUBMISSION_LINKS>
+</SUBMISSION>
+</SUBMISSION_SET>
