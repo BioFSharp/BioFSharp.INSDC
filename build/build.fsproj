@@ -15,6 +15,7 @@
     <Compile Include="PackageTasks.fs" />
     <Compile Include="DocumentationTasks.fs" />
     <Compile Include="ReleaseTasks.fs" />
+    <Compile Include="ReleaseFromNotesTask.fs" />
     <Compile Include="Build.fs" />
   </ItemGroup>
 

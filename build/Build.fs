@@ -16,6 +16,7 @@ open TestTasks
 open PackageTasks
 open DocumentationTasks
 open ReleaseTasks
+open ReleaseFromNotesTask
 
 /// Full release of nuget package, git tag, and documentation for the stable version.
 let _release = 
@@ -36,10 +37,15 @@ let _releaseNoDocs =
         [clean; buildSolution; runTests; pack; createTag; publishNuget;]
 
 /// Full release of nuget package for the prerelease version.
-let _preReleaseNoDocs = 
-    BuildTask.createEmpty 
-        "PreReleaseNoDocs" 
+let _preReleaseNoDocs =
+    BuildTask.createEmpty
+        "PreReleaseNoDocs"
         [setPrereleaseTag; clean; buildSolution; runTests; packPrerelease; createPrereleaseTag; publishNugetPrerelease]
+
+// Force ReleaseFromNotesTask to be initialized so its BuildTask.create call
+// registers the target. Without a reference here F# would skip the module's
+// top-level bindings (target wouldn't be discoverable from the CLI).
+let _releaseFromNotes = releaseFromNotes
 
 [<EntryPoint>]
 let main args = 

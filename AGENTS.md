@@ -76,6 +76,18 @@ dotnet tool restore     # installs the pinned dotnet-xscgen
 - Rule keys must match xscgen's default name exactly. When in doubt, regenerate without `--tnsf` once locally to read off the defaults, then write rules against those.
 - The substitution file is not regex-based; every rule is a literal type-name rename.
 
+## CI is a thin shell around FAKE
+
+The `.github/workflows/` files exist to set up a runner, restore the SDK, and **invoke a single FAKE target**. Any non-trivial logic — version parsing, gate checks, conditional skips, packaging, tagging — belongs in the build project under [`build/`](build/), not in the YAML.
+
+Concretely:
+
+- The release CI calls `./build.sh releaseFromNotes`; everything that flow does (parsing the topmost `### <version>` header from `RELEASE_NOTES.md`, the `(Unreleased)` skip, the "tag already exists" skip, clean/build/test/pack/push/tag) is implemented in [`build/ReleaseFromNotesTask.fs`](build/ReleaseFromNotesTask.fs).
+- Interactive `promptYesNo` gates inside FAKE targets auto-accept when the `CI` env var is `true` (see [`build/MessagePrompts.fs`](build/MessagePrompts.fs)). CI sets this; humans get prompted.
+- The NuGet API key is read from the `NUGET_API_KEY` env var by FAKE; CI passes it through from the `NUGET_API_KEY` GitHub Actions secret.
+
+**When changing release behavior:** edit the FAKE task, not the workflow. If a workflow file starts growing shell logic (`grep`/`sed`/`awk` against repo files, conditional `if: ...` chains around build steps), that logic should move into a FAKE target.
+
 ## Things to avoid
 
 - Do not add an fsdocs / FsDocs site here — usage examples live in the base BioFSharp docs.
