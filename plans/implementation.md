@@ -152,15 +152,15 @@ The `regenerateInsdcTypes` target lives in `build/BasicTasks.fs`. It is standalo
 
 CI uses `global-json-file: global.json` so the workflow tracks the SDK version pinned at the repo root (currently 10.0.100). The Codecov slug is retargeted to `BioFSharp/BioFSharp.INSDC`.
 
-## 6. [ ] Verification
+## 6. [x] Verification
 
 Each step gates the next:
 
-1. `dotnet tool restore` succeeds.
-2. `build.cmd regenerateInsdcTypes` produces `.cs` files under `src/BioFSharp.FileFormats.INSDC/Generated/`.
-3. `build.cmd` (default `buildSolution`) succeeds with zero `CS1591` (missing-XML-doc) warnings.
-4. [x] `bash build.sh runtests` passes locally in the devcontainer (`24/24` tests, 2026-05-21).
-5. `build.cmd pack` produces both nupkgs with non-template metadata.
+1. [x] `dotnet tool restore` succeeds (verified 2026-05-23 in devcontainer; restores `dotnet-xscgen` 3.0.1270 and `fsdocs-tool` 20.0.1).
+2. [x] `build.sh regenerateInsdcTypes` produces `.cs` files under `src/BioFSharp.FileFormats.INSDC/Generated/` (verified 2026-05-23; only diff vs. committed output is the absolute-path noise in the generator-header comment).
+3. [x] `build.sh` (default `buildSolution`) succeeds with zero `CS1591` (missing-XML-doc) warnings (verified 2026-05-23; `0 Error(s)`).
+4. [x] `bash build.sh runtests` passes locally in the devcontainer (`24/24` tests, re-confirmed 2026-05-23).
+5. [x] `build.sh pack` produces both nupkgs with non-template metadata (verified 2026-05-23 — `pkg/BioFSharp.FileFormats.INSDC.0.1.0.nupkg` and `pkg/BioFSharp.IO.INSDC.0.1.0.nupkg`). The `Pack` target uses an interactive `Y/n` confirmation prompt; pipe `echo Y |` when invoking non-interactively.
 
 ## 7. Out of scope
 
