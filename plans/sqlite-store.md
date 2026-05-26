@@ -332,14 +332,16 @@ O(entity_count) queries per reconstruction; with FK indexes this stays cheap.
 
 **Result:** Empty F# library compiles; full solution build is clean. Pre-existing NU1903 warnings on FAKE build tooling are unchanged.
 
-### Chunk 3 — Internal helpers
+### Chunk 3 — Internal helpers ✅
 
-- [ ] `Internal/Sql.fs` — `openConnection : string -> SqliteConnection` (issues `PRAGMA foreign_keys = ON` after open); `withTransaction` wrapper; small param-binding helpers
-- [ ] `Internal/Schema.fs` — loads `insdc_schema.sql` from embedded resources and executes against a connection
-- [ ] `Internal/Identifiers.fs` — `IdentifierOwner` record + `writeIdentifiers` / `readIdentifiers` (generic over owner table, accession column, accession value)
-- [ ] `Internal/Attributes.fs` — `writeAttributes` / `readAttributes` (same shape)
-- [ ] `Internal/Links.fs` — `writeLinks` / `readLinks` with `link_kind` resolution against the `Link` DU (UrlLink / XrefLink / EntrezLink)
-- [ ] `Internal/References.fs` — `writeRefObject` / `readRefObject` for any `RefObject` subtype, including its sibling identifier table
+- [x] `Internal/Sql.fs` — `openConnection : string -> SqliteConnection` (issues `PRAGMA foreign_keys = ON` after open); `withTransaction` wrapper; small param-binding helpers (`execNonQuery`, `queryAll`, `tryQueryOne`, `readStringOrNull`)
+- [x] `Internal/Schema.fs` — loads `insdc_schema.sql` from embedded resources and executes against a connection
+- [x] `Internal/Identifiers.fs` — `IdentifierOwner` record + `write` / `read` (generic over owner table, accession column, accession value)
+- [x] `Internal/Attributes.fs` — `write` / `read` (same shape)
+- [x] `Internal/Links.fs` — `write` / `read` with `link_kind` resolution against the `Link` DU (UrlLink / XrefLink / EntrezLink)
+- [x] `Internal/References.fs` — `write` / `read` for any `RefObject` subtype, including its sibling identifier table (new()-constrained generic so the right concrete subclass — `ExperimentStudyRef`, `BioSampleDescriptor`, `RunExperimentRef` — is returned)
+
+**Result:** Clean build, zero warnings. Smoke test through `dotnet fsi`: schema loads (42 tables), all 5 identifier kinds round-trip (PRIMARY/SECONDARY/EXTERNAL/SUBMITTER/UUID) with label/namespace preserved, attributes round-trip with NULL value/units preserved, all 3 Link DU cases (URL/XREF/ENTREZ with nullable int64 Id) round-trip cleanly.
 
 ### Chunk 4 — Per-entity public modules
 

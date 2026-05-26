@@ -8,6 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Internal\Sql.fs" />
+    <Compile Include="Internal\Schema.fs" />
+    <Compile Include="Internal\Identifiers.fs" />
+    <Compile Include="Internal\Attributes.fs" />
+    <Compile Include="Internal\Links.fs" />
+    <Compile Include="Internal\References.fs" />
     <EmbeddedResource Include="schema\insdc_schema.sql" />
     <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
     <None Include="..\..\README.md" Pack="true" PackagePath="" />
