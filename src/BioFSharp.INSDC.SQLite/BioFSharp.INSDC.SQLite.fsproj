@@ -14,6 +14,13 @@
     <Compile Include="Internal\Attributes.fs" />
     <Compile Include="Internal\Links.fs" />
     <Compile Include="Internal\References.fs" />
+    <Compile Include="Internal\Platforms.fs" />
+    <Compile Include="Schema.fs" />
+    <Compile Include="BioProject.fs" />
+    <Compile Include="Study.fs" />
+    <Compile Include="BioSample.fs" />
+    <Compile Include="Experiment.fs" />
+    <Compile Include="Run.fs" />
     <EmbeddedResource Include="schema\insdc_schema.sql" />
     <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
     <None Include="..\..\README.md" Pack="true" PackagePath="" />

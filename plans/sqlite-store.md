@@ -343,14 +343,20 @@ O(entity_count) queries per reconstruction; with FK indexes this stays cheap.
 
 **Result:** Clean build, zero warnings. Smoke test through `dotnet fsi`: schema loads (42 tables), all 5 identifier kinds round-trip (PRIMARY/SECONDARY/EXTERNAL/SUBMITTER/UUID) with label/namespace preserved, attributes round-trip with NULL value/units preserved, all 3 Link DU cases (URL/XREF/ENTREZ with nullable int64 Id) round-trip cleanly.
 
-### Chunk 4 — Per-entity public modules
+### Chunk 4 — Per-entity public modules ✅
 
-- [ ] `Schema.fs` — public `Schema.init : SqliteConnection -> unit`
-- [ ] `BioProject.fs` — `insert`, `tryGet`, `delete`, `listAccessions`
-- [ ] `Study.fs` — same surface; handles `study_descriptor` denormalization
-- [ ] `BioSample.fs` — same surface; handles `biosample_name`
-- [ ] `Experiment.fs` — same surface; uses `References` for `StudyRef` and `Library.SampleDescriptor`; serializes `Platform` DU into `experiment_platform` + `_params`
-- [ ] `Run.fs` — same surface; uses `References` for `ExperimentRef`; serializes optional `Platform` DU
+- [x] `Schema.fs` — public `Schema.init : SqliteConnection -> unit`
+- [x] `BioProject.fs` — `insert`, `tryGet`, `delete`, `listAccessions`; covers `Collaborators` and `RelatedProjects` (PARENT/CHILD/PEER DU)
+- [x] `Study.fs` — same surface; reconstructs the full `StudyDescriptor` (existing-type enum, NullableProjectId, RelatedStudies with XRef). Takes parent `bioProjectAccession` (NULL ok) since the F# type doesn't model the parent FK.
+- [x] `BioSample.fs` — same surface; handles `biosample_name`
+- [x] `Experiment.fs` — same surface; uses `References` for `StudyRef` and `Library.SampleDescriptor`; serializes `Platform` DU via the new shared `Internal/Platforms.fs` helper; round-trips library strategy/source/selection enums, paired-end nominal length/sdev, targeted loci, spot descriptor read specs
+- [x] `Run.fs` — same surface; uses `References` for `ExperimentRef`; reuses `Platforms` helper; persists `RunDate` (ISO-8601), `RunCenter`, `DataBlock.MemberName`, spot descriptor
+
+**Extras landed:**
+- Schema's platform `CHECK (kind IN (...))` constraint expanded from 11 to all 18 DU cases (the F# `Platform` type has 18, the original constraint would have rejected 7).
+- `Internal/Platforms.fs` extracted as a sibling to `Identifiers/Attributes/Links/References` — both Experiment and Run share it.
+
+**Result:** fsi round-trip test exercises every entity (and through them every helper). Outputs match inputs for: identifiers (all 5 kinds), attributes, URL/XREF/ENTREZ links, collaborators, related-projects (PARENT case), `FirstPublic` date, `StudyDescriptor` with enum + nullable long + RelatedStudies, library strategy/source/selection enums, paired layout, Platform `ILLUMINA → IlluminaNovaSeq6000`, `RunDate` timestamp, ExperimentRef. FK enforcement verified (bogus parent rejected). `listAccessions` works for all five entities. Cascade delete behaves correctly with `bioproject → study` being `ON DELETE SET NULL` (so dropping a BioProject leaves orphan studies, by design).
 
 ### Chunk 5 — Tests
 

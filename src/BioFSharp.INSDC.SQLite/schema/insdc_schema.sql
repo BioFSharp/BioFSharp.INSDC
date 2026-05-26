@@ -340,14 +340,17 @@ CREATE TABLE experiment_pipeline (
 );
 
 CREATE TABLE experiment_platform (
-    -- Experiment.Platform — F# Platform is a DU over 11 sequencing technologies.
+    -- Experiment.Platform — F# Platform is a DU over 18 sequencing technologies.
     -- `kind` records which case it is; per-platform parameters live in the
     -- sibling experiment_platform_params table (key/value bag).
     experiment_accession TEXT PRIMARY KEY REFERENCES experiment (accession) ON DELETE CASCADE ON UPDATE CASCADE,
     kind                 TEXT NOT NULL CHECK (kind IN (
                              'LS454','ILLUMINA','HELICOS','ABI_SOLID','COMPLETE_GENOMICS',
-                             'BGISEQ','OXFORD_NANOPORE','PACBIO_SMRT','CAPILLARY','DNBSEQ','AVITI')),
-                            -- sequencing technology family
+                             'BGISEQ','OXFORD_NANOPORE','PACBIO_SMRT','ION_TORRENT','CAPILLARY',
+                             'DNBSEQ','ELEMENT','AVITI','ULTIMA','VELA_DIAGNOSTICS',
+                             'GENAPSYS','GENEMIND','TAPESTRI')),
+                            -- sequencing technology family; values match the XSD's PLATFORM
+                            -- choice element names (e.g. ILLUMINA, PACBIO_SMRT)
     instrument_model     TEXT
                             -- specific instrument model, e.g. "Illumina NovaSeq 6000",
                             -- "PacBio Sequel II". Values come from the per-platform XSD enums.
@@ -514,7 +517,9 @@ CREATE TABLE run_platform (
     run_accession    TEXT PRIMARY KEY REFERENCES run (accession) ON DELETE CASCADE ON UPDATE CASCADE,
     kind             TEXT NOT NULL CHECK (kind IN (
                          'LS454','ILLUMINA','HELICOS','ABI_SOLID','COMPLETE_GENOMICS',
-                         'BGISEQ','OXFORD_NANOPORE','PACBIO_SMRT','CAPILLARY','DNBSEQ','AVITI')),
+                         'BGISEQ','OXFORD_NANOPORE','PACBIO_SMRT','ION_TORRENT','CAPILLARY',
+                         'DNBSEQ','ELEMENT','AVITI','ULTIMA','VELA_DIAGNOSTICS',
+                         'GENAPSYS','GENEMIND','TAPESTRI')),
     instrument_model TEXT
 );
 
