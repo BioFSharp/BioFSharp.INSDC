@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/BioFSharp.FileFormats.INSDC/BioFSharp.FileFormats.INSDC.csproj" />
     <Project Path="src/BioFSharp.IO.INSDC/BioFSharp.IO.INSDC.fsproj" />
+    <Project Path="src/BioFSharp.INSDC.SQLite/BioFSharp.INSDC.SQLite.fsproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/BioFSharp.INSDC.Tests/BioFSharp.INSDC.Tests.fsproj" />

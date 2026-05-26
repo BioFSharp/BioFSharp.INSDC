@@ -320,15 +320,17 @@ O(entity_count) queries per reconstruction; with FK indexes this stays cheap.
 
 **Result:** 42 tables (down from 80 in the dump), 11 indexes. Identifier fragmentation collapsed (5 entity tables × 5 ID kinds → 5 unified identifier tables; 15 reference-nested ID tables → 3 reference identifier tables). `accession_map` and `run_inner` dropped; sparse processing-directive tables inlined into `experiment`/`run`.
 
-### Chunk 2 — SQLite project scaffold
+### Chunk 2 — SQLite project scaffold ✅
 
-- [ ] Create [src/BioFSharp.INSDC.SQLite/BioFSharp.INSDC.SQLite.fsproj](src/BioFSharp.INSDC.SQLite/BioFSharp.INSDC.SQLite.fsproj) — `netstandard2.0`, matches existing `BioFSharp.IO.INSDC.fsproj` style
-- [ ] Add `PackageReference Include="Microsoft.Data.Sqlite"`
-- [ ] Add `ProjectReference` to `BioFSharp.FileFormats.INSDC.csproj` and `BioFSharp.IO.INSDC.fsproj`
-- [ ] Add `<EmbeddedResource Include="schema/insdc_schema.sql" />`
-- [ ] Add `<PackageProjectUrl>`, `<Description>`, `<PackageTags>` etc. matching repo conventions
-- [ ] Register the new project in `BioFSharp.INSDC.slnx`
-- [ ] `dotnet build src/BioFSharp.INSDC.SQLite` succeeds (empty project compiles)
+- [x] Create [src/BioFSharp.INSDC.SQLite/BioFSharp.INSDC.SQLite.fsproj](src/BioFSharp.INSDC.SQLite/BioFSharp.INSDC.SQLite.fsproj) — `netstandard2.0`, matches existing `BioFSharp.IO.INSDC.fsproj` style
+- [x] Add `PackageReference Include="Microsoft.Data.Sqlite"` (8.0.10 — last line that still targets netstandard2.0; 9.x dropped it)
+- [x] Add `ProjectReference` to `BioFSharp.FileFormats.INSDC.csproj` and `BioFSharp.IO.INSDC.fsproj`
+- [x] Add `<EmbeddedResource Include="schema/insdc_schema.sql" />`
+- [x] Add `<PackageProjectUrl>`, `<Description>`, `<PackageTags>` etc. matching repo conventions
+- [x] Register the new project in `BioFSharp.INSDC.slnx`
+- [x] `dotnet build src/BioFSharp.INSDC.SQLite` succeeds (empty project compiles)
+
+**Result:** Empty F# library compiles; full solution build is clean. Pre-existing NU1903 warnings on FAKE build tooling are unchanged.
 
 ### Chunk 3 — Internal helpers
 
