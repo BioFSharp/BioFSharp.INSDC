@@ -24,8 +24,13 @@ module BioProject =
     let writeString (project: BioProject) : string =
         XmlSerializer.writeString project
 
-    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
-    /// `project`. Name the property with a quotation, addressing array positions with `.[i]`:
-    /// `project |> BioProject.xpathOf <@ fun p -> p.Name @>` -> `#xpointer(/PROJECT/NAME)`.
+    /// Resolve the absolute XPath of a property of a parsed `project`. Name the property with a
+    /// quotation, addressing array positions with `.[i]`:
+    /// `project |> BioProject.xpathOf <@ fun p -> p.Name @>` -> `/PROJECT/NAME`.
     let xpathOf selector (project: BioProject) : string =
         XPathTracking.xpathOf selector project
+
+    /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector:
+    /// `project |> BioProject.xpointerOf <@ fun p -> p.Name @>` -> `#xpointer(/PROJECT/NAME)`.
+    let xpointerOf selector (project: BioProject) : string =
+        XPathTracking.xpointerOf selector project

@@ -22,8 +22,12 @@ module Experiment =
     let writeString (experiment: Experiment) : string =
         XmlSerializer.writeString experiment
 
-    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
-    /// `experiment`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// Resolve the absolute XPath of a property of a parsed `experiment`. Name the property with a
+    /// quotation, addressing array positions with `.[i]`:
     /// `experiment |> Experiment.xpathOf <@ fun e -> e.StudyRef.Accession @>`.
     let xpathOf selector (experiment: Experiment) : string =
         XPathTracking.xpathOf selector experiment
+
+    /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector (`#xpointer(...)`).
+    let xpointerOf selector (experiment: Experiment) : string =
+        XPathTracking.xpointerOf selector experiment

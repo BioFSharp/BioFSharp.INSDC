@@ -22,8 +22,12 @@ module Submission =
     let writeString (submission: Submission) : string =
         XmlSerializer.writeString submission
 
-    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
-    /// `submission`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// Resolve the absolute XPath of a property of a parsed `submission`. Name the property with a
+    /// quotation, addressing array positions with `.[i]`:
     /// `submission |> Submission.xpathOf <@ fun s -> s.SubmissionLinks.[0].XrefLink.Db @>`.
     let xpathOf selector (submission: Submission) : string =
         XPathTracking.xpathOf selector submission
+
+    /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector (`#xpointer(...)`).
+    let xpointerOf selector (submission: Submission) : string =
+        XPathTracking.xpointerOf selector submission

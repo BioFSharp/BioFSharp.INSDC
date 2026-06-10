@@ -9,8 +9,9 @@ open System.Xml.Serialization
 
 open Microsoft.FSharp.Quotations
 
-/// Resolves the concrete, position-qualified W3C XPointer of a property on a parsed INSDC value.
-/// Public entity modules expose this as `<Entity>.xpathOf`. The property is named with a quotation
+/// Resolves the concrete, position-qualified XPath of a property on a parsed INSDC value. Public
+/// entity modules expose this as `<Entity>.xpathOf` (the bare XPath) and `<Entity>.xpointerOf` (the
+/// same path wrapped as a W3C `#xpointer(...)` fragment). The property is named with a quotation
 /// (`<@ fun b -> b.Name @>`) rather than piped by value, because a scalar value carries no
 /// back-reference to its property, owner, or array position. The XPath is derived from the same
 /// `System.Xml.Serialization` attributes the serializer uses, with array positions taken from the
@@ -119,11 +120,15 @@ module XPathTracking =
                     current <- value
         sb.ToString()
 
-    /// Resolve the `#xpointer(...)` fragment selector for the property named by `selector` on the
-    /// parsed `root` value, with real array positions taken from the indices in the quotation.
+    /// The bare absolute XPath for the property named by `selector` on the parsed `root` value
+    /// (`/PROJECT/NAME`), with real array positions taken from the indices in the quotation.
     let xpathOf (selector: Expr<'Root -> 'P>) (root: 'Root) : string =
         let steps =
             match (selector :> Expr) with
             | Patterns.Lambda(_, body) -> parseChain body
             | _ -> failwith "Expected a selector lambda, e.g. <@ fun x -> x.Prop @>."
-        "#xpointer(" + build typeof<'Root> steps (box root) + ")"
+        build typeof<'Root> steps (box root)
+
+    /// The same selector as `xpathOf`, wrapped as a W3C XPointer fragment (`#xpointer(/PROJECT/NAME)`).
+    let xpointerOf (selector: Expr<'Root -> 'P>) (root: 'Root) : string =
+        "#xpointer(" + xpathOf selector root + ")"

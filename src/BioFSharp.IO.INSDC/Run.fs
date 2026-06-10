@@ -22,8 +22,12 @@ module Run =
     let writeString (run: Run) : string =
         XmlSerializer.writeString run
 
-    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
-    /// `run`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// Resolve the absolute XPath of a property of a parsed `run`. Name the property with a
+    /// quotation, addressing array positions with `.[i]`:
     /// `run |> Run.xpathOf <@ fun r -> r.ExperimentRef.Accession @>`.
     let xpathOf selector (run: Run) : string =
         XPathTracking.xpathOf selector run
+
+    /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector (`#xpointer(...)`).
+    let xpointerOf selector (run: Run) : string =
+        XPathTracking.xpointerOf selector run

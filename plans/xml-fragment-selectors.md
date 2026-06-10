@@ -138,10 +138,13 @@ model. Phase 2 adds the runtime counterpart — given a value returned by `*.rea
 ```fsharp
 let project = BioProject.read "PRJDB5192.xml" |> Seq.head
 project |> BioProject.xpathOf <@ fun b -> b.Name @>
-//  -> "#xpointer(/PROJECT/NAME)"
-project |> BioProject.xpathOf <@ fun b -> b.Collaborators.[1].Name @>
+//  -> "/PROJECT/NAME"
+project |> BioProject.xpointerOf <@ fun b -> b.Collaborators.[1].Name @>
 //  -> "#xpointer(/PROJECT/COLLABORATORS/COLLABORATOR[2]/NAME)"
 ```
+
+Each entity exposes two functions: **`xpathOf`** returns the bare absolute XPath; **`xpointerOf`**
+wraps the same path as a W3C `#xpointer(...)` fragment.
 
 Where the Phase-1 maps describe where a property lives *structurally* (a `COLLABORATOR` node-set),
 Phase 2 returns the XPath of *this value in this document*: real array indices, only the nodes
@@ -184,10 +187,10 @@ obsolete.
    Reflects over the FileFormats model types (the IO project already references FileFormats). It
    re-implements the attribute→step logic from `FragmentSelectorTasks.fs` (which is build-only); the
    duplication is factorable later but not worth blocking on.
-5. **Per-entity `xpathOf` — the `BioProject`/`Study`/`BioSample`/`Experiment`/`Run`/`Analysis`/
-   `Submission`/`Receipt` modules.** One-line wrappers over the generic core so `BioProject.xpathOf`
-   reads as in the example. `read`/`readString`/`write` are untouched — the IO read/write surface is
-   unchanged.
+5. **Per-entity `xpathOf` / `xpointerOf` — the `BioProject`/`Study`/`BioSample`/`Experiment`/`Run`/
+   `Analysis`/`Submission`/`Receipt` modules.** One-line wrappers over the generic core so
+   `BioProject.xpathOf` / `BioProject.xpointerOf` read as in the example. `read`/`readString`/`write`
+   are untouched — the IO read/write surface is unchanged.
 
 > **Scope note.** Phase 2 adds files to the **IO layer**, which Phase 1 excluded ("No IO-layer
 > changes"). It is the promotion of the Phase-1 "evaluate selector" follow-up into scope — but it stays

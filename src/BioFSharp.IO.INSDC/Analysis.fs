@@ -22,8 +22,12 @@ module Analysis =
     let writeString (analysis: Analysis) : string =
         XmlSerializer.writeString analysis
 
-    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
-    /// `analysis`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// Resolve the absolute XPath of a property of a parsed `analysis`. Name the property with a
+    /// quotation, addressing array positions with `.[i]`:
     /// `analysis |> Analysis.xpathOf <@ fun a -> a.Files.[0].Filename @>`.
     let xpathOf selector (analysis: Analysis) : string =
         XPathTracking.xpathOf selector analysis
+
+    /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector (`#xpointer(...)`).
+    let xpointerOf selector (analysis: Analysis) : string =
+        XPathTracking.xpointerOf selector analysis

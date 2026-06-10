@@ -23,8 +23,12 @@ module Receipt =
     let writeString (receipt: Receipt) : string =
         XmlSerializer.writeString receipt
 
-    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
-    /// `receipt`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// Resolve the absolute XPath of a property of a parsed `receipt`. Name the property with a
+    /// quotation, addressing array positions with `.[i]`:
     /// `receipt |> Receipt.xpathOf <@ fun r -> r.Submission.Accession @>`.
     let xpathOf selector (receipt: Receipt) : string =
         XPathTracking.xpathOf selector receipt
+
+    /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector (`#xpointer(...)`).
+    let xpointerOf selector (receipt: Receipt) : string =
+        XPathTracking.xpointerOf selector receipt

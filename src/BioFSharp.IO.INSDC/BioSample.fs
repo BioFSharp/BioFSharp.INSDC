@@ -24,8 +24,12 @@ module BioSample =
     let writeString (sample: BioSample) : string =
         XmlSerializer.writeString sample
 
-    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
-    /// `sample`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// Resolve the absolute XPath of a property of a parsed `sample`. Name the property with a
+    /// quotation, addressing array positions with `.[i]`:
     /// `sample |> BioSample.xpathOf <@ fun s -> s.SampleName.ScientificName @>`.
     let xpathOf selector (sample: BioSample) : string =
         XPathTracking.xpathOf selector sample
+
+    /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector (`#xpointer(...)`).
+    let xpointerOf selector (sample: BioSample) : string =
+        XPathTracking.xpointerOf selector sample
