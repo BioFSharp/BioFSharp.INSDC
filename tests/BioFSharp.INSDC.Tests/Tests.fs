@@ -91,6 +91,40 @@ module private Assertions =
         |> Seq.find (fun attribute -> attribute.Tag = tag)
         |> fun attribute -> attribute.Value
 
+module private XPointer =
+
+    open System.Xml
+
+    /// Strip the XPointer wrapper: "#xpointer(/PROJECT/NAME)" -> "/PROJECT/NAME".
+    let xpath (selector: string) =
+        let openParen = selector.IndexOf('(')
+        selector.Substring(openParen + 1, selector.Length - openParen - 2)
+
+    /// Load a fixture and return a document rooted at the single entity element. The fixtures wrap
+    /// the entity in a `*_SET`, while the selectors are absolute from the entity root (`/PROJECT`).
+    let entityDoc (xml: string) =
+        let outer = XmlDocument()
+        outer.LoadXml(xml)
+        let root = outer.DocumentElement
+
+        let entity =
+            if root.Name.EndsWith("_SET") then
+                root.ChildNodes
+                |> Seq.cast<XmlNode>
+                |> Seq.find (fun n -> n.NodeType = XmlNodeType.Element)
+            else
+                root :> XmlNode
+
+        let doc = XmlDocument()
+        doc.LoadXml(entity.OuterXml)
+        doc
+
+    /// Resolve a selector to the text/value of the node it points at (None if it matches nothing).
+    let resolve (doc: XmlDocument) (selector: string) : string option =
+        match doc.SelectSingleNode(xpath selector) with
+        | null -> None
+        | node -> Some node.InnerText
+
 type BioProjectTests() =
 
     [<Fact>]
@@ -308,3 +342,46 @@ type ReceiptTests() =
         let fromString = Receipt.readString (TestFiles.fixtureText "receipt-sample.xml")
 
         ObjectGraph.equal fromFile fromString
+
+type FragmentSelectorTests() =
+
+    // The generated `FragmentSelectors` maps live as static members on the FileFormats types;
+    // fully qualify to disambiguate from the same-named `BioFSharp.IO.INSDC` modules.
+    let bioProjectSelectors = BioFSharp.FileFormats.INSDC.BioProject.FragmentSelectors
+
+    [<Fact>]
+    member _.``BioProject selectors have the expected XPointer strings`` () =
+        Assert.Equal("#xpointer(/PROJECT/NAME)", bioProjectSelectors.["Name"])
+        Assert.Equal("#xpointer(/PROJECT/TITLE)", bioProjectSelectors.["Title"])
+        Assert.Equal("#xpointer(/PROJECT/@accession)", bioProjectSelectors.["Accession"])
+        Assert.Equal("#xpointer(/PROJECT/COLLABORATORS/COLLABORATOR)", bioProjectSelectors.["Collaborators"])
+        Assert.Equal("#xpointer(/PROJECT/IDENTIFIERS/SECONDARY_ID/text())", bioProjectSelectors.["Identifiers.SecondaryId.Value"])
+        Assert.Equal(
+            "#xpointer(/PROJECT/SUBMISSION_PROJECT/ORGANISM/SCIENTIFIC_NAME)",
+            bioProjectSelectors.["SubmissionProject.Organism.ScientificName"])
+
+    [<Fact>]
+    member _.``Every entity root exposes a non-empty selector map`` () =
+        Assert.NotEmpty(BioFSharp.FileFormats.INSDC.BioProject.FragmentSelectors)
+        Assert.NotEmpty(BioFSharp.FileFormats.INSDC.Study.FragmentSelectors)
+        Assert.NotEmpty(BioFSharp.FileFormats.INSDC.BioSample.FragmentSelectors)
+        Assert.NotEmpty(BioFSharp.FileFormats.INSDC.Experiment.FragmentSelectors)
+        Assert.NotEmpty(BioFSharp.FileFormats.INSDC.Run.FragmentSelectors)
+        Assert.NotEmpty(BioFSharp.FileFormats.INSDC.Analysis.FragmentSelectors)
+        Assert.NotEmpty(BioFSharp.FileFormats.INSDC.Submission.FragmentSelectors)
+        Assert.NotEmpty(BioFSharp.FileFormats.INSDC.Receipt.FragmentSelectors)
+
+    [<Fact>]
+    member _.``BioProject selectors resolve to the right nodes in a real fixture`` () =
+        let project = BioProject.read (TestFiles.fixture "PRJDB5192.xml") |> Seq.exactlyOne
+        let doc = XPointer.entityDoc (TestFiles.fixtureText "PRJDB5192.xml")
+        let resolved key = (XPointer.resolve doc bioProjectSelectors.[key]).Value
+
+        Assert.Equal(project.Accession, resolved "Accession")
+        Assert.Equal(project.Name, resolved "Name")
+        Assert.Equal(
+            (project.Identifiers.SecondaryId |> Seq.head).Value,
+            resolved "Identifiers.SecondaryId.Value")
+        Assert.Equal(
+            project.SubmissionProject.Organism.ScientificName,
+            resolved "SubmissionProject.Organism.ScientificName")

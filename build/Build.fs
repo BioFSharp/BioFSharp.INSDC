@@ -12,6 +12,7 @@ open Helpers
 initializeContext()
 
 open BasicTasks
+open FragmentSelectorTasks
 open TestTasks
 open PackageTasks
 open DocumentationTasks
@@ -46,6 +47,10 @@ let _preReleaseNoDocs =
 // registers the target. Without a reference here F# would skip the module's
 // top-level bindings (target wouldn't be discoverable from the CLI).
 let _releaseFromNotes = releaseFromNotes
+
+// Same forced-init reason as above: reference the target so its module's top-level
+// BuildTask.create call runs and registers `generateFragmentSelectors` for the CLI.
+let _generateFragmentSelectors = generateFragmentSelectors
 
 [<EntryPoint>]
 let main args = 
