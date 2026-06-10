@@ -385,3 +385,45 @@ type FragmentSelectorTests() =
         Assert.Equal(
             project.SubmissionProject.Organism.ScientificName,
             resolved "SubmissionProject.Organism.ScientificName")
+
+type XPathLookupTests() =
+
+    // Phase 2: per-instance, position-qualified XPointer lookup driven by a property quotation.
+    let project = BioProject.read (TestFiles.fixture "PRJDB5192.xml") |> Seq.exactlyOne
+
+    [<Fact>]
+    member _.``xpathOf resolves a scalar element`` () =
+        Assert.Equal("#xpointer(/PROJECT/NAME)", project |> BioProject.xpathOf <@ fun b -> b.Name @>)
+
+    [<Fact>]
+    member _.``xpathOf resolves an attribute`` () =
+        Assert.Equal("#xpointer(/PROJECT/@accession)", project |> BioProject.xpathOf <@ fun b -> b.Accession @>)
+
+    [<Fact>]
+    member _.``xpathOf resolves a nested element path`` () =
+        Assert.Equal(
+            "#xpointer(/PROJECT/SUBMISSION_PROJECT/ORGANISM/SCIENTIFIC_NAME)",
+            project |> BioProject.xpathOf <@ fun b -> b.SubmissionProject.Organism.ScientificName @>)
+
+    [<Fact>]
+    member _.``xpathOf injects a 1-based positional predicate for a collection item`` () =
+        Assert.Equal(
+            "#xpointer(/PROJECT/IDENTIFIERS/SECONDARY_ID[1]/text())",
+            project |> BioProject.xpathOf <@ fun b -> b.Identifiers.SecondaryId.[0].Value @>)
+
+    [<Fact>]
+    member _.``xpathOf selectors resolve to the value read from the document`` () =
+        let doc = XPointer.entityDoc (TestFiles.fixtureText "PRJDB5192.xml")
+        let resolve selector = (XPointer.resolve doc selector).Value
+
+        Assert.Equal(project.Name, resolve (project |> BioProject.xpathOf <@ fun b -> b.Name @>))
+        Assert.Equal(project.Accession, resolve (project |> BioProject.xpathOf <@ fun b -> b.Accession @>))
+        Assert.Equal(
+            (project.Identifiers.SecondaryId |> Seq.head).Value,
+            resolve (project |> BioProject.xpathOf <@ fun b -> b.Identifiers.SecondaryId.[0].Value @>))
+
+    [<Fact>]
+    member _.``xpathOf raises on an out-of-range collection index`` () =
+        Assert.ThrowsAny<exn>(fun () ->
+            project |> BioProject.xpathOf <@ fun b -> b.Identifiers.SecondaryId.[99].Value @> |> ignore)
+        |> ignore

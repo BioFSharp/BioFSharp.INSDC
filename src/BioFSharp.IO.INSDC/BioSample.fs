@@ -23,3 +23,9 @@ module BioSample =
     /// Serialize an INSDC BioSample `sample` to an XML string.
     let writeString (sample: BioSample) : string =
         XmlSerializer.writeString sample
+
+    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
+    /// `sample`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// `sample |> BioSample.xpathOf <@ fun s -> s.SampleName.ScientificName @>`.
+    let xpathOf selector (sample: BioSample) : string =
+        XPathTracking.xpathOf selector sample

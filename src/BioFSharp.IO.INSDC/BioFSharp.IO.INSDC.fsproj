@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <Compile Include="Internal\XmlSerializer.fs" />
+    <Compile Include="Internal\XPathTracking.fs" />
     <Compile Include="BioProject.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="BioSample.fs" />

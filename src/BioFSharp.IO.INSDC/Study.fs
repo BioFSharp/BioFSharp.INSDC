@@ -21,3 +21,9 @@ module Study =
     /// Serialize an INSDC Study `study` to an XML string.
     let writeString (study: Study) : string =
         XmlSerializer.writeString study
+
+    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
+    /// `study`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// `study |> Study.xpathOf <@ fun s -> s.Descriptor.StudyTitle @>`.
+    let xpathOf selector (study: Study) : string =
+        XPathTracking.xpathOf selector study

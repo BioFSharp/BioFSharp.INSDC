@@ -23,3 +23,9 @@ module BioProject =
     /// Serialize an INSDC BioProject `project` to an XML string.
     let writeString (project: BioProject) : string =
         XmlSerializer.writeString project
+
+    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
+    /// `project`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// `project |> BioProject.xpathOf <@ fun p -> p.Name @>` -> `#xpointer(/PROJECT/NAME)`.
+    let xpathOf selector (project: BioProject) : string =
+        XPathTracking.xpathOf selector project

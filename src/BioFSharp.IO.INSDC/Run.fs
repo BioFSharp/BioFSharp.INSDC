@@ -21,3 +21,9 @@ module Run =
     /// Serialize an INSDC Run `run` to an XML string.
     let writeString (run: Run) : string =
         XmlSerializer.writeString run
+
+    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
+    /// `run`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// `run |> Run.xpathOf <@ fun r -> r.ExperimentRef.Accession @>`.
+    let xpathOf selector (run: Run) : string =
+        XPathTracking.xpathOf selector run

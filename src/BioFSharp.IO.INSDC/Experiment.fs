@@ -21,3 +21,9 @@ module Experiment =
     /// Serialize an INSDC Experiment `experiment` to an XML string.
     let writeString (experiment: Experiment) : string =
         XmlSerializer.writeString experiment
+
+    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
+    /// `experiment`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// `experiment |> Experiment.xpathOf <@ fun e -> e.StudyRef.Accession @>`.
+    let xpathOf selector (experiment: Experiment) : string =
+        XPathTracking.xpathOf selector experiment

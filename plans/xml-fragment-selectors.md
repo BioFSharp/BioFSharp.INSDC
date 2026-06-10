@@ -154,21 +154,24 @@ at all). The caller passes the **object** (which has identity) plus a **property
 names the property without invoking it). The quotation also gives compile-time checking and IDE
 rename support.
 
-**Mechanism — populate at parse time, no second parse.**
-- After `*.read` deserializes, walk the object graph and compute, for every populated leaf, its
-  positional XPath. `System.Xml.Serialization` preserves document order within a collection and each
-  collection property maps to exactly one repeating element name, so object index `i` ⇒ same-named
-  XPath sibling `Y[i+1]` — the indices come from the object graph itself; the XML is not re-read.
-- Store the result in a module-level `ConditionalWeakTable<obj, IReadOnlyDictionary<string,string>>`
-  keyed by the parsed root. **No model-type changes**: the generated classes stay pure
-  `[Xml*]`-decorated DTOs (a dictionary property on a model type would make `XmlSerializer(typeof<_>)`
-  throw at construction).
-- Keys are F#-side positional dotted paths (`"Collaborators[1].Name"`, **0-based** to match quotation
-  indexing); values are full `#xpointer(...)` with **1-based** XPath predicates.
+**Mechanism — derive on demand from the quotation; no map, no second parse.**
+- `xpathOf` decomposes the quotation AST into an ordered chain of `(property, optional index)` steps:
+  `PropertyGet` for members; `get_Item` / `GetArray` / indexer `PropertyGet` for `xs.[i]`, whose index
+  attaches to the collection property that produced it.
+- Each step's relative XPath piece comes from the property's own `System.Xml.Serialization` attribute
+  (`@accession`, `NAME`, `COLLABORATORS/COLLABORATOR`, `text()`) — the same mapping the Phase-1 engine
+  uses. An indexed step appends a **1-based** predicate to the last segment (`COLLABORATOR` + index 1
+  → `COLLABORATOR[2]`).
+- The parsed `root` is walked **only along the selected chain**, to validate indices against the real
+  data (out-of-range or an absent collection raises a clear exception) so the result points at a node
+  that exists. There is **no full-graph walk, no per-instance map, and no `ConditionalWeakTable`** —
+  the XPath is a pure function of the quotation plus the model's attributes, with the instance
+  consulted only for index bounds. (`System.Xml.Serialization` preserves document order within a
+  collection, so object index `i` ⇒ same-named XPath sibling `[i+1]`; the source XML is never re-read.)
+- **No model-type changes** and **no change to the `read`/`write` surface**: the lookup needs only the
+  value the caller already holds, and the generated classes stay pure `[Xml*]`-decorated DTOs.
 
-**`xpathOf`.** Parses the quotation AST (`PropertyGet` chain + `Item`/`get_Item` indexers) into a
-dotted key and looks it up in the table for the passed object. v1 supports literal/captured-constant
-indices; a non-constant index is a follow-up.
+v1 supports literal/captured-constant indices in the quotation; a non-constant index is a follow-up.
 
 **The Phase-1 maps stay.** They are the structural template Phase 2 resolves against and the only
 selectors available *without* a parsed instance (documentation, write-side, schema tooling) — not
@@ -176,29 +179,29 @@ obsolete.
 
 ### Files to create / modify (Phase 2)
 
-4. **Runtime tracking module — `src/BioFSharp.IO.INSDC/Internal/XPathTracking.fs` (new).** The
-   object-graph walk, the `ConditionalWeakTable`, the quotation parser, and the generic
-   `xpathOf : Expr<'T -> 'P> -> 'T -> string`. Reflects over the FileFormats model types (the IO
-   project already references FileFormats). It re-implements the attribute→step logic from
-   `FragmentSelectorTasks.fs` (which is build-only); the duplication is factorable later but not worth
-   blocking on.
-5. **Wire population into `read` — `src/BioFSharp.IO.INSDC/Internal/XmlSerializer.fs`.** Register each
-   deserialized result in the table as the seq is realized. `read`/`readString` signatures are
-   **unchanged** (non-breaking).
-6. **Per-entity `xpathOf` — the `BioProject`/`Analysis`/`Experiment`/`BioSample`/`Run`/… modules.**
-   Thin wrappers over the generic core so `BioProject.xpathOf` reads as in the example.
+4. **Runtime lookup module — `src/BioFSharp.IO.INSDC/Internal/XPathTracking.fs` (new).** The quotation
+   parser, the attribute→step mapping, and the generic `xpathOf : Expr<'T -> 'P> -> 'T -> string`.
+   Reflects over the FileFormats model types (the IO project already references FileFormats). It
+   re-implements the attribute→step logic from `FragmentSelectorTasks.fs` (which is build-only); the
+   duplication is factorable later but not worth blocking on.
+5. **Per-entity `xpathOf` — the `BioProject`/`Study`/`BioSample`/`Experiment`/`Run`/`Analysis`/
+   `Submission`/`Receipt` modules.** One-line wrappers over the generic core so `BioProject.xpathOf`
+   reads as in the example. `read`/`readString`/`write` are untouched — the IO read/write surface is
+   unchanged.
 
-> **Scope note.** Phase 2 deliberately reaches into the **IO layer**, which Phase 1 excluded
-> ("No IO-layer changes"). It is the promotion of the Phase-1 "evaluate selector" follow-up into scope.
+> **Scope note.** Phase 2 adds files to the **IO layer**, which Phase 1 excluded ("No IO-layer
+> changes"). It is the promotion of the Phase-1 "evaluate selector" follow-up into scope — but it stays
+> additive: no existing IO function changes signature or behaviour.
 
 ### Verification (Phase 2)
 
-- A `XPathLookupTests` type: scalar (`Name`), attribute (`Accession`), nested
-  (`SubmissionProject.Organism.ScientificName`), and **collection-index** (`Collaborators.[i].…`)
-  cases against a real fixture.
+- A `XPathLookupTests` type over the `PRJDB5192` BioProject fixture: scalar (`Name`), attribute
+  (`Accession`), nested (`SubmissionProject.Organism.ScientificName`), and **collection-index**
+  (`Identifiers.SecondaryId.[0].Value` → `…/SECONDARY_ID[1]/text()`) selectors.
 - **Round-trip the resolution:** for each, assert `xpathOf`'s XPath resolves (via `XmlDocument`) to
   the exact value `read` produced — proving the per-instance selector points at the right node.
-- Absent optionals / `*Specified = false` produce no entry (lookup returns `None` / raises a clear error).
+- An out-of-range collection index raises a clear exception (the index is validated against the
+  instance).
 
 ## Out of scope
 

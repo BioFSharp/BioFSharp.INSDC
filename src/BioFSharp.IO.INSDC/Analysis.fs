@@ -21,3 +21,9 @@ module Analysis =
     /// Serialize an INSDC Analysis `analysis` to an XML string.
     let writeString (analysis: Analysis) : string =
         XmlSerializer.writeString analysis
+
+    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
+    /// `analysis`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// `analysis |> Analysis.xpathOf <@ fun a -> a.Files.[0].Filename @>`.
+    let xpathOf selector (analysis: Analysis) : string =
+        XPathTracking.xpathOf selector analysis

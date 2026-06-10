@@ -22,3 +22,9 @@ module Receipt =
     /// Serialize an INSDC Receipt `receipt` to an XML string.
     let writeString (receipt: Receipt) : string =
         XmlSerializer.writeString receipt
+
+    /// Resolve the position-qualified W3C XPointer fragment selector for a property of a parsed
+    /// `receipt`. Name the property with a quotation, addressing array positions with `.[i]`:
+    /// `receipt |> Receipt.xpathOf <@ fun r -> r.Submission.Accession @>`.
+    let xpathOf selector (receipt: Receipt) : string =
+        XPathTracking.xpathOf selector receipt
