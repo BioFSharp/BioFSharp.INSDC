@@ -33,3 +33,8 @@ module BioSample =
     /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector (`#xpointer(...)`).
     let xpointerOf selector (sample: BioSample) : string =
         XPathTracking.xpointerOf selector sample
+
+    /// Every present leaf of a parsed `sample` as an `XPathEntry` (property path, positional XPath,
+    /// value) — a serializable, position-qualified DTO of the whole record for a web API.
+    let xpathEntries (sample: BioSample) : XPathEntry[] =
+        XPathTracking.xpathEntries sample

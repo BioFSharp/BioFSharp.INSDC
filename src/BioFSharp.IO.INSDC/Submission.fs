@@ -31,3 +31,8 @@ module Submission =
     /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector (`#xpointer(...)`).
     let xpointerOf selector (submission: Submission) : string =
         XPathTracking.xpointerOf selector submission
+
+    /// Every present leaf of a parsed `submission` as an `XPathEntry` (property path, positional
+    /// XPath, value) — a serializable, position-qualified DTO of the whole record for a web API.
+    let xpathEntries (submission: Submission) : XPathEntry[] =
+        XPathTracking.xpathEntries submission

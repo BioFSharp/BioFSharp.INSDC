@@ -34,3 +34,8 @@ module BioProject =
     /// `project |> BioProject.xpointerOf <@ fun p -> p.Name @>` -> `#xpointer(/PROJECT/NAME)`.
     let xpointerOf selector (project: BioProject) : string =
         XPathTracking.xpointerOf selector project
+
+    /// Every present leaf of a parsed `project` as an `XPathEntry` (property path, positional XPath,
+    /// value) — a serializable, position-qualified DTO of the whole record for a web API.
+    let xpathEntries (project: BioProject) : XPathEntry[] =
+        XPathTracking.xpathEntries project

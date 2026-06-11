@@ -31,3 +31,8 @@ module Run =
     /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector (`#xpointer(...)`).
     let xpointerOf selector (run: Run) : string =
         XPathTracking.xpointerOf selector run
+
+    /// Every present leaf of a parsed `run` as an `XPathEntry` (property path, positional XPath,
+    /// value) — a serializable, position-qualified DTO of the whole record for a web API.
+    let xpathEntries (run: Run) : XPathEntry[] =
+        XPathTracking.xpathEntries run

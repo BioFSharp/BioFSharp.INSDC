@@ -32,3 +32,8 @@ module Receipt =
     /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector (`#xpointer(...)`).
     let xpointerOf selector (receipt: Receipt) : string =
         XPathTracking.xpointerOf selector receipt
+
+    /// Every present leaf of a parsed `receipt` as an `XPathEntry` (property path, positional XPath,
+    /// value) — a serializable, position-qualified DTO of the whole record for a web API.
+    let xpathEntries (receipt: Receipt) : XPathEntry[] =
+        XPathTracking.xpathEntries receipt

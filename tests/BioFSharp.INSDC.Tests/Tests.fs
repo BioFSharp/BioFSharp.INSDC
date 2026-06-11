@@ -435,3 +435,40 @@ type XPathLookupTests() =
         Assert.ThrowsAny<exn>(fun () ->
             project |> BioProject.xpathOf <@ fun b -> b.Identifiers.SecondaryId.[99].Value @> |> ignore)
         |> ignore
+
+type XPathEntriesTests() =
+
+    // Phase 3: serializable per-instance DTO — every present leaf with its positional XPath + value.
+    let project = BioProject.read (TestFiles.fixture "PRJDB5192.xml") |> Seq.exactlyOne
+    let entries = BioProject.xpathEntries project
+    let byPath path = entries |> Array.find (fun e -> e.Path = path)
+
+    [<Fact>]
+    member _.``xpathEntries emits scalar, attribute, and positional collection leaves`` () =
+        let name = byPath "Name"
+        Assert.Equal("/PROJECT/NAME", name.XPath)
+        Assert.Equal(project.Name, name.Value)
+
+        let accession = byPath "Accession"
+        Assert.Equal("/PROJECT/@accession", accession.XPath)
+        Assert.Equal(project.Accession, accession.Value)
+
+        let secondaryId = byPath "Identifiers.SecondaryId[0].Value"
+        Assert.Equal("/PROJECT/IDENTIFIERS/SECONDARY_ID[1]/text()", secondaryId.XPath)
+        Assert.Equal((project.Identifiers.SecondaryId |> Seq.head).Value, secondaryId.Value)
+
+    [<Fact>]
+    member _.``xpathEntries values resolve to the emitted xpath in the document`` () =
+        let doc = XPointer.entityDoc (TestFiles.fixtureText "PRJDB5192.xml")
+
+        for path in [ "Name"; "Accession"; "Identifiers.SecondaryId[0].Value" ] do
+            let entry = byPath path
+            let node = doc.SelectSingleNode(entry.XPath)
+            Assert.NotNull(node)
+            Assert.Equal(entry.Value, node.InnerText)
+
+    [<Fact>]
+    member _.``xpathEntries leaf xpaths are unique and non-empty`` () =
+        Assert.NotEmpty(entries)
+        Assert.All(entries, fun e -> Assert.False(System.String.IsNullOrEmpty e.XPath))
+        Assert.Equal(entries.Length, entries |> Array.distinctBy (fun e -> e.XPath) |> Array.length)

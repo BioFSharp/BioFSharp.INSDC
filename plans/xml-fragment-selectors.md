@@ -206,6 +206,35 @@ obsolete.
 - An out-of-range collection index raises a clear exception (the index is validated against the
   instance).
 
+## Phase 3 — serializable per-instance DTO (`xpathEntries`)
+
+For backend/API use a quotation can't cross the wire, so Phase 3 walks a parsed instance once and
+returns a flat, JSON-serializable array of every present leaf:
+
+```fsharp
+type XPathEntry = { Path: string; XPath: string; Value: string }
+
+project |> BioProject.xpathEntries
+//  [ { Path = "Accession"; XPath = "/PROJECT/@accession"; Value = "PRJDB5192" }
+//    { Path = "Name";      XPath = "/PROJECT/NAME";        Value = "Arabidopsis ..." }
+//    { Path = "Identifiers.SecondaryId[0].Value"
+//      XPath = "/PROJECT/IDENTIFIERS/SECONDARY_ID[1]/text()"; Value = "DRP003416" } ... ]
+```
+
+- **Walk, not quotation:** reuses the Phase-2 attribute→step mapping but traverses the whole object
+  graph, emitting one entry per leaf with real array positions and only the nodes actually present
+  (choice groups resolve to the populated branch for free).
+- **Shape:** a flat `XPathEntry[]` (a plain record, no JSON-library coupling) — the simplest complete
+  form. A hierarchical tree or a `path → xpath` overlay is a pure projection of it, deferred unless
+  needed. Returns an **array**, not an F# list, so it serializes cleanly under System.Text.Json /
+  Newtonsoft.
+- **Fields:** `Path` is the F# property path with positions (`Identifiers.SecondaryId[0].Value`,
+  0-based); `XPath` is the bare absolute XPath; `Value` is the leaf's string form (equals the source
+  XML text for strings — enum/date leaves use the invariant CLR form, which can differ from the raw
+  serialized text).
+- **Files:** `xpathEntries` + the public `XPathEntry` record in `XPathTracking.fs` (the type in the
+  `BioFSharp.IO.INSDC` namespace), plus a one-line wrapper on each entity module.
+
 ## Out of scope
 
 - No CSV/RFC-7111 selectors — XML only.

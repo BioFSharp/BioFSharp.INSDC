@@ -1,3 +1,14 @@
+namespace BioFSharp.IO.INSDC
+
+/// A single leaf of a parsed INSDC record: its F# property path (with array positions), the absolute
+/// positional XPath to the value in the source XML, and the value as a string. A plain serializable
+/// record for web/API DTOs — one per present leaf of a parsed entity, position-qualified.
+type XPathEntry =
+    { Path: string
+      XPath: string
+      Value: string }
+
+
 namespace BioFSharp.IO.INSDC.Internal
 
 open System
@@ -8,6 +19,8 @@ open System.Text
 open System.Xml.Serialization
 
 open Microsoft.FSharp.Quotations
+
+open BioFSharp.IO.INSDC
 
 /// Resolves the concrete, position-qualified XPath of a property on a parsed INSDC value. Public
 /// entity modules expose this as `<Entity>.xpathOf` (the bare XPath) and `<Entity>.xpointerOf` (the
@@ -132,3 +145,48 @@ module XPathTracking =
     /// The same selector as `xpathOf`, wrapped as a W3C XPointer fragment (`#xpointer(/PROJECT/NAME)`).
     let xpointerOf (selector: Expr<'Root -> 'P>) (root: 'Root) : string =
         "#xpointer(" + xpathOf selector root + ")"
+
+    /// True for a model class to descend into (vs. a leaf: string, primitive, enum, DateTime, ...).
+    let private isModelClass (modelAsm: Assembly) (t: Type) : bool =
+        t.IsClass && t <> typeof<string> && t.Assembly = modelAsm
+
+    /// The string form of a leaf value. Equals the source XML text for strings; enum/date leaves use
+    /// the invariant CLR form, which can differ from the raw serialized text.
+    let private stringify (v: obj) : string =
+        match v with
+        | null -> null
+        | :? string as s -> s
+        | :? bool as b -> if b then "true" else "false"
+        | :? IFormattable as f -> f.ToString(null, System.Globalization.CultureInfo.InvariantCulture)
+        | other -> other.ToString()
+
+    /// Walk a parsed `root` value and return one `XPathEntry` per present leaf, with array positions
+    /// (`COLLABORATOR[2]`) taken from the data — a serializable, position-qualified view of the whole
+    /// record for use in DTOs. Containers are not emitted; only addressable leaf values.
+    let xpathEntries (root: 'Root) : XPathEntry[] =
+        let modelAsm = typeof<'Root>.Assembly
+        let acc = ResizeArray<XPathEntry>()
+        let appendKey prefix seg = if prefix = "" then seg else prefix + "." + seg
+        let rec emit (key: string) (xpath: string) (value: obj) (depth: int) =
+            if not (isNull value) then
+                if isModelClass modelAsm (value.GetType()) then walk key xpath value (depth + 1)
+                else acc.Add { Path = key; XPath = xpath; Value = stringify value }
+        and walk (keyPrefix: string) (xpathPrefix: string) (node: obj) (depth: int) =
+            if not (isNull node) && depth <= 64 then
+                node.GetType().GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
+                |> Array.filter (fun p -> p.CanRead && p.GetIndexParameters().Length = 0)
+                |> Array.iter (fun p ->
+                    match relativeStep p with
+                    | None -> ()
+                    | Some(piece, repeatable) ->
+                        let value = p.GetValue node
+                        if not (isNull value) then
+                            if repeatable then
+                                items value
+                                |> Array.iteri (fun i item ->
+                                    emit (appendKey keyPrefix (sprintf "%s[%d]" p.Name i))
+                                         (xpathPrefix + "/" + withIndex piece i) item depth)
+                            else
+                                emit (appendKey keyPrefix p.Name) (xpathPrefix + "/" + piece) value depth)
+        walk "" ("/" + rootElementName typeof<'Root>) (box root) 0
+        acc.ToArray()

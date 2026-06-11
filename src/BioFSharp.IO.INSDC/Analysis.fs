@@ -31,3 +31,8 @@ module Analysis =
     /// As `xpathOf`, but wrapped as a W3C XPointer fragment selector (`#xpointer(...)`).
     let xpointerOf selector (analysis: Analysis) : string =
         XPathTracking.xpointerOf selector analysis
+
+    /// Every present leaf of a parsed `analysis` as an `XPathEntry` (property path, positional XPath,
+    /// value) — a serializable, position-qualified DTO of the whole record for a web API.
+    let xpathEntries (analysis: Analysis) : XPathEntry[] =
+        XPathTracking.xpathEntries analysis
