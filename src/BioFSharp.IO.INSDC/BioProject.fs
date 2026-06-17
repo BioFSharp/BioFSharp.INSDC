@@ -39,3 +39,9 @@ module BioProject =
     /// value) — a serializable, position-qualified DTO of the whole record for a web API.
     let xpathEntries (project: BioProject) : XPathEntry[] =
         XPathTracking.xpathEntries project
+
+    /// Decompile a parsed `project` into structural-ontology `DecompiledTerm`s — one per present leaf,
+    /// coupling each value with the OBO term describing what it is:
+    /// `project |> BioProject.decompile`.
+    let decompile (project: BioProject) : DecompiledTerm list =
+        StructuralOntology.decompile project

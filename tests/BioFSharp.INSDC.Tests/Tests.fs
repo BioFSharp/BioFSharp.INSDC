@@ -6,6 +6,8 @@ open System.IO
 open System.Reflection
 open Xunit
 
+open OBO.NET
+
 open BioFSharp.FileFormats.INSDC
 open BioFSharp.IO.INSDC
 
@@ -472,3 +474,67 @@ type XPathEntriesTests() =
         Assert.NotEmpty(entries)
         Assert.All(entries, fun e -> Assert.False(System.String.IsNullOrEmpty e.XPath))
         Assert.Equal(entries.Length, entries |> Array.distinctBy (fun e -> e.XPath) |> Array.length)
+
+type DecompileTests() =
+
+    // Phase 4: decompile a parsed record into structural-ontology (term, value) pairs.
+    let project = BioProject.read (TestFiles.fixture "PRJDB5192.xml") |> Seq.exactlyOne
+    let decompiled = BioProject.decompile project
+    let byXPath xpath = decompiled |> List.find (fun d -> d.XPath = xpath)
+
+    [<Fact>]
+    member _.``decompile couples scalar and attribute leaves with their ontology terms`` () =
+        let name = byXPath "/PROJECT/NAME"
+        Assert.Equal("Name", name.Term.Name)
+        Assert.Equal(project.Name, name.Value)
+
+        let accession = byXPath "/PROJECT/@accession"
+        Assert.Equal("Accession", accession.Term.Name)
+        Assert.Equal(project.Accession, accession.Value)
+
+    [<Fact>]
+    member _.``decompile collapses a positional collection leaf onto its structural term`` () =
+        let secondaryId = byXPath "/PROJECT/IDENTIFIERS/SECONDARY_ID[1]/text()"
+        Assert.Equal("Identifiers.SecondaryId.Value", secondaryId.Term.Name)
+        Assert.Equal((project.Identifiers.SecondaryId |> Seq.head).Value, secondaryId.Value)
+
+    [<Fact>]
+    member _.``decompile covers every leaf that xpathEntries emits`` () =
+        let entries = BioProject.xpathEntries project
+        Assert.Equal(entries.Length, decompiled.Length)
+        let decompiledXPaths = decompiled |> List.map (fun d -> d.XPath) |> Set.ofList
+        for e in entries do
+            Assert.True(decompiledXPaths.Contains e.XPath, $"no ontology term for leaf {e.XPath}")
+
+    [<Fact>]
+    member _.``leaf terms part_of resolve up to the entity root`` () =
+        let onto = StructuralOntology.ontology ()
+        let byId = onto.Terms |> List.map (fun t -> t.Id, t) |> Map.ofList
+        let parentOf (term: OboTerm) =
+            term.Relationships
+            |> List.tryPick (fun r ->
+                if r.StartsWith "part_of " then Some byId.[r.Substring("part_of ".Length)] else None)
+        let rec climb (term: OboTerm) fuel =
+            if fuel = 0 then failwith "part_of chain did not terminate at a root"
+            match parentOf term with
+            | Some parent -> climb parent (fuel - 1)
+            | None -> term
+        let leaf = (byXPath "/PROJECT/SUBMISSION_PROJECT/ORGANISM/SCIENTIFIC_NAME").Term
+        Assert.Equal("BioProject", (climb leaf 64).Name)
+
+    [<Fact>]
+    member _.``the structural ontology loads and resolves an xpath to a term`` () =
+        Assert.NotEmpty((StructuralOntology.ontology ()).Terms)
+        match StructuralOntology.tryTermForXPath "/PROJECT/NAME" with
+        | Some term -> Assert.Equal("Name", term.Name)
+        | None -> Assert.True(false, "no term for /PROJECT/NAME")
+
+    [<Fact>]
+    member _.``decompile resolves cross-entity (BioSample) xpaths`` () =
+        let sample = BioSample.read (TestFiles.fixture "SAMD00064197.xml") |> Seq.exactlyOne
+        let sampleDecompiled = BioSample.decompile sample
+        Assert.NotEmpty(sampleDecompiled)
+        Assert.Equal((BioSample.xpathEntries sample).Length, sampleDecompiled.Length)
+        let accession = sampleDecompiled |> List.find (fun d -> d.XPath = "/SAMPLE/@accession")
+        Assert.Equal("Accession", accession.Term.Name)
+        Assert.Equal(sample.Accession, accession.Value)

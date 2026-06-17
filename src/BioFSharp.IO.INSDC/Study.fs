@@ -36,3 +36,8 @@ module Study =
     /// value) — a serializable, position-qualified DTO of the whole record for a web API.
     let xpathEntries (study: Study) : XPathEntry[] =
         XPathTracking.xpathEntries study
+
+    /// Decompile a parsed `study` into structural-ontology `DecompiledTerm`s — one per present leaf,
+    /// coupling each value with the OBO term describing what it is: `study |> Study.decompile`.
+    let decompile (study: Study) : DecompiledTerm list =
+        StructuralOntology.decompile study

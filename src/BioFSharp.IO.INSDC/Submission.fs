@@ -36,3 +36,9 @@ module Submission =
     /// XPath, value) — a serializable, position-qualified DTO of the whole record for a web API.
     let xpathEntries (submission: Submission) : XPathEntry[] =
         XPathTracking.xpathEntries submission
+
+    /// Decompile a parsed `submission` into structural-ontology `DecompiledTerm`s — one per present
+    /// leaf, coupling each value with the OBO term describing what it is:
+    /// `submission |> Submission.decompile`.
+    let decompile (submission: Submission) : DecompiledTerm list =
+        StructuralOntology.decompile submission

@@ -37,3 +37,8 @@ module Receipt =
     /// value) — a serializable, position-qualified DTO of the whole record for a web API.
     let xpathEntries (receipt: Receipt) : XPathEntry[] =
         XPathTracking.xpathEntries receipt
+
+    /// Decompile a parsed `receipt` into structural-ontology `DecompiledTerm`s — one per present leaf,
+    /// coupling each value with the OBO term describing what it is: `receipt |> Receipt.decompile`.
+    let decompile (receipt: Receipt) : DecompiledTerm list =
+        StructuralOntology.decompile receipt

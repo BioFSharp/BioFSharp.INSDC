@@ -38,3 +38,8 @@ module BioSample =
     /// value) — a serializable, position-qualified DTO of the whole record for a web API.
     let xpathEntries (sample: BioSample) : XPathEntry[] =
         XPathTracking.xpathEntries sample
+
+    /// Decompile a parsed `sample` into structural-ontology `DecompiledTerm`s — one per present leaf,
+    /// coupling each value with the OBO term describing what it is: `sample |> BioSample.decompile`.
+    let decompile (sample: BioSample) : DecompiledTerm list =
+        StructuralOntology.decompile sample

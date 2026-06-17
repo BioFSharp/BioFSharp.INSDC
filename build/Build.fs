@@ -13,6 +13,7 @@ initializeContext()
 
 open BasicTasks
 open FragmentSelectorTasks
+open StructuralOntologyTasks
 open TestTasks
 open PackageTasks
 open DocumentationTasks
@@ -51,6 +52,9 @@ let _releaseFromNotes = releaseFromNotes
 // Same forced-init reason as above: reference the target so its module's top-level
 // BuildTask.create call runs and registers `generateFragmentSelectors` for the CLI.
 let _generateFragmentSelectors = generateFragmentSelectors
+
+// Same forced-init reason: register `generateStructuralOntology` for the CLI.
+let _generateStructuralOntology = generateStructuralOntology
 
 [<EntryPoint>]
 let main args = 

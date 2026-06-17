@@ -36,3 +36,9 @@ module Experiment =
     /// XPath, value) — a serializable, position-qualified DTO of the whole record for a web API.
     let xpathEntries (experiment: Experiment) : XPathEntry[] =
         XPathTracking.xpathEntries experiment
+
+    /// Decompile a parsed `experiment` into structural-ontology `DecompiledTerm`s — one per present
+    /// leaf, coupling each value with the OBO term describing what it is:
+    /// `experiment |> Experiment.decompile`.
+    let decompile (experiment: Experiment) : DecompiledTerm list =
+        StructuralOntology.decompile experiment

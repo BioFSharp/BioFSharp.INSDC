@@ -36,3 +36,8 @@ module Run =
     /// value) — a serializable, position-qualified DTO of the whole record for a web API.
     let xpathEntries (run: Run) : XPathEntry[] =
         XPathTracking.xpathEntries run
+
+    /// Decompile a parsed `run` into structural-ontology `DecompiledTerm`s — one per present leaf,
+    /// coupling each value with the OBO term describing what it is: `run |> Run.decompile`.
+    let decompile (run: Run) : DecompiledTerm list =
+        StructuralOntology.decompile run

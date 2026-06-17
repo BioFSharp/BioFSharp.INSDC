@@ -36,3 +36,8 @@ module Analysis =
     /// value) — a serializable, position-qualified DTO of the whole record for a web API.
     let xpathEntries (analysis: Analysis) : XPathEntry[] =
         XPathTracking.xpathEntries analysis
+
+    /// Decompile a parsed `analysis` into structural-ontology `DecompiledTerm`s — one per present leaf,
+    /// coupling each value with the OBO term describing what it is: `analysis |> Analysis.decompile`.
+    let decompile (analysis: Analysis) : DecompiledTerm list =
+        StructuralOntology.decompile analysis

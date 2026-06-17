@@ -12,6 +12,7 @@
     <Compile Include="ReleaseNotesTasks.fs" />
     <Compile Include="BasicTasks.fs" />
     <Compile Include="FragmentSelectorTasks.fs" />
+    <Compile Include="StructuralOntologyTasks.fs" />
     <Compile Include="TestTasks.fs" />
     <Compile Include="PackageTasks.fs" />
     <Compile Include="DocumentationTasks.fs" />
@@ -31,6 +32,7 @@
     <PackageReference Include="Fake.IO.FileSystem" Version="6.0.0" />
     <PackageReference Include="Fake.Tools.Git" Version="6.0.0" />
     <PackageReference Include="Fake.Extensions.Release" Version="1.0.0" />
+    <PackageReference Include="OBO.NET" Version="0.6.0" />
   </ItemGroup>
 
 </Project>

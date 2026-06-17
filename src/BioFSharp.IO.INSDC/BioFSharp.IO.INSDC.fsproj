@@ -10,6 +10,8 @@
   <ItemGroup>
     <Compile Include="Internal\XmlSerializer.fs" />
     <Compile Include="Internal\XPathTracking.fs" />
+    <Compile Include="Internal\StructuralOntology.fs" />
+    <EmbeddedResource Include="StructuralOntology.obo" />
     <Compile Include="BioProject.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="BioSample.fs" />
@@ -43,6 +45,7 @@
 
   <ItemGroup>
     <PackageReference Include="BioFSharp" Version="2.0.0-preview.3" />
+    <PackageReference Include="OBO.NET" Version="0.6.0" />
   </ItemGroup>
 
 </Project>
