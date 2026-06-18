@@ -485,17 +485,17 @@ type DecompileTests() =
     [<Fact>]
     member _.``decompile couples scalar and attribute leaves with their ontology terms`` () =
         let name = byXPath "/PROJECT/NAME"
-        Assert.Equal("Name", name.Term.Name)
+        Assert.Equal("BioProject.Name", name.Term.Name)
         Assert.Equal(project.Name, name.Value)
 
         let accession = byXPath "/PROJECT/@accession"
-        Assert.Equal("Accession", accession.Term.Name)
+        Assert.Equal("BioProject.Accession", accession.Term.Name)
         Assert.Equal(project.Accession, accession.Value)
 
     [<Fact>]
     member _.``decompile collapses a positional collection leaf onto its structural term`` () =
         let secondaryId = byXPath "/PROJECT/IDENTIFIERS/SECONDARY_ID[1]/text()"
-        Assert.Equal("Identifiers.SecondaryId.Value", secondaryId.Term.Name)
+        Assert.Equal("BioProject.Identifiers.SecondaryId.Value", secondaryId.Term.Name)
         Assert.Equal((project.Identifiers.SecondaryId |> Seq.head).Value, secondaryId.Value)
 
     [<Fact>]
@@ -526,7 +526,7 @@ type DecompileTests() =
     member _.``the structural ontology loads and resolves an xpath to a term`` () =
         Assert.NotEmpty((StructuralOntology.ontology ()).Terms)
         match StructuralOntology.tryTermForXPath "/PROJECT/NAME" with
-        | Some term -> Assert.Equal("Name", term.Name)
+        | Some term -> Assert.Equal("BioProject.Name", term.Name)
         | None -> Assert.True(false, "no term for /PROJECT/NAME")
 
     [<Fact>]
@@ -536,5 +536,49 @@ type DecompileTests() =
         Assert.NotEmpty(sampleDecompiled)
         Assert.Equal((BioSample.xpathEntries sample).Length, sampleDecompiled.Length)
         let accession = sampleDecompiled |> List.find (fun d -> d.XPath = "/SAMPLE/@accession")
-        Assert.Equal("Accession", accession.Term.Name)
+        Assert.Equal("BioSample.Accession", accession.Term.Name)
         Assert.Equal(sample.Accession, accession.Value)
+
+    [<Fact>]
+    member _.``leaf term names are entity-qualified, mirroring the full xpath`` () =
+        // Regression: the entity is the first xpath segment and must lead the term name. Without it,
+        // the Webin-wrapped copy of a field (`/WEBIN/EXPERIMENT/...`) collapses onto the same name as
+        // the field on the standalone Experiment record (`/EXPERIMENT/...`).
+        match StructuralOntology.tryTermForXPath "/WEBIN/EXPERIMENT/PLATFORM/GENAPSYS/INSTRUMENT_MODEL" with
+        | Some term -> Assert.Equal("Webin.Experiment.Platform.Genapsys.InstrumentModel", term.Name)
+        | None -> Assert.True(false, "no term for /WEBIN/EXPERIMENT/PLATFORM/GENAPSYS/INSTRUMENT_MODEL")
+
+    [<Fact>]
+    member _.``every decompiled leaf name is rooted at its entity`` () =
+        Assert.All(decompiled, fun d -> Assert.StartsWith("BioProject.", d.Term.Name))
+
+    [<Fact>]
+    member _.``structural ontology term names are globally unique`` () =
+        // The entity prefix is what keeps the parallel Webin / standalone hierarchies from colliding.
+        let names = (StructuralOntology.ontology ()).Terms |> List.map (fun t -> t.Name)
+        Assert.Equal(names.Length, names |> List.distinct |> List.length)
+
+    [<Fact>]
+    member _.``wrapped-collection leaves keep their item level in the term name`` () =
+        // Regression: xscgen collapses the <PROJECT_ATTRIBUTES><PROJECT_ATTRIBUTE> wrapper+item into a
+        // single `ProjectAttributes` property, so the property path is `ProjectAttributes.Tag`. The
+        // ontology must still expose the item (`Attribute`) level — Tag is a field of an attribute, not
+        // of the attributes collection — so the structural xpath maps to ...Attribute.Tag.
+        match StructuralOntology.tryTermForXPath "/PROJECT/PROJECT_ATTRIBUTES/PROJECT_ATTRIBUTE/TAG" with
+        | Some term -> Assert.Equal("BioProject.ProjectAttributes.Attribute.Tag", term.Name)
+        | None -> Assert.True(false, "no term for /PROJECT/PROJECT_ATTRIBUTES/PROJECT_ATTRIBUTE/TAG")
+
+    [<Fact>]
+    member _.``unwrapped repeated elements are not given a spurious item level`` () =
+        // Contrast with the wrapped case: SECONDARY_ID is an unwrapped repeated element (xscgen names
+        // the property after the item), so no `Attribute`-style level must be spliced in.
+        match StructuralOntology.tryTermForXPath "/PROJECT/IDENTIFIERS/SECONDARY_ID/text()" with
+        | Some term -> Assert.Equal("BioProject.Identifiers.SecondaryId.Value", term.Name)
+        | None -> Assert.True(false, "no term for /PROJECT/IDENTIFIERS/SECONDARY_ID/text()")
+
+    [<Fact>]
+    member _.``a decompiled wrapped-collection leaf resolves to the spliced item-level term`` () =
+        let tag =
+            decompiled
+            |> List.find (fun d -> d.XPath = "/PROJECT/PROJECT_ATTRIBUTES/PROJECT_ATTRIBUTE[1]/TAG")
+        Assert.Equal("BioProject.ProjectAttributes.Attribute.Tag", tag.Term.Name)

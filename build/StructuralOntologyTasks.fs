@@ -19,7 +19,14 @@ open OBO.NET
 // the chain of container terms (one per dotted prefix, plus an entity root) wired with `part_of`, and
 // a leaf term carrying the bare structural xpath as a `property_value` (`insdc_xpath /PROJECT/NAME`).
 // That property_value is the join key the IO layer's `decompile` uses; the OBO IO itself goes through
-// OBO.NET. Because the ontology is a pure function of the committed selector maps it cannot drift.
+// OBO.NET.
+//
+// One reflection step on top of the selector strings: the FragmentSelectors key is the F# *property*
+// path, and xscgen collapses a `[XmlArray]` wrapper+item pair into a single property (so the item level
+// is in the xpath but not the key). We re-derive those wrapped-collection item levels from the model
+// and splice them back into the dotted path (`ProjectAttributes.Tag` -> `ProjectAttributes.Attribute.Tag`)
+// so the ontology mirrors the XML, not the flatter property graph. Names are labels only; the xpath
+// join key is untouched, so `decompile` is unaffected.
 //
 // On-demand only — like `generateFragmentSelectors` the default build does NOT depend on this; run it
 // after touching schemas/, the type model, or FragmentSelectors.cs.
@@ -41,6 +48,65 @@ module private Engine =
             | :? IReadOnlyDictionary<string, string> as d ->
                 d |> Seq.map (fun kv -> kv.Key, bareXPath kv.Value) |> List.ofSeq |> Some
             | _ -> None
+
+    /// Unwrap a collection/array property type to its element type (mirrors the FragmentSelectors
+    /// generator). Leaves non-collections as-is.
+    let private unwrap (t: Type) : Type =
+        if t = typeof<string> then t
+        elif t.IsArray then t.GetElementType()
+        else
+            Seq.append [ t ] (t.GetInterfaces() :> seq<_>)
+            |> Seq.tryPick (fun i ->
+                if i.IsGenericType && i.GetGenericTypeDefinition() = typedefof<IEnumerable<_>>
+                then Some(i.GetGenericArguments().[0])
+                else None)
+            |> Option.defaultValue t
+
+    /// Per entity root type, the dotted *property* path of every wrapped collection (`[XmlArray]`,
+    /// e.g. `<PROJECT_ATTRIBUTES><PROJECT_ATTRIBUTE>…`) mapped to its element type name. xscgen models
+    /// such a wrapper+item pair as a single property named after the wrapper, dropping the item level
+    /// from the property path — but the XML (and this ontology, which mirrors it) keeps it. We splice
+    /// the element type name back in as that level: `ProjectAttributes` -> `ProjectAttributes.Attribute`.
+    /// Unwrapped repeated elements (xscgen emits `[XmlElement]` on the collection, named after the item
+    /// itself, e.g. `SecondaryId`) already carry their level and are not recorded here.
+    let private wrappedItemLevels (modelAsm: Assembly) (rootType: Type) : Map<string, string> =
+        let acc = Dictionary<string, string>()
+        let visited = HashSet<Type>()
+        let has n (p: PropertyInfo) =
+            p.GetCustomAttributesData() |> Seq.exists (fun c -> c.AttributeType.Name = n)
+        let complexChild (t: Type) =
+            let u = unwrap t
+            if u.Assembly = modelAsm && u.IsClass then Some u else None
+        let rec go depth (keyPrefix: string) (t: Type) =
+            if depth <= 64 && visited.Add t then
+                t.GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
+                |> Array.filter (fun p -> p.CanRead && p.GetIndexParameters().Length = 0 && not (has "XmlIgnoreAttribute" p))
+                |> Array.iter (fun p ->
+                    let key = if keyPrefix = "" then p.Name else keyPrefix + "." + p.Name
+                    match complexChild p.PropertyType with
+                    | Some ct ->
+                        if has "XmlArrayAttribute" p then acc.[key] <- (unwrap p.PropertyType).Name
+                        if not (visited.Contains ct) then go (depth + 1) key ct
+                    | None -> ())
+                visited.Remove t |> ignore
+        go 0 "" rootType
+        acc |> Seq.map (fun kv -> kv.Key, kv.Value) |> Map.ofSeq
+
+    /// Rewrite a dotted property-path key, splicing each wrapped-collection item level (the element type
+    /// name) in right after its wrapper prefix, so the dotted path mirrors the full XML element chain.
+    /// `running` tracks the original *property* path (suffix-free for non-terminal segments, and the
+    /// disambiguation suffix on the terminal segment never matches a container), so insertions don't
+    /// feed back into later lookups.
+    let private spliceItemLevels (levels: Map<string, string>) (key: string) : string =
+        let out = ResizeArray<string>()
+        let mutable running = ""
+        for seg in key.Split('.') do
+            running <- if running = "" then seg else running + "." + seg
+            out.Add seg
+            match Map.tryFind running levels with
+            | Some itemName -> out.Add itemName
+            | None -> ()
+        String.Join(".", out)
 
     /// A node of one entity's structural tree. `DottedPath = ""` is the entity root; `Parent` is the
     /// parent's dotted path within the same entity (`Some ""` = the root), `None` only for the root.
@@ -86,7 +152,12 @@ module private Engine =
     let generate (asm: Assembly) : string =
         let entities =
             asm.GetTypes()
-            |> Array.choose (fun t -> fragmentSelectors t |> Option.map (fun ps -> t.Name, ps))
+            |> Array.choose (fun t -> fragmentSelectors t |> Option.map (fun ps -> t, ps))
+            |> Array.map (fun (t, ps) ->
+                // Splice the dropped wrapped-collection item level back into every key so names and the
+                // container chain mirror the XML element structure, not the (flatter) property path.
+                let levels = wrappedItemLevels asm t
+                t.Name, ps |> List.map (fun (k, xpath) -> spliceItemLevels levels k, xpath))
             |> Array.sortBy fst
 
         // Deterministic global numbering: entity, then dotted path. A dotted prefix sorts before any
@@ -107,7 +178,11 @@ module private Engine =
             allNodes
             |> Array.map (fun n ->
                 let id = ids.[(n.Entity, n.DottedPath)]
-                let name = if n.DottedPath = "" then n.Entity else n.DottedPath
+                // Entity-qualify every non-root name so it mirrors the full XPath (the entity is the
+                // first XPath segment) and stays globally unique: a leaf nested under the `Webin`
+                // wrapper (`/WEBIN/EXPERIMENT/...`) and the same field on the standalone `Experiment`
+                // record (`/EXPERIMENT/...`) must not collapse to the same `Experiment.Platform...` name.
+                let name = if n.DottedPath = "" then n.Entity else n.Entity + "." + n.DottedPath
                 let def =
                     if n.IsLeaf then sprintf "INSDC %s field %s at %s" n.Entity n.DottedPath n.XPath
                     elif n.DottedPath = "" then sprintf "INSDC %s record root" n.Entity
