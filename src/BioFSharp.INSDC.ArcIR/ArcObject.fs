@@ -1,5 +1,6 @@
 namespace Arc.Build
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ArcObject =
 
     let create id kind dtypes properties annotations =
@@ -12,6 +13,7 @@ module ArcObject =
         }
 
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ArcRelation =
 
     let create subject predicate objectId properties annotations =
@@ -35,6 +37,7 @@ module ArcRelation =
         }
 
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ArcAnnotation =
 
     let term iri name source =

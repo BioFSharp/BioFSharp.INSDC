@@ -23,7 +23,7 @@ type Iri =
         Iri.Create value
 
     static member op_Implicit(iri: Iri) =
-        iri.Value    
+        iri.Value
 
 [<Struct>]
 type ArcId =
@@ -42,20 +42,19 @@ type ArcId =
         ArcId value
 
 
-type ArcObjectKind = 
-    // Activity Inputs und Outputs, muss man sich namen überlegen, sollten semantisch kllar getrennt sein
-    | Observable // Input für activity? orig. Entity
-    | Instrument // ? Irgendwas mit dem man activity ausführt, soll nicht instrument heißen
-    | Resource // evtl data, orig. Resource weil auch URL etc.
-
-
-    | Activity // Process 
-    | Agent // Person + AI Agents + Institution
-    | Role // Role von Agent in Activity
-    | Recipe // orig. Plan
-    | Collection // praktisch generisches dataset, mappt auch I / S / A etc. -> Group?
-
-    | Selector // evtl mergebar mit Resource
+/// The closed structural classification of an ArcObject. The finer-grained semantics ride on
+/// `DTypes` (see [Vocabulary]); this is the coarse category. INSDC concept → kind mapping lives in the
+/// mapping docs.
+type ArcObjectKind =
+    | Observable // an entity/material an activity observes or consumes (orig. ISA Entity)
+    | Instrument // a device/instrument an activity is carried out with
+    | Resource // data or an addressable resource (a file, a URL)
+    | Activity // a process/activity (orig. ISA Process)
+    | Agent // a person, institution, or software agent
+    | Role // the role an agent plays in an activity
+    | Recipe // a plan/protocol (orig. ISA Plan)
+    | Collection // a grouping dataset (ISA Investigation / Study / Assay)
+    | Selector // an addressing/provenance selector (e.g. an XPath into a source record)
 
 
 type ArcValue =

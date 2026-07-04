@@ -1,5 +1,6 @@
 namespace Arc.Build
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ArcIR =
 
     let addObject (object': ArcObject) (ir: ArcIR) =

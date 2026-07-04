@@ -11,6 +11,9 @@ open OBO.NET
 open BioFSharp.FileFormats.INSDC
 open BioFSharp.IO.INSDC
 
+open Arc.Build
+open BioFSharp.INSDC.ArcIR
+
 module private TestFiles =
 
     let fixture fileName =
@@ -582,3 +585,149 @@ type DecompileTests() =
             decompiled
             |> List.find (fun d -> d.XPath = "/PROJECT/PROJECT_ATTRIBUTES/PROJECT_ATTRIBUTE[1]/TAG")
         Assert.Equal("BioProject.ProjectAttributes.Attribute.Tag", tag.Term.Name)
+
+
+type ArcMappingTests() =
+
+    // Phase 5: map the 8 IO-readable INSDC entities into the ArcIR property graph. Typed converters build
+    // the structure (typed values, sub-objects, edges via the controlled Vocabulary); the structural-
+    // ontology decompilation supplies the annotation overlay.
+    let read reader file = reader (TestFiles.fixture file) |> Seq.exactlyOne
+    let project = read BioProject.read "PRJDB5192.xml"
+    let study = read Study.read "DRP003416.xml"
+    let sample = read BioSample.read "SAMD00064197.xml"
+    let experiment = read Experiment.read "DRX066772.xml"
+    let run = read Run.read "DRR072834.xml"
+    let analysis = read Analysis.read "ERZ496533.xml"
+    let submission = read Submission.read "DRA005154.xml"
+    let receipt = Receipt.read (TestFiles.fixture "receipt-sample.xml")
+
+    let ir =
+        [ INSDC.bioProject project
+          INSDC.study study
+          INSDC.bioSample sample
+          INSDC.experiment experiment
+          INSDC.run run
+          INSDC.analysis analysis
+          INSDC.submission submission
+          INSDC.receipt receipt ]
+        |> INSDC.build
+
+    let objectById (id: string) = ir.Objects.[ArcId.Create id]
+    let outgoing (id: string) = ArcIR.outgoing (ArcId.Create id) ir |> List.ofSeq
+    let hasEdge subject predicate object' =
+        outgoing subject |> List.exists (fun r -> r.Predicate = predicate && r.Object = ArcId.Create object')
+    let hasPredicate subject predicate = outgoing subject |> List.exists (fun r -> r.Predicate = predicate)
+    let byDType dtype = ir.Objects.Values |> Seq.filter (fun o -> o.DTypes.Contains dtype) |> List.ofSeq
+
+    [<Fact>]
+    member _.``every entity maps to a node keyed by its accession, with the right kind`` () =
+        Assert.Equal(ArcObjectKind.Collection, (objectById project.Accession).Kind)
+        Assert.Equal(ArcObjectKind.Collection, (objectById study.Accession).Kind)
+        Assert.Equal(ArcObjectKind.Observable, (objectById sample.Accession).Kind)
+        Assert.Equal(ArcObjectKind.Activity, (objectById experiment.Accession).Kind)
+        Assert.Equal(ArcObjectKind.Activity, (objectById run.Accession).Kind)
+        Assert.Equal(ArcObjectKind.Activity, (objectById analysis.Accession).Kind)
+        Assert.Equal(ArcObjectKind.Collection, (objectById submission.Accession).Kind)
+
+    [<Fact>]
+    member _.``DTypes and predicates use the controlled vocabulary IRIs`` () =
+        Assert.True((objectById project.Accession).DTypes.Contains Vocabulary.DType.bioProject)
+        Assert.True(hasPredicate experiment.Accession Vocabulary.Rel.hasStudy)
+
+    [<Fact>]
+    member _.``the sample organism is a deduped taxon node with a typed integer TaxonId`` () =
+        // Mapping from the typed objects (not the flat string decompilation) is the point: TAXON_ID lands
+        // as an ArcValue.Integer, and the taxon node id is shared across every sample of that organism.
+        let organism = objectById "taxon:3702"
+        Assert.Equal(ArcValue.Integer 3702L, organism.Properties.[Iri.Create "TaxonId"])
+        Assert.True(hasEdge sample.Accession Vocabulary.Rel.hasOrganism "taxon:3702")
+
+    [<Fact>]
+    member _.``the experiment links to study, sample, instrument and protocol`` () =
+        Assert.True(hasEdge experiment.Accession Vocabulary.Rel.hasStudy "DRP003416")
+        Assert.True(hasEdge experiment.Accession Vocabulary.Rel.hasSample "DRS039895")
+        Assert.True(hasPredicate experiment.Accession Vocabulary.Rel.usesInstrument)
+        Assert.True(hasPredicate experiment.Accession Vocabulary.Rel.hasProtocol)
+
+    [<Fact>]
+    member _.``the run references its experiment`` () =
+        Assert.True(hasEdge run.Accession Vocabulary.Rel.hasExperiment experiment.Accession)
+
+    [<Fact>]
+    member _.``the analysis references its study and produces data-file resources`` () =
+        Assert.True(hasPredicate analysis.Accession Vocabulary.Rel.hasStudy)
+        Assert.True(hasPredicate analysis.Accession Vocabulary.Rel.producesData)
+        Assert.NotEmpty(byDType Vocabulary.DType.data)
+
+    [<Fact>]
+    member _.``the bioproject records a related-project edge`` () =
+        Assert.True(hasPredicate project.Accession Vocabulary.Rel.hasParentProject)
+
+    [<Fact>]
+    member _.``the receipt acknowledges submitted objects and carries typed Success/ReceiptDate`` () =
+        let node = byDType Vocabulary.DType.receipt |> List.exactlyOne
+        Assert.True(hasPredicate node.Id.Value Vocabulary.Rel.acknowledges)
+        match node.Properties.[Iri.Create "Success"] with
+        | ArcValue.Boolean _ -> ()
+        | v -> Assert.True(false, $"Success should be a Boolean, got {v}")
+        match node.Properties.[Iri.Create "ReceiptDate"] with
+        | ArcValue.DateTime _ -> ()
+        | v -> Assert.True(false, $"ReceiptDate should be a DateTime, got {v}")
+
+    [<Fact>]
+    member _.``a shared institution collapses to one Agent node referenced by several entities`` () =
+        let ddbj = ArcId.Create "org:ddbj"
+        Assert.True(ir.Objects.ContainsKey ddbj)
+        let referrers = ArcIR.incoming ddbj ir |> Seq.length
+        Assert.True(referrers > 1, $"expected the shared org node to be referenced more than once, got {referrers}")
+
+    [<Fact>]
+    member _.``a closed-vocabulary enum maps to an ArcValue.Iri`` () =
+        let instrument = byDType Vocabulary.DType.instrument |> List.head
+        match instrument.Properties.[Iri.Create "InstrumentModel"] with
+        | ArcValue.Iri _ -> ()
+        | v -> Assert.True(false, $"InstrumentModel should be an Iri, got {v}")
+
+    [<Fact>]
+    member _.``a mapped object carries ontology annotations from the structural ontology`` () =
+        let node = objectById sample.Accession
+        Assert.NotEmpty node.Annotations
+        Assert.True(
+            node.Annotations
+            |> List.exists (fun a -> a.Property.Name = Some "BioSample.Accession"))
+
+
+type ArcResolverTests() =
+
+    // The resolve-relations-afterwards pass prefers an accession, then a refcenter-namespaced refname,
+    // then a bare refname, then a synthetic id from the refname.
+    let target =
+        ArcObject.create
+            "ACC1"
+            ArcObjectKind.Collection
+            []
+            [ Iri.Create "Alias", ArcValue.String "myAlias"; Iri.Create "CenterName", ArcValue.String "CENTER" ]
+            []
+
+    let pending accession refname refcenter =
+        { Subject = ArcId.Create "S"
+          Predicate = Vocabulary.Rel.hasStudy
+          TargetAccession = accession
+          TargetRefname = refname
+          TargetRefcenter = refcenter }
+
+    [<Fact>]
+    member _.``an accession resolves directly, even when the target record is not loaded`` () =
+        let edges = Mapping.resolveRelations [] [ pending (Some "ACCX") None None ]
+        Assert.Equal(ArcId.Create "ACCX", (List.exactlyOne edges).Object)
+
+    [<Fact>]
+    member _.``a refname resolves to a loaded object within its refcenter namespace`` () =
+        let edges = Mapping.resolveRelations [ target ] [ pending None (Some "myAlias") (Some "CENTER") ]
+        Assert.Equal(ArcId.Create "ACC1", (List.exactlyOne edges).Object)
+
+    [<Fact>]
+    member _.``an unresolved refname falls back to a synthetic id`` () =
+        let edges = Mapping.resolveRelations [] [ pending None (Some "ghost") None ]
+        Assert.Equal(ArcId.Create "ghost", (List.exactlyOne edges).Object)

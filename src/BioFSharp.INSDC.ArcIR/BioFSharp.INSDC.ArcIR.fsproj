@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ArcCore.fs" />
+    <Compile Include="ArcIR.fs" />
+    <Compile Include="ArcObject.fs" />
+    <Compile Include="Vocabulary.fs" />
+    <Compile Include="Mapping\ArcValueConversion.fs" />
+    <Compile Include="Mapping\Ontology.fs" />
+    <Compile Include="Mapping\SubObjects.fs" />
+    <Compile Include="Mapping\Mapping.fs" />
+    <Compile Include="Mapping\INSDC.fs" />
+    <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <Authors>Kevin Schneider, BioFSharp contributors</Authors>
+    <Description>Maps INSDC records (BioProject, Study, Sample, Experiment, Run, Analysis, Submission) into ArcIR — an ARC-oriented intermediate representation (a property graph of typed objects and relations).</Description>
+    <Summary>INSDC to ARC intermediate representation mapping.</Summary>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BioFSharp/BioFSharp.INSDC</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>bioinformatics F# fsharp INSDC ENA SRA ARC ArcIR</PackageTags>
+    <RepositoryUrl>https://github.com/BioFSharp/BioFSharp.INSDC</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <FsDocsLicenseLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/LICENSE</FsDocsLicenseLink>
+    <FsDocsReleaseNotesLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BioFSharp.FileFormats.INSDC\BioFSharp.FileFormats.INSDC.csproj" />
+    <ProjectReference Include="..\BioFSharp.IO.INSDC\BioFSharp.IO.INSDC.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OBO.NET" Version="0.6.0" />
+  </ItemGroup>
+
+</Project>
