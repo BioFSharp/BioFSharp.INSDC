@@ -12,6 +12,9 @@
     <Compile Include="ArcIR.fs" />
     <Compile Include="ArcObject.fs" />
     <Compile Include="Vocabulary.fs" />
+    <Compile Include="GraphText.fs" />
+    <Compile Include="GraphMl.fs" />
+    <Compile Include="Html.fs" />
     <Compile Include="Mapping\ArcValueConversion.fs" />
     <Compile Include="Mapping\Ontology.fs" />
     <Compile Include="Mapping\SubObjects.fs" />

@@ -4,6 +4,7 @@ open System
 open System.Collections
 open System.IO
 open System.Reflection
+open System.Xml.Linq
 open Xunit
 
 open OBO.NET
@@ -731,3 +732,132 @@ type ArcResolverTests() =
     member _.``an unresolved refname falls back to a synthetic id`` () =
         let edges = Mapping.resolveRelations [] [ pending None (Some "ghost") None ]
         Assert.Equal(ArcId.Create "ghost", (List.exactlyOne edges).Object)
+
+
+type GraphMlExportTests() =
+
+    // The GraphML serializer renders the assembled ArcIR property graph so it can be opened in Gephi
+    // (nodes colored by kind, properties + annotations as inspectable columns, predicates as edge labels).
+    let read reader file = reader (TestFiles.fixture file) |> Seq.exactlyOne
+    let sample = read BioSample.read "SAMD00064197.xml"
+    let experiment = read Experiment.read "DRX066772.xml"
+
+    let ir =
+        [ INSDC.bioProject (read BioProject.read "PRJDB5192.xml")
+          INSDC.study (read Study.read "DRP003416.xml")
+          INSDC.bioSample sample
+          INSDC.experiment experiment
+          INSDC.run (read Run.read "DRR072834.xml")
+          INSDC.analysis (read Analysis.read "ERZ496533.xml")
+          INSDC.submission (read Submission.read "DRA005154.xml")
+          INSDC.receipt (Receipt.read (TestFiles.fixture "receipt-sample.xml")) ]
+        |> INSDC.build
+
+    let gml = XNamespace.Get "http://graphml.graphdrawing.org/xmlns"
+    let doc = XDocument.Parse(GraphMl.toString ir)
+    let attr name (el: XElement) = el.Attribute(XName.Get name).Value
+    let nodesOf (d: XDocument) = d.Root.Descendants(gml + "node")
+    let edgesOf (d: XDocument) = d.Root.Descendants(gml + "edge")
+    let nodeById id = nodesOf doc |> Seq.find (fun n -> attr "id" n = id)
+    let dataVal keyId (el: XElement) =
+        el.Elements(gml + "data")
+        |> Seq.tryFind (fun d -> attr "key" d = keyId)
+        |> Option.map (fun d -> d.Value)
+    let keyIdOf forWhat name =
+        doc.Root.Elements(gml + "key")
+        |> Seq.find (fun k -> attr "for" k = forWhat && attr "attr.name" k = name)
+        |> attr "id"
+
+    [<Fact>]
+    member _.``the export is a well-formed graphml document`` () =
+        Assert.Equal("graphml", doc.Root.Name.LocalName)
+        Assert.Equal("directed", attr "edgedefault" (doc.Root.Element(gml + "graph")))
+
+    [<Fact>]
+    member _.``node and edge counts match the graph (dangling endpoints become placeholder nodes)`` () =
+        let missing =
+            ir.Relations
+            |> Seq.collect (fun r -> [ r.Subject; r.Object ])
+            |> Seq.distinct
+            |> Seq.filter (fun id -> not (ir.Objects.ContainsKey id))
+            |> Seq.length
+        Assert.Equal(ir.Objects.Count + missing, nodesOf doc |> Seq.length)
+        Assert.Equal(ir.Relations.Count, edgesOf doc |> Seq.length)
+
+    [<Fact>]
+    member _.``a node carries its kind and a typed property renders in its own column`` () =
+        Assert.Equal(Some "Activity", dataVal "kind" (nodeById experiment.Accession))
+        // The deduped taxon node's typed-integer TaxonId lands in the `TaxonId` column.
+        Assert.Equal(Some "3702", dataVal (keyIdOf "node" "TaxonId") (nodeById "taxon:3702"))
+
+    [<Fact>]
+    member _.``ontology annotations are rendered as columns, not counted`` () =
+        // The BioSample carries a `BioSample.Accession` structural-ontology annotation; it must serialize
+        // as a populated node column rather than a bare count.
+        let value = dataVal (keyIdOf "node" "BioSample.Accession") (nodeById sample.Accession)
+        Assert.False(String.IsNullOrEmpty(value |> Option.defaultValue ""))
+
+    [<Fact>]
+    member _.``an edge carries its predicate as the label`` () =
+        let studyEdge =
+            edgesOf doc
+            |> Seq.find (fun e -> attr "source" e = experiment.Accession && attr "target" e = "DRP003416")
+        Assert.Equal(Some "hasStudy", dataVal "predicate" studyEdge)
+
+    [<Fact>]
+    member _.``a relation to a missing target yields a placeholder node and a valid edge`` () =
+        let node = ArcObject.create "A" ArcObjectKind.Collection [] [] []
+        let relation = ArcRelation.create "A" Vocabulary.Rel.hasStudy "B" [] []
+        let dangling = ArcIR.Empty |> ArcIR.addObject node |> ArcIR.addRelation relation
+        let d = XDocument.Parse(GraphMl.toString dangling)
+        let nodes = nodesOf d |> Seq.toList
+        Assert.Equal(2, nodes.Length)
+        let placeholder = nodes |> Seq.find (fun n -> attr "id" n = "B")
+        Assert.Equal(Some "Missing", dataVal "kind" placeholder)
+        Assert.Equal(1, edgesOf d |> Seq.length)
+
+
+type HtmlExportTests() =
+
+    // The interactive HTML viewer renders the same graph as a single self-contained page with an
+    // embedded force-directed SVG and a click-to-inspect property/annotation panel.
+    let read reader file = reader (TestFiles.fixture file) |> Seq.exactlyOne
+
+    let ir =
+        [ INSDC.bioProject (read BioProject.read "PRJDB5192.xml")
+          INSDC.study (read Study.read "DRP003416.xml")
+          INSDC.bioSample (read BioSample.read "SAMD00064197.xml")
+          INSDC.experiment (read Experiment.read "DRX066772.xml")
+          INSDC.run (read Run.read "DRR072834.xml")
+          INSDC.analysis (read Analysis.read "ERZ496533.xml")
+          INSDC.submission (read Submission.read "DRA005154.xml")
+          INSDC.receipt (Receipt.read (TestFiles.fixture "receipt-sample.xml")) ]
+        |> INSDC.build
+
+    let html = Html.toString ir
+
+    [<Fact>]
+    member _.``the export is a self-contained html document with no external resources`` () =
+        Assert.StartsWith("<!doctype html", html)
+        Assert.Contains("<svg", html)
+        Assert.Contains("const DATA =", html)
+        // Everything is inline: no CDN script/stylesheet, no network dependency.
+        Assert.DoesNotContain("<script src", html)
+        Assert.DoesNotContain("<link", html)
+
+    [<Fact>]
+    member _.``node properties and rendered annotations are embedded for inspection`` () =
+        // The deduped taxon node and its typed TaxonId property + organism annotation are in the payload.
+        Assert.Contains("taxon:3702", html)
+        Assert.Contains("Arabidopsis thaliana", html)
+
+    [<Fact>]
+    member _.``dangling reference targets are embedded as Missing placeholder nodes`` () =
+        Assert.Contains("\"Missing\"", html)
+
+    [<Fact>]
+    member _.``a value containing markup cannot break out of the script block`` () =
+        let evil = ArcObject.create "x" ArcObjectKind.Resource [] [ Iri.Create "Note", ArcValue.String "</script><b>hi" ] []
+        let out = Html.toString (ArcIR.Empty |> ArcIR.addObject evil)
+        Assert.DoesNotContain("</script><b>hi", out)
+        Assert.Contains("\\u003c/script>", out)
