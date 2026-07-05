@@ -669,12 +669,13 @@ type ArcMappingTests() =
     member _.``the receipt acknowledges submitted objects and carries typed Success/ReceiptDate`` () =
         let node = byDType Vocabulary.DType.receipt |> List.exactlyOne
         Assert.True(hasPredicate node.Id.Value Vocabulary.Rel.acknowledges)
-        match node.Properties.[Iri.Create "Success"] with
-        | ArcValue.Boolean _ -> ()
-        | v -> Assert.True(false, $"Success should be a Boolean, got {v}")
-        match node.Properties.[Iri.Create "ReceiptDate"] with
-        | ArcValue.DateTime _ -> ()
-        | v -> Assert.True(false, $"ReceiptDate should be a DateTime, got {v}")
+        let annValue name = node.Annotations |> List.pick (fun a -> if a.Property.Name = Some name then Some a.Value else None)
+        match annValue "Success" with
+        | AnnotationValue.Literal(ArcValue.Boolean _) -> ()
+        | v -> Assert.True(false, $"Success should be a Boolean literal, got {v}")
+        match annValue "ReceiptDate" with
+        | AnnotationValue.Literal(ArcValue.DateTime _) -> ()
+        | v -> Assert.True(false, $"ReceiptDate should be a DateTime literal, got {v}")
 
     [<Fact>]
     member _.``a shared institution collapses to one Agent node referenced by several entities`` () =
@@ -691,23 +692,25 @@ type ArcMappingTests() =
         | v -> Assert.True(false, $"InstrumentModel should be an Iri, got {v}")
 
     [<Fact>]
-    member _.``the bioproject converter is decoupled from the flat decompilation`` () =
-        // BioProject uses the explicit per-accession converter: annotations-first (empty Properties) and
-        // no shredded structural-ontology leaves (those are entity-qualified, e.g. "BioProject.Foo.Bar").
-        let node = objectById project.Accession
-        Assert.True(node.Properties.IsEmpty)
-        Assert.NotEmpty node.Annotations
-        Assert.False(
-            node.Annotations
-            |> List.exists (fun a -> (defaultArg a.Property.Name "").StartsWith "BioProject."))
+    member _.``mapped entity nodes are decoupled from the flat decompilation`` () =
+        // Every entity now uses an explicit per-accession converter: annotations-first (empty Properties)
+        // and no shredded structural-ontology leaves (those are entity-qualified, e.g. "BioSample.Foo.Bar").
+        let cases =
+            [ project.Accession, "BioProject"
+              study.Accession, "Study"
+              sample.Accession, "BioSample"
+              experiment.Accession, "Experiment"
+              run.Accession, "Run"
+              analysis.Accession, "Analysis"
+              submission.Accession, "Submission" ]
 
-    [<Fact>]
-    member _.``a mapped object carries ontology annotations from the structural ontology`` () =
-        let node = objectById sample.Accession
-        Assert.NotEmpty node.Annotations
-        Assert.True(
-            node.Annotations
-            |> List.exists (fun a -> a.Property.Name = Some "BioSample.Accession"))
+        for accession, prefix in cases do
+            let node = objectById accession
+            Assert.True(node.Properties.IsEmpty, $"{accession} should have empty Properties")
+            Assert.NotEmpty node.Annotations
+            Assert.False(
+                node.Annotations |> List.exists (fun a -> (defaultArg a.Property.Name "").StartsWith(prefix + ".")),
+                $"{accession} should carry no {prefix}.* decompilation leaves")
 
     [<Fact>]
     member _.``INSDC attributes become paired annotations, not tag-keyed properties`` () =
@@ -860,11 +863,11 @@ type GraphMlExportTests() =
         Assert.Equal(Some "3702", dataVal (keyIdOf "node" "TaxonId") (nodeById "taxon:3702"))
 
     [<Fact>]
-    member _.``ontology annotations are rendered as columns, not counted`` () =
-        // The BioSample carries a `BioSample.Accession` structural-ontology annotation; it must serialize
-        // as a populated node column rather than a bare count.
-        let value = dataVal (keyIdOf "node" "BioSample.Accession") (nodeById sample.Accession)
-        Assert.False(String.IsNullOrEmpty(value |> Option.defaultValue ""))
+    member _.``annotations are rendered as their own columns, not counted`` () =
+        // The BioSample's `ecotype` attribute is an annotation; it must serialize as a populated node
+        // column (keyed by the annotation term's name) rather than a bare count.
+        let value = dataVal (keyIdOf "node" "ecotype") (nodeById sample.Accession)
+        Assert.Equal(Some "Col-0", value)
 
     [<Fact>]
     member _.``an edge carries its predicate as the label`` () =

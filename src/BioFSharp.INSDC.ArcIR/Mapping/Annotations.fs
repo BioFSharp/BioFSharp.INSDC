@@ -30,6 +30,10 @@ module Annotations =
     let field (source: string) (key: string) (value: ArcValue) : ArcAnnotation =
         literal (sprintf "%sfield/%s" baseIri (slug key)) key source value
 
+    /// A string field as an annotation, or `None` when the value is absent/blank.
+    let stringField (source: string) (key: string) (value: string) : ArcAnnotation option =
+        if System.String.IsNullOrWhiteSpace value then None else Some(field source key (ArcValue.String value))
+
     // ---- INSDC <Attribute> (tag / value / optional units) ----
 
     [<Literal>]

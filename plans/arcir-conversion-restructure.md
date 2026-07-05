@@ -93,11 +93,19 @@ dotnet build src/BioFSharp.INSDC.ArcIR && dotnet fsi playground/arcir_graphml.fs
 Inspect the BioProject node in `playground/arcir.html`: `ExternalId` shows as `BioProject = PRJDB5192`
 (one row), no `.Identifiers.ExternalId.Namespace/.Value/.Label` leaves.
 
+## Status
+
+Rolled out to **all** entities: shared helpers extracted to `Mapping/Convert.fs`, and every entity has
+its own explicit, decompilation-decoupled converter under `Mapping/<Entity>/<Entity>.fs`
+(BioProject/BioSample/Study/Experiment/Run/Analysis/Submission/Receipt). `INSDC.fs` is now a thin facade.
+No entity node carries flat decompilation leaves; a Study's `ExternalId namespace="BioProject"` folds to
+one `BioProject = <accession>` annotation **and** a `references` edge to that BioProject.
+
 ## Future work
 
 Reconnect the structural ontology as a **term provider** (field/xpath → `OntologyTerm`) so explicit
-annotations carry real ontology terms instead of synthetic ones; roll the per-accession folder pattern
-out to the remaining six entities; consider a type-directed registry if the folder set grows.
+annotations carry real ontology terms instead of the current synthetic ones; consider a type-directed
+registry if the folder set grows; fold the remaining composites (`XrefLink`/`UrlLink` in `*_LINKS`).
 
 ## Key files
 

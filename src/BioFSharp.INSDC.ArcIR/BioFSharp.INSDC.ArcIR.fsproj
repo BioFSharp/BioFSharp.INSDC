@@ -20,7 +20,15 @@
     <Compile Include="Mapping\SubObjects.fs" />
     <Compile Include="Mapping\Mapping.fs" />
     <Compile Include="Mapping\Annotations.fs" />
+    <Compile Include="Mapping\Convert.fs" />
     <Compile Include="Mapping\BioProject\BioProject.fs" />
+    <Compile Include="Mapping\BioSample\BioSample.fs" />
+    <Compile Include="Mapping\Study\Study.fs" />
+    <Compile Include="Mapping\Experiment\Experiment.fs" />
+    <Compile Include="Mapping\Run\Run.fs" />
+    <Compile Include="Mapping\Analysis\Analysis.fs" />
+    <Compile Include="Mapping\Submission\Submission.fs" />
+    <Compile Include="Mapping\Receipt\Receipt.fs" />
     <Compile Include="Mapping\INSDC.fs" />
     <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
     <None Include="..\..\README.md" Pack="true" PackagePath="" />
