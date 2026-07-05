@@ -29,11 +29,6 @@ module INSDC =
           strProp "CenterName" o.CenterName
           strProp "BrokerName" o.BrokerName ]
 
-    /// INSDC `Attribute`s (tag/value) as candidate properties. Same-tag attributes collapse (the
-    /// `Properties` map keeps the last); the full positional set still survives in the ontology overlay.
-    let private attributeProps (attrs: seq<InsdcAttribute>) : (Iri * ArcValue) option list =
-        attrs |> Seq.map (fun a -> strProp a.Tag a.Value) |> List.ofSeq
-
     /// A cross-entity reference (`RefObject`) as a `PendingRelation` from `subject`, resolved later.
     let private pendingRef (subject: string) (predicate: Iri) (refObj: #RefObject) : PendingRelation =
         {
@@ -67,33 +62,17 @@ module INSDC =
         let subNodes, subEdges = List.unzip subs
         { Objects = node :: subNodes; Relations = subEdges; Pending = pending }
 
-    /// BioProject -> a `Collection` node (also typed as an ISA Investigation).
-    let bioProject (project: BioProject) : ConversionResult =
-        let nodeId = entityId project
-        let firstPublic =
-            ArcValueConversion.ofNullableDateTime project.FirstPublic
-            |> Option.map (fun v -> iri "FirstPublic", v)
-        let scalars = [ strProp "Name" project.Name; strProp "Title" project.Title; strProp "Description" project.Description; firstPublic ]
-        let props = baseProperties project @ scalars @ attributeProps project.ProjectAttributes |> List.choose id
-        let relatedPending =
-            project.RelatedProjects
-            |> Seq.collect (fun rp ->
-                [ (if isNull rp.ParentProject then None else pendingAccession nodeId Vocabulary.Rel.hasParentProject rp.ParentProject.Accession)
-                  (if isNull rp.ChildProject then None else pendingAccession nodeId Vocabulary.Rel.hasChildProject rp.ChildProject.Accession)
-                  (if isNull rp.PeerProject then None else pendingAccession nodeId Vocabulary.Rel.hasPeerProject rp.PeerProject.Accession) ]
-                |> List.choose id)
-            |> List.ofSeq
-        let node =
-            ArcObject.create nodeId ArcObjectKind.Collection [ Vocabulary.DType.bioProject; Vocabulary.DType.investigation ] props (Ontology.annotationsOf project)
-        result node (institutionAgents nodeId project) relatedPending
+    /// BioProject -> a `Collection` node (also typed as an ISA Investigation). Delegates to the explicit,
+    /// decompilation-decoupled converter — the per-accession restructure exemplar.
+    let bioProject (project: BioProject) : ConversionResult = BioProjectConversion.convert project
 
     /// BioSample -> an `Observable` (input material) plus its organism/taxon sub-object.
     let bioSample (sample: BioSample) : ConversionResult =
         let nodeId = entityId sample
         let scalars = [ strProp "Title" sample.Title; strProp "Description" sample.Description ]
-        let props = baseProperties sample @ scalars @ attributeProps sample.SampleAttributes |> List.choose id
+        let props = baseProperties sample @ scalars |> List.choose id
         let node =
-            ArcObject.create nodeId ArcObjectKind.Observable [ Vocabulary.DType.bioSample; Vocabulary.DType.sample ] props (Ontology.annotationsOf sample)
+            ArcObject.create nodeId ArcObjectKind.Observable [ Vocabulary.DType.bioSample; Vocabulary.DType.sample ] props (Ontology.annotationsOf sample @ Annotations.attributeAnnotations sample.SampleAttributes)
         let organism = if isNull sample.SampleName then [] else [ SubObjects.organism nodeId sample.SampleName ]
         result node (organism @ institutionAgents nodeId sample) []
 
@@ -106,7 +85,7 @@ module INSDC =
             | design -> strProp "DesignDescription" design.DesignDescription
         let props = baseProperties experiment @ [ strProp "Title" experiment.Title; designDescription ] |> List.choose id
         let node =
-            ArcObject.create nodeId ArcObjectKind.Activity [ Vocabulary.DType.experiment; Vocabulary.DType.assay ] props (Ontology.annotationsOf experiment)
+            ArcObject.create nodeId ArcObjectKind.Activity [ Vocabulary.DType.experiment; Vocabulary.DType.assay ] props (Ontology.annotationsOf experiment @ Annotations.attributeAnnotations experiment.ExperimentAttributes)
         let instrument = if isNull experiment.Platform then [] else SubObjects.instrument nodeId experiment.Platform |> Option.toList
         let protocol =
             match experiment.Design with
@@ -150,9 +129,9 @@ module INSDC =
                   strProp "StudyDescription" d.StudyDescription
                   (if d.ProjectId.HasValue then Some(iri "ProjectId", ArcValueConversion.ofInt64 d.ProjectId.Value) else None)
                   studyType ]
-        let props = baseProperties study @ descriptorProps @ attributeProps study.StudyAttributes |> List.choose id
+        let props = baseProperties study @ descriptorProps |> List.choose id
         let node =
-            ArcObject.create nodeId ArcObjectKind.Collection [ Vocabulary.DType.study ] props (Ontology.annotationsOf study)
+            ArcObject.create nodeId ArcObjectKind.Collection [ Vocabulary.DType.study ] props (Ontology.annotationsOf study @ Annotations.attributeAnnotations study.StudyAttributes)
         result node (institutionAgents nodeId study) []
 
     /// Run -> an `Activity`: instrument + data-file sub-objects, an edge to its experiment.
@@ -161,7 +140,7 @@ module INSDC =
         let runDate = ArcValueConversion.ofNullableDateTime run.RunDate |> Option.map (fun v -> iri "RunDate", v)
         let props = baseProperties run @ [ strProp "Title" run.Title; strProp "RunCenter" run.RunCenter; runDate ] |> List.choose id
         let node =
-            ArcObject.create nodeId ArcObjectKind.Activity [ Vocabulary.DType.run ] props (Ontology.annotationsOf run)
+            ArcObject.create nodeId ArcObjectKind.Activity [ Vocabulary.DType.run ] props (Ontology.annotationsOf run @ Annotations.attributeAnnotations run.RunAttributes)
         let instrument = if isNull run.Platform then [] else SubObjects.instrument nodeId run.Platform |> Option.toList
         let dataFiles =
             if isNull run.DataBlock then []
@@ -181,9 +160,9 @@ module INSDC =
                 |> Option.map (fun name -> iri "AnalysisType", ArcValue.String name)
         let analysisDate = ArcValueConversion.ofNullableDateTime analysis.AnalysisDate |> Option.map (fun v -> iri "AnalysisDate", v)
         let scalars = [ strProp "Title" analysis.Title; strProp "Description" analysis.Description; strProp "AnalysisCenter" analysis.AnalysisCenter; analysisDate; analysisType ]
-        let props = baseProperties analysis @ scalars @ attributeProps analysis.AnalysisAttributes |> List.choose id
+        let props = baseProperties analysis @ scalars |> List.choose id
         let node =
-            ArcObject.create nodeId ArcObjectKind.Activity [ Vocabulary.DType.analysis ] props (Ontology.annotationsOf analysis)
+            ArcObject.create nodeId ArcObjectKind.Activity [ Vocabulary.DType.analysis ] props (Ontology.annotationsOf analysis @ Annotations.attributeAnnotations analysis.AnalysisAttributes)
         let dataFiles = analysis.Files |> Seq.map (SubObjects.analysisFile nodeId) |> List.ofSeq
         let centerAgent = SubObjects.organization nodeId analysis.AnalysisCenter |> Option.toList
         let pending =
@@ -200,9 +179,9 @@ module INSDC =
         let nodeId = entityId submission
         let submissionDate = ArcValueConversion.ofNullableDateTime submission.SubmissionDate |> Option.map (fun v -> iri "SubmissionDate", v)
         let scalars = [ strProp "Title" submission.Title; strProp "SubmissionComment" submission.SubmissionComment; strProp "LabName" submission.LabName; submissionDate ]
-        let props = baseProperties submission @ scalars @ attributeProps submission.SubmissionAttributes |> List.choose id
+        let props = baseProperties submission @ scalars |> List.choose id
         let node =
-            ArcObject.create nodeId ArcObjectKind.Collection [ Vocabulary.DType.submission ] props (Ontology.annotationsOf submission)
+            ArcObject.create nodeId ArcObjectKind.Collection [ Vocabulary.DType.submission ] props (Ontology.annotationsOf submission @ Annotations.attributeAnnotations submission.SubmissionAttributes)
         let contacts = submission.Contacts |> Seq.choose (SubObjects.submissionContact nodeId) |> List.ofSeq
         let lab = SubObjects.organization nodeId submission.LabName |> Option.toList
         result node (contacts @ lab @ institutionAgents nodeId submission) []

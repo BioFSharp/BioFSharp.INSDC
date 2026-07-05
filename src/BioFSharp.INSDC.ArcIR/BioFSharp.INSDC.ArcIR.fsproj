@@ -19,6 +19,8 @@
     <Compile Include="Mapping\Ontology.fs" />
     <Compile Include="Mapping\SubObjects.fs" />
     <Compile Include="Mapping\Mapping.fs" />
+    <Compile Include="Mapping\Annotations.fs" />
+    <Compile Include="Mapping\BioProject\BioProject.fs" />
     <Compile Include="Mapping\INSDC.fs" />
     <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
     <None Include="..\..\README.md" Pack="true" PackagePath="" />

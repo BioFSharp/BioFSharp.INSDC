@@ -51,13 +51,17 @@ module internal GraphText =
     let annotationName (a: ArcAnnotation) =
         a.Property.Name |> Option.defaultValue (localName a.Property.Id.Value)
 
-    /// A friendly node label: a title/name property if present, else the node's id.
+    /// A friendly node label. Accession is the stable identity, so it always wins over the (descriptive)
+    /// title/name; falls back to the node's id (which is itself the accession/alias for entity nodes).
     let nodeLabel (o: ArcObject) =
-        o.Properties
-        |> Seq.tryPick (fun kv ->
-            match localName kv.Key.Value with
-            | ln when String.Equals(ln, "Title", StringComparison.OrdinalIgnoreCase)
-                      || String.Equals(ln, "Name", StringComparison.OrdinalIgnoreCase) ->
-                Some(renderValue kv.Value)
-            | _ -> None)
+        let pick (name: string) =
+            o.Properties
+            |> Seq.tryPick (fun kv ->
+                if String.Equals(name, localName kv.Key.Value, StringComparison.OrdinalIgnoreCase) then
+                    Some(renderValue kv.Value)
+                else
+                    None)
+        pick "Accession"
+        |> Option.orElseWith (fun () -> pick "Title")
+        |> Option.orElseWith (fun () -> pick "Name")
         |> Option.defaultValue o.Id.Value

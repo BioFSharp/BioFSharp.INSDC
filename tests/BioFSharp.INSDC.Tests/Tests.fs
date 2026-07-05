@@ -691,12 +691,38 @@ type ArcMappingTests() =
         | v -> Assert.True(false, $"InstrumentModel should be an Iri, got {v}")
 
     [<Fact>]
+    member _.``the bioproject converter is decoupled from the flat decompilation`` () =
+        // BioProject uses the explicit per-accession converter: annotations-first (empty Properties) and
+        // no shredded structural-ontology leaves (those are entity-qualified, e.g. "BioProject.Foo.Bar").
+        let node = objectById project.Accession
+        Assert.True(node.Properties.IsEmpty)
+        Assert.NotEmpty node.Annotations
+        Assert.False(
+            node.Annotations
+            |> List.exists (fun a -> (defaultArg a.Property.Name "").StartsWith "BioProject."))
+
+    [<Fact>]
     member _.``a mapped object carries ontology annotations from the structural ontology`` () =
         let node = objectById sample.Accession
         Assert.NotEmpty node.Annotations
         Assert.True(
             node.Annotations
             |> List.exists (fun a -> a.Property.Name = Some "BioSample.Accession"))
+
+    [<Fact>]
+    member _.``INSDC attributes become paired annotations, not tag-keyed properties`` () =
+        // Arbitrary tag/value metadata belongs in the annotation layer, not the last-resort Properties
+        // dump: the tag is the annotation term's Name and the value is its literal.
+        let node = objectById analysis.Accession
+        let ena = node.Annotations |> List.find (fun a -> a.Property.Name = Some "ENA-STATUS")
+        match ena.Value with
+        | AnnotationValue.Literal(ArcValue.String v) -> Assert.Equal("PUBLIC", v)
+        | v -> Assert.True(false, $"expected a string literal, got {v}")
+        // Not duplicated into Properties, and the redundant flat structural leaves are suppressed.
+        Assert.False(node.Properties.ContainsKey(Iri.Create "ENA-STATUS"))
+        Assert.False(
+            node.Annotations
+            |> List.exists (fun a -> (defaultArg a.Property.Name "").EndsWith ".Attribute.Tag"))
 
 
 type ArcResolverTests() =
@@ -732,6 +758,44 @@ type ArcResolverTests() =
     member _.``an unresolved refname falls back to a synthetic id`` () =
         let edges = Mapping.resolveRelations [] [ pending None (Some "ghost") None ]
         Assert.Equal(ArcId.Create "ghost", (List.exactlyOne edges).Object)
+
+
+type IdentifierAnnotationTests() =
+
+    // Folding INSDC <IDENTIFIERS> composites into single annotations (+ an edge when the namespace names
+    // a modelled entity), preserving object integrity instead of shredding namespace/value/label.
+    let externalId (ns: string) (value: string) =
+        let q = QualifiedName(Namespace = ns, Value = value)
+        let ids = Identifier()
+        ids.ExternalId.Add q
+        ids
+
+    [<Fact>]
+    member _.``an external identifier folds to one namespaced annotation`` () =
+        let anns, _ = Annotations.identifierAnnotations "SUBJ" (externalId "Study" "DRP999")
+        let ann = anns |> List.find (fun a -> a.Property.Name = Some "Study")
+        match ann.Value with
+        | AnnotationValue.Literal(ArcValue.String v) -> Assert.Equal("DRP999", v)
+        | v -> Assert.True(false, $"expected a string literal, got {v}")
+
+    [<Fact>]
+    member _.``an identifier naming a modelled entity draws a references edge`` () =
+        let _, edges = Annotations.identifierAnnotations "SUBJ" (externalId "Study" "DRP999")
+        let edge = List.exactlyOne edges
+        Assert.Equal(ArcId.Create "SUBJ", edge.Subject)
+        Assert.Equal(Vocabulary.Rel.references, edge.Predicate)
+        Assert.Equal(Some "DRP999", edge.TargetAccession)
+
+    [<Fact>]
+    member _.``a self-referencing identifier folds but draws no edge`` () =
+        let anns, edges = Annotations.identifierAnnotations "SUBJ" (externalId "BioProject" "SUBJ")
+        Assert.NotEmpty anns
+        Assert.Empty edges
+
+    [<Fact>]
+    member _.``an identifier in a non-modelled namespace draws no edge`` () =
+        let _, edges = Annotations.identifierAnnotations "SUBJ" (externalId "PubMed" "12345")
+        Assert.Empty edges
 
 
 type GraphMlExportTests() =
@@ -772,6 +836,11 @@ type GraphMlExportTests() =
     member _.``the export is a well-formed graphml document`` () =
         Assert.Equal("graphml", doc.Root.Name.LocalName)
         Assert.Equal("directed", attr "edgedefault" (doc.Root.Element(gml + "graph")))
+
+    [<Fact>]
+    member _.``the node label prefers the accession over the title`` () =
+        // The experiment has a Title, but its label is the accession (the stable identity).
+        Assert.Equal(Some experiment.Accession, dataVal "label" (nodeById experiment.Accession))
 
     [<Fact>]
     member _.``node and edge counts match the graph (dangling endpoints become placeholder nodes)`` () =

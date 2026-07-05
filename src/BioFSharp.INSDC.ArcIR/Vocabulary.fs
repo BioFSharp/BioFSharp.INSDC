@@ -38,6 +38,9 @@ module Vocabulary =
         // Receipt acknowledgements (Id buckets; not RefObject).
         let acknowledges = term "acknowledges"
 
+        // Cross-reference from an identifier (IDENTIFIERS/EXTERNAL_ID etc.) to the entity it names.
+        let references = term "references"
+
         // Sub-object edges.
         let hasOrganism = term "hasOrganism" // BioSample -> Organism/Taxon
         let usesInstrument = term "usesInstrument" // Experiment/Run -> Instrument

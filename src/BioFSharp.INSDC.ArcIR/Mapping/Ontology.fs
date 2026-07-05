@@ -33,8 +33,20 @@ module Ontology =
     let annotationsOfLeaves (leaves: DecompiledTerm list) : ArcAnnotation list =
         leaves |> List.map annotationOfLeaf
 
+    /// True for a structural-ontology leaf that is one field of an INSDC `<Attribute>` (tag/value/units).
+    /// Arbitrary attribute key/value metadata is lifted to first-class, *paired* annotations by the
+    /// converters (`INSDC.attributeAnnotations`), so these flat, unpaired structural leaves are dropped
+    /// here to avoid a redundant second copy (the "tag and value in a single list each" problem).
+    let private isAttributeLeaf (leaf: DecompiledTerm) : bool =
+        match leaf.Term.Name with
+        | null -> false
+        | name -> name.EndsWith ".Attribute.Tag" || name.EndsWith ".Attribute.Value" || name.EndsWith ".Attribute.Units"
+
     /// Decompile a parsed INSDC record (any entity — `decompile` is generic) and turn every
-    /// structural-ontology leaf into an annotation. This is the overlay a converter attaches to the
-    /// entity's mapped object, reusing the ontology instead of hand-mapping field semantics.
+    /// structural-ontology leaf into an annotation, except the `<Attribute>` leaves (see above). This is
+    /// the overlay a converter attaches to the entity's mapped object, reusing the ontology instead of
+    /// hand-mapping field semantics.
     let annotationsOf (root: 'Root) : ArcAnnotation list =
-        StructuralOntology.decompile root |> annotationsOfLeaves
+        StructuralOntology.decompile root
+        |> List.filter (isAttributeLeaf >> not)
+        |> annotationsOfLeaves
