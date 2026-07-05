@@ -594,6 +594,34 @@ CREATE TABLE run_experiment_ref_identifiers (
 -- directive). Full mapping is out of scope for this phase.
 
 -- ============================================================================
+-- accession_relations
+--   The flat connectivity graph captured from the ENA Portal API `read_run`
+--   report during a crawl: one row per run, linking it to its experiment,
+--   sample, study, and project. This is NOT a decomposed record — it is the
+--   raw connectivity tuple ENA returns for a project/study.
+--
+--   Deliberately has NO foreign keys to the entity tables: connectivity is
+--   recorded even when a referenced record's XML failed to download (or was
+--   never fetched), so the graph is complete independently of record coverage.
+--   Because of that, the transitive sample -> project link (otherwise only
+--   reachable via experiment_sample_descriptor -> experiment -> study) is a
+--   single-row lookup here.
+--
+--   Column naming is clarified from ENA's, which confusingly calls the
+--   BioProject "study_accession" and the Study "secondary_study_accession".
+-- ============================================================================
+
+CREATE TABLE accession_relations (
+    run_accession        TEXT PRIMARY KEY NOT NULL, -- read_run is run-keyed: one row per run
+    experiment_accession TEXT,                      -- the run's experiment (ENA experiment_accession)
+    sample_accession     TEXT,                      -- the run's sample (ENA sample_accession)
+    study_accession      TEXT,                      -- the Study (ENA "secondary_study_accession": SRP/ERP/DRP)
+    project_accession    TEXT,                      -- the BioProject (ENA "study_accession": PRJ...)
+    root_accession       TEXT,                      -- the accession the crawl started from
+    fetched_at           TEXT                       -- ISO-8601 timestamp when discovery fetched this row
+);
+
+-- ============================================================================
 -- Indexes on every foreign-key column.
 --   Primary-key columns are already indexed by SQLite. These indexes cover the
 --   non-PK FK columns that joins traverse, so parent → children navigation
@@ -619,3 +647,10 @@ CREATE INDEX ix_run_identifiers_kind          ON run_identifiers        (run_acc
 CREATE INDEX ix_experiment_study_ref_target            ON experiment_study_ref            (accession);
 CREATE INDEX ix_experiment_sample_descriptor_target    ON experiment_sample_descriptor    (accession);
 CREATE INDEX ix_run_experiment_ref_target              ON run_experiment_ref              (accession);
+
+-- accession_relations connectivity lookups (project/sample/study/experiment ->
+-- their runs, without scanning the whole table):
+CREATE INDEX ix_accession_relations_experiment ON accession_relations (experiment_accession);
+CREATE INDEX ix_accession_relations_sample     ON accession_relations (sample_accession);
+CREATE INDEX ix_accession_relations_study      ON accession_relations (study_accession);
+CREATE INDEX ix_accession_relations_project    ON accession_relations (project_accession);

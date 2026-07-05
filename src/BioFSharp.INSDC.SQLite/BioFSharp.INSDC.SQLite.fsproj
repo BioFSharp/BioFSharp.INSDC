@@ -21,6 +21,7 @@
     <Compile Include="BioSample.fs" />
     <Compile Include="Experiment.fs" />
     <Compile Include="Run.fs" />
+    <Compile Include="AccessionRelations.fs" />
     <EmbeddedResource Include="schema\insdc_schema.sql" />
     <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
     <None Include="..\..\README.md" Pack="true" PackagePath="" />
