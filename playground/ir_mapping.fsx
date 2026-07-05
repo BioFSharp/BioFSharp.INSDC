@@ -9,9 +9,9 @@
 #r "nuget: OBO.NET, 0.6.0"
 #r "nuget: System.ComponentModel.Annotations, 5.0.0"
 
-#r "../src/BioFSharp.FileFormats.INSDC/bin/Debug/netstandard2.0/BioFSharp.FileFormats.INSDC.dll"
-#r "../src/BioFSharp.IO.INSDC/bin/Debug/netstandard2.0/BioFSharp.IO.INSDC.dll"
-#r "../src/BioFSharp.INSDC.ArcIR/bin/Debug/netstandard2.0/BioFSharp.INSDC.ArcIR.dll"
+#r "../src/BioFSharp.FileFormats.INSDC/bin/Release/netstandard2.0/BioFSharp.FileFormats.INSDC.dll"
+#r "../src/BioFSharp.IO.INSDC/bin/Release/netstandard2.0/BioFSharp.IO.INSDC.dll"
+#r "../src/BioFSharp.INSDC.ArcIR/bin/Release/netstandard2.0/BioFSharp.INSDC.ArcIR.dll"
 
 open System.IO
 open Arc.Build

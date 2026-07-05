@@ -105,13 +105,16 @@ html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,'Seg
 .node{cursor:pointer}
 .node circle{stroke:#fff;stroke-width:1.5}
 .node.sel circle{stroke:#222;stroke-width:2.5}
-#panel{width:340px;border-left:1px solid #e3e3e3;overflow:auto;padding:16px;background:#fff}
-#panel h2{font-size:15px;margin:0 0 8px;word-break:break-all}
+#panel{flex:0 0 auto;width:340px;min-width:220px;max-width:80vw;background:#fff;display:flex}
+#pbody{flex:1 1 auto;overflow:auto;padding:16px;min-width:0}
+#panel h2{font-size:15px;margin:0 0 8px;word-break:break-word}
 #panel h3{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin:16px 0 6px}
 .badge{display:inline-block;color:#fff;font-size:11px;padding:2px 9px;border-radius:10px;margin-bottom:10px}
-table{width:100%;border-collapse:collapse;font-size:12px}
-td{padding:3px 6px;border-bottom:1px solid #f0f0f0;vertical-align:top;word-break:break-word}
-td.k{color:#666;white-space:nowrap;width:38%}
+#grip{flex:0 0 8px;cursor:col-resize;background:#e3e3e3;border-right:1px solid #d8d8d8}
+#grip:hover{background:#9aa0a6}
+.row{padding:5px 0;border-bottom:1px solid #f0f0f0}
+.row .k{color:#888;font-size:11px;word-break:break-word;margin-bottom:1px}
+.row .v{font-size:13px;word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap}
 #bar{position:absolute;top:10px;left:10px;font-size:12px;color:#555;background:rgba(255,255,255,.88);padding:6px 10px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 #bar button{font-size:11px;margin-left:8px;cursor:pointer}
 .hint{color:#aaa}
@@ -122,9 +125,10 @@ td.k{color:#666;white-space:nowrap;width:38%}
  html,body{background:#1e1e1e;color:#ddd}
  #graph{background:#1e1e1e}
  .edge{stroke:#3a3a3a}.elabel{fill:#777}.nlabel{fill:#ccc}
- #panel{background:#252525;border-color:#333}
+ #panel{background:#252525}
  #panel h2{color:#eee}
- td{border-color:#333}td.k{color:#999}
+ #grip{background:#333;border-color:#444}#grip:hover{background:#555}
+ .row{border-color:#333}.row .k{color:#999}
  #bar,#legend{background:rgba(42,42,42,.92);color:#ccc}
 }
 </style>
@@ -136,7 +140,7 @@ td.k{color:#666;white-space:nowrap;width:38%}
   <div id="bar"><span id="counts"></span><button id="reset">Reset view</button><span class="hint"> &middot; scroll = zoom, drag background = pan, drag node = move, click node = details</span></div>
   <div id="legend"></div>
  </div>
- <aside id="panel"><h2>ArcIR graph</h2><p class="hint">Click a node to see its properties and annotations.</p></aside>
+ <aside id="panel"><div id="grip"></div><div id="pbody"><h2>ArcIR graph</h2><p class="hint">Click a node to see its properties and annotations.</p></div></aside>
 </div>
 <script>
 const DATA = __DATA__;
@@ -181,16 +185,24 @@ window.addEventListener('mousemove',ev=>{
 window.addEventListener('mouseup',()=>{panning=false;if(drag){drag.fixed=false;drag=null;}});
 function startDrag(ev,n){ev.stopPropagation();ev.preventDefault();drag=n;n.fixed=true;select(n);}
 const panel=document.getElementById('panel');
-function addRow(tbl,k,v){const tr=document.createElement('tr'),a=document.createElement('td'),b=document.createElement('td');a.className='k';a.textContent=k;b.textContent=v;tr.appendChild(a);tr.appendChild(b);tbl.appendChild(tr);}
-function section(title,pairs){if(!pairs||!pairs.length)return null;const frag=document.createDocumentFragment(),h=document.createElement('h3');h.textContent=title+' ('+pairs.length+')';const tbl=document.createElement('table');pairs.forEach(p=>addRow(tbl,p[0],p[1]));frag.appendChild(h);frag.appendChild(tbl);return frag;}
+const pbody=document.getElementById('pbody');
+// Drag the grip on the panel's left edge to resize the inspection pane.
+const grip=document.getElementById('grip');
+let resizing=false;
+grip.addEventListener('mousedown',ev=>{ev.preventDefault();resizing=true;document.body.style.userSelect='none';document.body.style.cursor='col-resize';});
+window.addEventListener('mousemove',ev=>{if(resizing){panel.style.width=Math.min(Math.max(window.innerWidth-ev.clientX,220),window.innerWidth-160)+'px';}});
+window.addEventListener('mouseup',()=>{if(resizing){resizing=false;document.body.style.userSelect='';document.body.style.cursor='';}});
+// Stacked key-over-value rows so a long term name never squeezes the value.
+function row(container,k,v){const r=document.createElement('div');r.className='row';const kk=document.createElement('div');kk.className='k';kk.textContent=k;const vv=document.createElement('div');vv.className='v';vv.textContent=v;r.appendChild(kk);r.appendChild(vv);container.appendChild(r);}
+function section(title,pairs){if(!pairs||!pairs.length)return null;const frag=document.createDocumentFragment(),h=document.createElement('h3');h.textContent=title+' ('+pairs.length+')';frag.appendChild(h);pairs.forEach(p=>row(frag,p[0],p[1]));return frag;}
 function select(n){
  nodeEls.forEach(({n:m,g})=>g.classList.toggle('sel',m===n));
- panel.innerHTML='';
- const h=document.createElement('h2');h.textContent=n.label;panel.appendChild(h);
- const b=document.createElement('div');b.className='badge';b.textContent=n.kind;b.style.background=KIND_COLORS[n.kind]||'#888';panel.appendChild(b);
- const meta=document.createElement('table');addRow(meta,'id',n.id);if(n.dtypes)addRow(meta,'dtypes',n.dtypes);panel.appendChild(meta);
- const ps=section('Properties',n.props);if(ps)panel.appendChild(ps);
- const an=section('Annotations',n.annotations);if(an)panel.appendChild(an);
+ pbody.innerHTML='';
+ const h=document.createElement('h2');h.textContent=n.label;pbody.appendChild(h);
+ const b=document.createElement('div');b.className='badge';b.textContent=n.kind;b.style.background=KIND_COLORS[n.kind]||'#888';pbody.appendChild(b);
+ const meta=document.createElement('div');row(meta,'id',n.id);if(n.dtypes)row(meta,'dtypes',n.dtypes);pbody.appendChild(meta);
+ const ps=section('Properties',n.props);if(ps)pbody.appendChild(ps);
+ const an=section('Annotations',n.annotations);if(an)pbody.appendChild(an);
 }
 </script>
 </body>
