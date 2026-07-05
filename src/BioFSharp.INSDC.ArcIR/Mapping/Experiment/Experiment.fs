@@ -52,10 +52,10 @@ module ExperimentConversion =
                         if isNull sd.Pool then
                             []
                         else
-                            (if isNull sd.Pool.DefaultMember then [] else [ Convert.pendingRef nodeId Vocabulary.Rel.hasSample sd.Pool.DefaultMember ])
-                            @ (sd.Pool.Member |> Seq.map (Convert.pendingRef nodeId Vocabulary.Rel.hasSample) |> List.ofSeq)
+                            (if isNull sd.Pool.DefaultMember then [] else [ Convert.pendingSampleRef nodeId sd.Pool.DefaultMember ])
+                            @ (sd.Pool.Member |> Seq.map (Convert.pendingSampleRef nodeId) |> List.ofSeq)
 
-                    Convert.pendingRef nodeId Vocabulary.Rel.hasSample sd :: pooled
+                    Convert.pendingSampleRef nodeId sd :: pooled
 
         let studyPending =
             match experiment.StudyRef with

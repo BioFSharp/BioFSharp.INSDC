@@ -647,7 +647,9 @@ type ArcMappingTests() =
     [<Fact>]
     member _.``the experiment links to study, sample, instrument and protocol`` () =
         Assert.True(hasEdge experiment.Accession Vocabulary.Rel.hasStudy "DRP003416")
-        Assert.True(hasEdge experiment.Accession Vocabulary.Rel.hasSample "DRS039895")
+        // The SAMPLE_DESCRIPTOR references the SRA accession DRS039895, but the edge resolves to the
+        // BioSample node (SAMD00064197) via the descriptor's EXTERNAL_ID[namespace=BioSample].
+        Assert.True(hasEdge experiment.Accession Vocabulary.Rel.hasSample sample.Accession)
         Assert.True(hasPredicate experiment.Accession Vocabulary.Rel.usesInstrument)
         Assert.True(hasPredicate experiment.Accession Vocabulary.Rel.hasProtocol)
 
@@ -933,3 +935,25 @@ type HtmlExportTests() =
         let out = Html.toString (ArcIR.Empty |> ArcIR.addObject evil)
         Assert.DoesNotContain("</script><b>hi", out)
         Assert.Contains("\\u003c/script>", out)
+
+type SampleReferenceTests() =
+
+    [<Fact>]
+    member _.``experiment resolves its sample reference to the BioSample node, not the SRA sample accession`` () =
+        // DRX066772's SAMPLE_DESCRIPTOR references the SRA sample accession DRS039895, but the
+        // BioSample node is keyed by its BioSample accession SAMD00064197; the descriptor's
+        // EXTERNAL_ID[namespace=BioSample] carries that key, so the hasSample edge must resolve to
+        // SAMD00064197 and never dangle to DRS039895.
+        let experiment = Experiment.read (TestFiles.fixture "DRX066772.xml") |> Seq.exactlyOne
+        let sample = BioSample.read (TestFiles.fixture "SAMD00064197.xml") |> Seq.exactlyOne
+        let ir = INSDC.build [ INSDC.experiment experiment; INSDC.bioSample sample ]
+
+        let sampleTargets =
+            ir.Relations
+            |> Seq.filter (fun r -> r.Subject.Value = "DRX066772" && r.Predicate = Vocabulary.Rel.hasSample)
+            |> Seq.map (fun r -> r.Object.Value)
+            |> Seq.toList
+
+        Assert.Contains("SAMD00064197", sampleTargets)
+        Assert.DoesNotContain("DRS039895", sampleTargets)
+

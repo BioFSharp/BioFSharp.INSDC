@@ -41,7 +41,7 @@ module AnalysisConversion =
 
         let refEdges =
             [ (if isNull analysis.StudyRef then [] else [ Convert.pendingRef nodeId Vocabulary.Rel.hasStudy analysis.StudyRef ])
-              (analysis.SampleRef |> Seq.map (Convert.pendingRef nodeId Vocabulary.Rel.hasSample) |> List.ofSeq)
+              (analysis.SampleRef |> Seq.map (Convert.pendingSampleRef nodeId) |> List.ofSeq)
               (analysis.ExperimentRef |> Seq.map (Convert.pendingRef nodeId Vocabulary.Rel.hasExperiment) |> List.ofSeq)
               (analysis.RunRef |> Seq.map (Convert.pendingRef nodeId Vocabulary.Rel.hasRun) |> List.ofSeq)
               (analysis.AnalysisRef |> Seq.map (Convert.pendingRef nodeId Vocabulary.Rel.hasAnalysis) |> List.ofSeq) ]

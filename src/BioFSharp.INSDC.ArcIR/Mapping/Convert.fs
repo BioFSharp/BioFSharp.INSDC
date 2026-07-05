@@ -25,6 +25,33 @@ module Convert =
           TargetRefname = Option.ofObj refObj.Refname
           TargetRefcenter = Option.ofObj refObj.Refcenter }
 
+    /// A sample reference (`SAMPLE_DESCRIPTOR` / `SAMPLE_REF`) as a pending `hasSample` edge.
+    /// INSDC references a sample by its SRA accession (e.g. `DRS039895`) while the BioSample
+    /// node is keyed by its BioSample accession (`SAMD00064197`); the descriptor's nested
+    /// `EXTERNAL_ID namespace="BioSample"` carries that key, so it is preferred as the edge
+    /// target when present. Without it the edge would dangle to the (unloaded) SRA accession.
+    let pendingSampleRef (subject: string) (refObj: #RefObject) : PendingRelation =
+        let bioSampleAccession =
+            if isNull refObj.Identifiers || isNull refObj.Identifiers.ExternalId then
+                None
+            else
+                refObj.Identifiers.ExternalId
+                |> Seq.tryPick (fun external ->
+                    if
+                        not (isNull (box external))
+                        && System.String.Equals(external.Namespace, "BioSample", System.StringComparison.OrdinalIgnoreCase)
+                        && not (System.String.IsNullOrWhiteSpace external.Value)
+                    then
+                        Some external.Value
+                    else
+                        None)
+
+        let pending = pendingRef subject Vocabulary.Rel.hasSample refObj
+
+        match bioSampleAccession with
+        | Some accession -> { pending with TargetAccession = Some accession }
+        | None -> pending
+
     /// A pending edge to a record identified by a bare accession string (for non-`RefObject` links).
     let pendingAccession (subject: string) (predicate: Iri) (accession: string) : PendingRelation option =
         if System.String.IsNullOrWhiteSpace accession then
