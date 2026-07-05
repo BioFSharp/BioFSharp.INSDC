@@ -957,3 +957,174 @@ type SampleReferenceTests() =
         Assert.Contains("SAMD00064197", sampleTargets)
         Assert.DoesNotContain("DRS039895", sampleTargets)
 
+// Scoped here (not at the top of the file) so the crawler namespace does not
+// disturb the earlier tests. `BioFSharp.INSDC.Crawler` exposes no `BioProject`
+// etc., so it does not clash with the IO reader modules opened above; the SQLite
+// store IS referenced fully-qualified for the same reason.
+open BioFSharp.INSDC.Crawler
+
+/// Offline fixtures for the crawler tests: a stubbed `Fetch` that maps the ENA
+/// URLs the crawler builds to the committed record/report fixtures, so a crawl
+/// runs end-to-end with no network access (AGENTS.md forbids network at test time).
+module private CrawlerFixtures =
+
+    /// Maps a crawl URL to its committed fixture body (the discovery report, or
+    /// the `*_SET` XML for one accession). Order matters: the filereport URL also
+    /// contains the project accession, so it is matched first.
+    let stubFetch (url: string) : Async<string> =
+        async {
+            let fixture =
+                if url.Contains "filereport" then "crawl-PRJDB5192.filereport.tsv"
+                elif url.Contains "DRR072834" then "DRR072834.xml"
+                elif url.Contains "DRX066772" then "DRX066772.xml"
+                elif url.Contains "SAMD00064197" then "SAMD00064197.xml"
+                elif url.Contains "DRP003416" then "DRP003416.xml"
+                elif url.Contains "PRJDB5192" then "PRJDB5192.xml"
+                else failwithf "unexpected crawl URL: %s" url
+
+            return TestFiles.fixtureText fixture
+        }
+
+    /// Crawl options wired for offline, deterministic tests.
+    let options: CrawlOptions =
+        { CrawlOptions.Default with
+            Fetch = stubFetch
+            Log = Log.silent
+            ThrottleMs = 0 }
+
+type CrawlerTests() =
+
+    [<Fact>]
+    member _.``Discovery.parse extracts the connected accessions and relationships`` () =
+        let discovered = Discovery.parse (TestFiles.fixtureText "crawl-PRJDB5192.filereport.tsv")
+        Assert.Equal<string[]>([| "PRJDB5192" |], List.toArray discovered.BioProjects)
+        Assert.Equal<string[]>([| "DRP003416" |], List.toArray discovered.Studies)
+        Assert.Equal<string[]>([| "SAMD00064197" |], List.toArray discovered.BioSamples)
+        Assert.Equal<string[]>([| "DRX066772" |], List.toArray discovered.Experiments)
+        Assert.Equal<string[]>([| "DRR072834" |], List.toArray discovered.Runs)
+        // parent relationships used to thread the SQLite foreign keys:
+        Assert.Equal("PRJDB5192", Map.find "DRP003416" discovered.StudyToProject)
+        Assert.Equal("DRP003416", Map.find "DRX066772" discovered.ExperimentToStudy)
+        Assert.Equal("DRX066772", Map.find "DRR072834" discovered.RunToExperiment)
+        // the run's FASTQ files (semicolon-separated fastq_ftp/md5/bytes, aligned):
+        let row = discovered.Rows |> List.exactlyOne
+        Assert.Equal(2, row.FastqFiles.Length)
+        Assert.EndsWith("DRR072834_1.fastq.gz", row.FastqFiles.[0].Url)
+        Assert.Equal("md5aaa", row.FastqFiles.[0].Md5)
+        Assert.Equal("222", row.FastqFiles.[1].Bytes)
+
+    [<Fact>]
+    member _.``Endpoints build the expected portal and browser URLs`` () =
+        let portal = Endpoints.portalFileReport Endpoints.DefaultPortalBaseUrl "PRJDB5192"
+        Assert.Contains("accession=PRJDB5192", portal)
+        Assert.Contains("result=read_run", portal)
+        Assert.Contains("format=tsv", portal)
+
+        let browser = Endpoints.browserXml Endpoints.DefaultBrowserBaseUrl [ "DRR1"; "DRR2" ]
+        Assert.Equal("https://www.ebi.ac.uk/ena/browser/api/xml/DRR1,DRR2", browser)
+
+    [<Fact>]
+    member _.``crawl returns the connected records (round trip into types)`` () =
+        let result =
+            Crawler.crawlWithAsync CrawlerFixtures.options "PRJDB5192"
+            |> Async.RunSynchronously
+
+        let expectedProject = BioProject.read (TestFiles.fixture "PRJDB5192.xml") |> Seq.exactlyOne
+        Assert.Equal(1, result.BioProjects.Length)
+        ObjectGraph.equal expectedProject (Array.exactlyOne result.BioProjects)
+
+        Assert.Equal("DRP003416", (Array.exactlyOne result.Studies).Accession)
+        Assert.Equal("SAMD00064197", (Array.exactlyOne result.BioSamples).Accession)
+        Assert.Equal("DRX066772", (Array.exactlyOne result.Experiments).Accession)
+
+        let expectedRun = Run.read (TestFiles.fixture "DRR072834.xml") |> Seq.exactlyOne
+        ObjectGraph.equal expectedRun (Array.exactlyOne result.Runs)
+
+    [<Fact>]
+    member _.``crawlToSqlite persists every entity and the connectivity relation (round trip into sqlite)`` () =
+        let dbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.sqlite")
+
+        try
+            Crawler.crawlToSqliteWithAsync CrawlerFixtures.options "PRJDB5192" dbPath
+            |> Async.RunSynchronously
+
+            (
+                use connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}")
+                connection.Open()
+
+                // Every entity kind is persisted and reconstructable by accession.
+                // Full structural fidelity of the store is the store's own concern
+                // (it is a normalized subset — e.g. it does not round-trip
+                // BioProject.SubmissionProject); the crawler's job of parsing
+                // records faithfully is covered by the "round trip into types" test
+                // above, so here we check identity + a representative stored field.
+                let expectedProject = BioProject.read (TestFiles.fixture "PRJDB5192.xml") |> Seq.exactlyOne
+                match BioFSharp.INSDC.SQLite.BioProject.tryGet connection "PRJDB5192" with
+                | Some stored ->
+                    Assert.Equal("PRJDB5192", stored.Accession)
+                    Assert.Equal(expectedProject.Title, stored.Title)
+                | None -> Assert.True(false, "BioProject PRJDB5192 was not persisted")
+
+                let expectedRun = Run.read (TestFiles.fixture "DRR072834.xml") |> Seq.exactlyOne
+                match BioFSharp.INSDC.SQLite.Run.tryGet connection "DRR072834" with
+                | Some stored ->
+                    Assert.Equal("DRR072834", stored.Accession)
+                    Assert.Equal(expectedRun.Title, stored.Title)
+                | None -> Assert.True(false, "Run DRR072834 was not persisted")
+
+                Assert.True((BioFSharp.INSDC.SQLite.Study.tryGet connection "DRP003416").IsSome, "Study not persisted")
+                Assert.True((BioFSharp.INSDC.SQLite.BioSample.tryGet connection "SAMD00064197").IsSome, "Sample not persisted")
+                Assert.True((BioFSharp.INSDC.SQLite.Experiment.tryGet connection "DRX066772").IsSome, "Experiment not persisted")
+
+                // The connectivity relation resolves run -> everything in one row.
+                match BioFSharp.INSDC.SQLite.AccessionRelations.tryGet connection "DRR072834" with
+                | Some relation ->
+                    Assert.Equal("DRX066772", relation.ExperimentAccession)
+                    Assert.Equal("SAMD00064197", relation.SampleAccession)
+                    Assert.Equal("DRP003416", relation.StudyAccession)
+                    Assert.Equal("PRJDB5192", relation.ProjectAccession)
+                    Assert.Equal("PRJDB5192", relation.RootAccession)
+                | None -> Assert.True(false, "accession_relations row for DRR072834 was not persisted")
+            )
+        finally
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools() |> ignore
+
+            if File.Exists dbPath then
+                File.Delete dbPath
+
+    [<Fact>]
+    member _.``crawlToSqlite is idempotent across re-runs (resume)`` () =
+        let dbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.sqlite")
+
+        try
+            Crawler.crawlToSqliteWithAsync CrawlerFixtures.options "PRJDB5192" dbPath |> Async.RunSynchronously
+            // A second run over the same DB must not throw on primary-key collisions.
+            Crawler.crawlToSqliteWithAsync CrawlerFixtures.options "PRJDB5192" dbPath |> Async.RunSynchronously
+
+            (
+                use connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}")
+                connection.Open()
+
+                Assert.Equal<string[]>(
+                    [| "PRJDB5192" |],
+                    BioFSharp.INSDC.SQLite.BioProject.listAccessions connection |> Seq.toArray)
+
+                Assert.Equal<string[]>(
+                    [| "DRR072834" |],
+                    BioFSharp.INSDC.SQLite.Run.listAccessions connection |> Seq.toArray)
+            )
+        finally
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools() |> ignore
+
+            if File.Exists dbPath then
+                File.Delete dbPath
+
+    [<Fact>]
+    member _.``LIVE crawl of a small public project (opt-in via INSDC_LIVE_TESTS=1)`` () =
+        // Off by default (AGENTS.md forbids network at test time). Set
+        // INSDC_LIVE_TESTS=1 to actually hit ENA and exercise the FsHttp path.
+        if System.Environment.GetEnvironmentVariable "INSDC_LIVE_TESTS" = "1" then
+            let result = Crawler.crawl "PRJDB5192"
+            Assert.NotEmpty result.BioSamples
+            Assert.NotEmpty result.Experiments
+            Assert.NotEmpty result.Runs

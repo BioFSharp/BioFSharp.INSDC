@@ -25,6 +25,8 @@
     <ProjectReference Include="..\..\src\BioFSharp.FileFormats.INSDC\BioFSharp.FileFormats.INSDC.csproj" />
     <ProjectReference Include="..\..\src\BioFSharp.IO.INSDC\BioFSharp.IO.INSDC.fsproj" />
     <ProjectReference Include="..\..\src\BioFSharp.INSDC.ArcIR\BioFSharp.INSDC.ArcIR.fsproj" />
+    <ProjectReference Include="..\..\src\BioFSharp.INSDC.SQLite\BioFSharp.INSDC.SQLite.fsproj" />
+    <ProjectReference Include="..\..\src\BioFSharp.INSDC.Crawler\BioFSharp.INSDC.Crawler.fsproj" />
   </ItemGroup>
 
 </Project>

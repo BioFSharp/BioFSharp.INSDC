@@ -22,7 +22,10 @@ Both target `netstandard2.0` to match BioFSharp.
 │   ├── BioFSharp.FileFormats.INSDC/        C# generated type model (.csproj)
 │   │   ├── schemas/                          Committed ENA XSDs (sra_1_5/*.xsd)
 │   │   └── Generated/                        Tool output — DO NOT HAND-EDIT
-│   └── BioFSharp.IO.INSDC/                 F# wrapper (.fsproj), one module per INSDC entity
+│   ├── BioFSharp.IO.INSDC/                 F# wrapper (.fsproj), one module per INSDC entity
+│   ├── BioFSharp.INSDC.ArcIR/              F# mapping to an ARC intermediate representation (netstandard2.0)
+│   ├── BioFSharp.INSDC.SQLite/             F# normalized SQLite store (netstandard2.0)
+│   └── BioFSharp.INSDC.Crawler/            F# ENA crawler — net8.0 dev tool, NOT packaged (see below)
 ├── tests/
 │   └── BioFSharp.INSDC.Tests/              xunit, one module per IO module
 │       └── fixtures/<entity>/<acc>.xml     Committed real ENA records used by tests
@@ -55,6 +58,30 @@ dotnet tool restore     # installs the pinned dotnet-xscgen
 - **Every public F# member** carries `///` XML doc comments. Builds run with `GenerateDocumentationFile=true`; missing docs surface as `CS1591`-equivalent warnings.
 - **The C# type model is generated.** Never hand-edit `src/BioFSharp.FileFormats.INSDC/Generated/`. To change the model, edit the XSDs in `schemas/` (rare) or adjust the generator flags in the `regenerateInsdcTypes` target, then re-run it.
 - **Adding a new INSDC entity** is a four-step recipe: (1) commit the XSD into `schemas/`, (2) run `regenerateInsdcTypes`, (3) add a parallel F# IO module in `BioFSharp.IO.INSDC`, (4) add a parallel test module + fixture.
+
+## Crawler (dev / inspection tier)
+
+`src/BioFSharp.INSDC.Crawler` pulls real records from ENA so their output can be
+inspected. It is the one project that does **not** target `netstandard2.0`: it
+uses [FsHttp](https://www.nuget.org/packages/FsHttp) for HTTP, which needs
+.NET 6+, so it is **net8.0** with `IsPackable=false` (kept out of `pack`).
+
+- **Public surface** (`Crawler` module): `crawl : accession -> CrawlResult` and
+  `crawlToSqlite : accession -> sqlitePath -> ()`, plus `*Async` and
+  `*WithAsync` (take a `CrawlOptions`) variants. `CrawlResult` carries
+  `BioProjects / Studies / BioSamples / Experiments / Runs`.
+- **Discovery** hits the ENA Portal API `filereport` (`result=read_run`) to
+  enumerate every run/experiment/sample/study connected to a project; **fetch**
+  hits the ENA Browser API with comma-separated accessions (returns a `*_SET`,
+  parsed by the existing IO `readString`). Both URLs are built in `Endpoints.fs`.
+- **Persistence** reuses the `BioFSharp.INSDC.SQLite` store for records and adds
+  the ENA connectivity graph to its `accession_relations` table. The crawl
+  connection runs with `PRAGMA foreign_keys = OFF` (set after `Schema.init`,
+  which enables it) because the store's soft references legitimately dangle — a
+  sample is referenced by its SRA `DRS...` accession but stored under its
+  BioSample `SAMD...` accession, the same sample under two accessions.
+- **Tests are offline** by default: a stubbed `Fetch` maps ENA URLs to committed
+  fixtures. The single live test is gated behind `INSDC_LIVE_TESTS=1`.
 
 ## Generated type naming (`typename-substitutions.txt`)
 
@@ -91,9 +118,9 @@ Concretely:
 ## Things to avoid
 
 - Do not add an fsdocs / FsDocs site here — usage examples live in the base BioFSharp docs.
-- Do not change `TargetFramework` away from `netstandard2.0` for the shipped projects.
+- Do not change `TargetFramework` away from `netstandard2.0` for the shipped projects. The `BioFSharp.INSDC.Crawler` dev tool is the sole exception (net8.0, `IsPackable=false`) because FsHttp needs .NET 6+.
 - Do not bypass the generator by hand-writing C# types under `BioFSharp.FileFormats.INSDC`.
-- Do not fetch test fixtures from the network at test time. Download once from `https://www.ebi.ac.uk/ena/browser/api/xml/<ACCESSION>` and commit under `tests/BioFSharp.INSDC.Tests/fixtures/`.
+- Do not fetch test fixtures from the network at test time. Download once from `https://www.ebi.ac.uk/ena/browser/api/xml/<ACCESSION>` and commit under `tests/fixtures/`. The crawler tests follow this too: they stub `Fetch` against committed fixtures, and the live path is opt-in via `INSDC_LIVE_TESTS=1`.
 - Do not wire `regenerateInsdcTypes` into the default build — generated code is committed precisely so day-to-day builds don't require the tool.
 
 ## Pointers
@@ -101,5 +128,6 @@ Concretely:
 - Authoritative plan: [`plans/implementation.md`](plans/implementation.md)
 - Upstream schemas: <https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/>
 - ENA record API (for fixtures): `https://www.ebi.ac.uk/ena/browser/api/xml/<ACCESSION>`
+- ENA Portal API (crawler discovery): `https://www.ebi.ac.uk/ena/portal/api/filereport?accession=<ACCESSION>&result=read_run`
 - Parent project: <https://github.com/CSBiology/BioFSharp>
 - Generator tool: <https://www.nuget.org/packages/dotnet-xscgen>

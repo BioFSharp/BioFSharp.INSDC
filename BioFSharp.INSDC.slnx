@@ -4,6 +4,7 @@
     <Project Path="src/BioFSharp.IO.INSDC/BioFSharp.IO.INSDC.fsproj" />
     <Project Path="src/BioFSharp.INSDC.ArcIR/BioFSharp.INSDC.ArcIR.fsproj" />
     <Project Path="src/BioFSharp.INSDC.SQLite/BioFSharp.INSDC.SQLite.fsproj" />
+    <Project Path="src/BioFSharp.INSDC.Crawler/BioFSharp.INSDC.Crawler.fsproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/BioFSharp.INSDC.Tests/BioFSharp.INSDC.Tests.fsproj" />
