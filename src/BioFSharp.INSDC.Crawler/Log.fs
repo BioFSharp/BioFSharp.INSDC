@@ -6,6 +6,9 @@ open System
 /// through `CrawlOptions.Log`; the built-in `Log.console` sink renders them to
 /// stdout, and a custom sink can forward them to any logger (e.g. an `ILogger`).
 type CrawlEvent =
+    /// The crawl is starting — carries the root accession it was invoked with.
+    /// Emitted before discovery so the very first log line identifies the crawl.
+    | Started of accession: string
     /// Discovery finished — a per-entity count of distinct accessions found.
     | Discovered of counts: Map<string, int>
     /// About to fetch `count` records of the named entity kind.
@@ -29,6 +32,7 @@ module Log =
     /// Renders `event` as a single human-readable line (no timestamp/prefix).
     let format (event: CrawlEvent) : string =
         match event with
+        | Started accession -> sprintf "start — %s" accession
         | Discovered counts ->
             let parts =
                 counts

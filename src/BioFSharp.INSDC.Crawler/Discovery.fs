@@ -164,11 +164,33 @@ module Discovery =
                 RunToExperiment = mapOf (fun r -> r.RunAccession) (fun r -> r.ExperimentAccession)
             }
 
+    /// Ensures `rootAccession` is present in the discovered set even when the
+    /// `read_run` report never named it. Discovery is entirely run-driven, so a
+    /// project or study with no runs yields a header-only report and an empty
+    /// set — without this the root's own record would never be fetched or
+    /// stored. The root is added to the bucket its accession prefix implies
+    /// (`PRJ...` -> BioProject, `SRP`/`ERP`/`DRP...` -> Study); an unrecognized
+    /// prefix (or one already present) leaves the set untouched.
+    let withRoot (rootAccession: string) (set: DiscoveredSet) : DiscoveredSet =
+        let hasPrefix (prefixes: string list) =
+            prefixes
+            |> List.exists (fun p -> rootAccession.StartsWith(p, StringComparison.OrdinalIgnoreCase))
+
+        let addDistinct (xs: string list) =
+            if List.contains rootAccession xs then xs else xs @ [ rootAccession ]
+
+        if String.IsNullOrWhiteSpace rootAccession then set
+        elif hasPrefix [ "PRJ" ] then { set with BioProjects = addDistinct set.BioProjects }
+        elif hasPrefix [ "SRP"; "ERP"; "DRP" ] then { set with Studies = addDistinct set.Studies }
+        else set
+
     /// Fetches and parses the `filereport` for `rootAccession` using `options`
-    /// (its Portal base URL, fetch function, retry count, and log sink).
+    /// (its Portal base URL, fetch function, retry count, and log sink), then
+    /// seeds the root itself (`withRoot`) so a childless project/study still
+    /// yields its own record.
     let discoverAsync (options: CrawlOptions) (rootAccession: string) : Async<DiscoveredSet> =
         async {
             let url = Endpoints.portalFileReport options.PortalBaseUrl rootAccession
             let! tsv = Internal.Http.withRetry options.Retries options.Log options.Fetch url
-            return parse tsv
+            return parse tsv |> withRoot rootAccession
         }

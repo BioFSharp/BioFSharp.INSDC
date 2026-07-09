@@ -1,3 +1,11 @@
+### 0.2.1 (2026-07-09)
+
+Crawler fixes surfaced by large-scale crawls (incl. ENA umbrella projects such as `PRJNA9506`, which fans out to thousands of child projects).
+
+- **BioFSharp.INSDC.Crawler** — a project/study with no sequencing runs now persists its own record: discovery is run-driven, so a childless root previously discovered nothing (not even itself). `Discovery.withRoot` seeds the root into the bucket its accession prefix implies (`PRJ…` → BioProject, `SRP`/`ERP`/`DRP…` → Study).
+- **BioFSharp.INSDC.Crawler** — new `Started` crawl event, emitted before discovery, so the first log line identifies the root accession rather than only learning it at `done —`.
+- **BioFSharp.INSDC.SQLite / Crawler** — bulk insert: `Sql.withTransaction` is now reentrant (a nested call joins the active transaction rather than throwing, since SQLite has no nested transactions), letting the crawler persist an entire crawl in a single transaction instead of one commit per record — the difference between a trickle and a bulk load on crawls of hundreds of thousands of runs.
+
 ### 0.2.0 (2026-07-09)
 
 Expands the suite from two packages to five: `BioFSharp.FileFormats.INSDC` and

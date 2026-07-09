@@ -68,15 +68,37 @@ module Sql =
         use reader = cmd.ExecuteReader()
         if reader.Read() then Some (project reader) else None
 
+    /// The transaction currently active on `connection`, or `null` if none.
+    /// `SqliteConnection` exposes no public accessor for it, but a freshly
+    /// created command auto-binds its `Transaction` to the connection's active
+    /// one (and leaves it `null` when there is none), so a throwaway command
+    /// reveals it.
+    let private activeTransaction (connection: SqliteConnection) : SqliteTransaction =
+        use probe = connection.CreateCommand()
+        probe.Transaction
+
     /// Runs `work` inside an explicit transaction; commits on success, rolls
     /// back on any exception, and rethrows. Use this around the per-entity
     /// `insert` calls so a partial deconstruction never leaves orphan rows.
+    ///
+    /// Reentrant: SQLite has no nested transactions (a second `BeginTransaction`
+    /// throws), so when a transaction is already active on `connection` this
+    /// joins it — running `work` inline and leaving the commit/rollback to the
+    /// outermost owner. That lets a bulk caller wrap many per-entity `insert`s
+    /// (each of which calls `withTransaction` itself) in one surrounding
+    /// transaction, so the whole batch commits once instead of fsync-ing per
+    /// record.
     let withTransaction (connection: SqliteConnection) (work: SqliteTransaction -> 'a) : 'a =
-        use tx = connection.BeginTransaction()
-        try
-            let result = work tx
-            tx.Commit()
-            result
-        with _ ->
-            tx.Rollback()
-            reraise ()
+        let active = activeTransaction connection
+
+        if isNull active then
+            use tx = connection.BeginTransaction()
+            try
+                let result = work tx
+                tx.Commit()
+                result
+            with _ ->
+                tx.Rollback()
+                reraise ()
+        else
+            work active

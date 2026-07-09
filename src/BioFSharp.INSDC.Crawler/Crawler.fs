@@ -89,6 +89,7 @@ module private Fetch =
     /// carries the relationships persistence needs to thread foreign keys).
     let crawlCore (options: CrawlOptions) (rootAccession: string) : Async<CrawlResult * DiscoveredSet> =
         async {
+            options.Log(Started rootAccession)
             let! discovered = Discovery.discoverAsync options rootAccession
 
             options.Log(
@@ -127,6 +128,11 @@ module private Persist =
 
     open Microsoft.Data.Sqlite
     open BioFSharp.INSDC.SQLite
+
+    // Just the transaction helper — a module abbreviation rather than `open
+    // ...Internal`, whose `Schema` would shadow the public `Schema.init` used
+    // below.
+    module Sql = BioFSharp.INSDC.SQLite.Internal.Sql
 
     /// Opens (creating the file if needed) a SQLite connection for the crawl.
     /// Foreign-key enforcement is turned OFF for the insert pass in `persist`
@@ -198,6 +204,14 @@ module private Persist =
         // only part of a project. Hard, NOT NULL FK order (study -> experiment
         // -> run) is guaranteed by the insertion order below instead.
         disableForeignKeys connection
+
+        // One surrounding transaction for the whole insert pass. Each entity
+        // `insert` opens its own `Sql.withTransaction`, but that is reentrant
+        // and joins this one, so the ~half-million per-record commits collapse
+        // into a single commit at the end — the difference between a trickle and
+        // a bulk load. `disableForeignKeys` stays *outside* it: `PRAGMA
+        // foreign_keys` is a no-op while a transaction is open.
+        Sql.withTransaction connection (fun _tx ->
 
         let hashSet (accessions: string seq) =
             System.Collections.Generic.HashSet<string>(accessions)
@@ -288,7 +302,7 @@ module private Persist =
                     rIns <- rIns + 1
                 | _ -> options.Log(Failed(sprintf "persist Run %s" run.Accession, "no stored parent experiment"))
 
-        options.Log(Persisted("Run", rIns, rSkip))
+        options.Log(Persisted("Run", rIns, rSkip)))
 
 /// The public crawler API. Two surfaces: return the connected records, or
 /// persist them (and the connectivity relations) into a SQLite database.

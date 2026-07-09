@@ -1250,6 +1250,106 @@ type CrawlerTests() =
                 File.Delete dbPath
 
     [<Fact>]
+    member _.``Discovery.withRoot seeds a childless root into the bucket its prefix implies`` () =
+        // A childless project/study yields a header-only report -> the empty set.
+        let empty = Discovery.parse "run_accession\texperiment_accession\n"
+        Assert.Empty empty.BioProjects
+        Assert.Empty empty.Studies
+
+        // The root is seeded so its own record is still fetched: PRJ... -> project,
+        // SRP/ERP/DRP... -> study.
+        Assert.Equal<string[]>([| "PRJNA999" |], Discovery.withRoot "PRJNA999" empty |> fun s -> List.toArray s.BioProjects)
+        Assert.Empty((Discovery.withRoot "PRJNA999" empty).Studies)
+        Assert.Equal<string[]>([| "SRP123456" |], Discovery.withRoot "SRP123456" empty |> fun s -> List.toArray s.Studies)
+
+        // An already-present root is not duplicated; an unrecognized prefix
+        // (e.g. a run accession) leaves every bucket untouched.
+        let parsed = Discovery.parse (TestFiles.fixtureText "crawl-PRJDB5192.filereport.tsv")
+        Assert.Equal<string[]>([| "PRJDB5192" |], Discovery.withRoot "PRJDB5192" parsed |> fun s -> List.toArray s.BioProjects)
+        Assert.Equal<string[]>(List.toArray parsed.BioProjects, Discovery.withRoot "DRR999" parsed |> fun s -> List.toArray s.BioProjects)
+
+    [<Fact>]
+    member _.``crawlToSqlite persists a childless project (no runs) via root seeding`` () =
+        // ENA returns a header-only filereport for a project with no runs, so
+        // discovery finds nothing to relate. The root must still be stored.
+        let headerOnly =
+            "run_accession\texperiment_accession\tsample_accession\tstudy_accession\t\
+             secondary_study_accession\tfastq_ftp\tfastq_md5\tfastq_bytes\n"
+
+        let stub (url: string) : Async<string> =
+            async {
+                return
+                    if url.Contains "filereport" then headerOnly
+                    elif url.Contains "PRJDB5192" then TestFiles.fixtureText "PRJDB5192.xml"
+                    else failwithf "unexpected crawl URL: %s" url
+            }
+
+        let options = { CrawlOptions.Default with Fetch = stub; Log = Log.silent; ThrottleMs = 0 }
+        let dbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.sqlite")
+
+        try
+            Crawler.crawlToSqliteWithAsync options "PRJDB5192" dbPath |> Async.RunSynchronously
+
+            (
+                use connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}")
+                connection.Open()
+
+                Assert.True(
+                    (BioFSharp.INSDC.SQLite.BioProject.tryGet connection "PRJDB5192").IsSome,
+                    "childless BioProject was not persisted")
+
+                // No runs, so the connectivity table is legitimately empty.
+                Assert.Empty(BioFSharp.INSDC.SQLite.AccessionRelations.listAccessions connection |> Seq.toList)
+            )
+        finally
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools() |> ignore
+
+            if File.Exists dbPath then
+                File.Delete dbPath
+
+    [<Fact>]
+    member _.``crawl emits a Started event carrying the root accession as its first event`` () =
+        let events = System.Collections.Generic.List<CrawlEvent>()
+        let options = { CrawlerFixtures.options with Log = events.Add }
+
+        Crawler.crawlWithAsync options "PRJDB5192" |> Async.RunSynchronously |> ignore
+
+        match Seq.tryHead events with
+        | Some (Started accession) -> Assert.Equal("PRJDB5192", accession)
+        | other -> Assert.Fail(sprintf "expected a Started event first, got %A" other)
+
+    [<Fact>]
+    member _.``Sql.withTransaction is reentrant — a nested call joins the outer transaction`` () =
+        use connection = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=:memory:")
+        connection.Open()
+        let exec sql = BioFSharp.INSDC.SQLite.Internal.Sql.execNonQuery connection sql [] |> ignore
+        let count () =
+            BioFSharp.INSDC.SQLite.Internal.Sql.queryAll connection "SELECT COUNT(*) FROM t;" [] (fun r -> r.GetInt32 0)
+            |> List.head
+
+        exec "CREATE TABLE t (v INTEGER);"
+
+        // A nested withTransaction must not throw (SQLite has no nested
+        // transactions) — it joins the outer one, so both inserts commit together.
+        BioFSharp.INSDC.SQLite.Internal.Sql.withTransaction connection (fun _ ->
+            exec "INSERT INTO t VALUES (1);"
+            BioFSharp.INSDC.SQLite.Internal.Sql.withTransaction connection (fun _ ->
+                exec "INSERT INTO t VALUES (2);"))
+        Assert.Equal(2, count ())
+
+        // When the outer rolls back, the joined-inner write is discarded too —
+        // proof the inner did not commit independently.
+        try
+            BioFSharp.INSDC.SQLite.Internal.Sql.withTransaction connection (fun _ ->
+                exec "INSERT INTO t VALUES (3);"
+                BioFSharp.INSDC.SQLite.Internal.Sql.withTransaction connection (fun _ ->
+                    exec "INSERT INTO t VALUES (4);")
+                failwith "boom")
+        with _ -> ()
+
+        Assert.Equal(2, count ())
+
+    [<Fact>]
     member _.``LIVE crawl of a small public project (opt-in via INSDC_LIVE_TESTS=1)`` () =
         // Off by default (AGENTS.md forbids network at test time). Set
         // INSDC_LIVE_TESTS=1 to actually hit ENA and exercise the FsHttp path.
