@@ -17,9 +17,9 @@ Settled decisions:
 - **Persistence reuses the existing normalized store** `BioFSharp.INSDC.SQLite`
   (not a raw-XML blob table). `BioProject.listAccessions` there is already documented
   as "suitable for crawler resume".
-- **net8.0, non-packable tool** (`IsPackable=false`). FsHttp 15.x is net6.0+, so the
-  `netstandard2.0` convention (AGENTS.md) cannot apply here; the crawler is a
-  dev/inspection tier, not a shipped package.
+- **net8.0** (FsHttp 15.x is net6.0+, so the `netstandard2.0` convention in AGENTS.md
+  cannot apply here). It is still packed and published to NuGet like every other
+  `src/` project.
 - **Return a named record including `Studies`** (a project may have no BioProject
   record, so Study must be surfaced independently). A mirrored study-first entry point
   is a noted future extension.
@@ -190,13 +190,14 @@ out of the box; users can forward events to their own logger/`ILogger`.
 ## Wiring
 
 - Add the fsproj to the `/src/` folder of `BioFSharp.INSDC.slnx` (explicit list).
-- fsproj: `net8.0`, `IsPackable=false`, `GenerateDocumentationFile=true`.
-  ProjectRefs: `BioFSharp.FileFormats.INSDC`, `BioFSharp.IO.INSDC`,
+- fsproj: `net8.0`, `GenerateDocumentationFile=true`, plus the standard NuGet package
+  metadata block (Authors/Description/tags/icon/README) so it packs like the other
+  `src/` projects. ProjectRefs: `BioFSharp.FileFormats.INSDC`, `BioFSharp.IO.INSDC`,
   `BioFSharp.INSDC.SQLite`. PackageRefs: `FsHttp` 15.0.3, `Microsoft.Data.Sqlite` 8.0.10.
 - Test project: add ProjectRefs to `BioFSharp.INSDC.Crawler` **and**
   `BioFSharp.INSDC.SQLite` (currently references neither). No `build/ProjectInfo.fs`
   change — the single test project is already in `testProjects`.
-- Update **AGENTS.md**: crawler in the layout tree; the net8.0 non-packable tier as the
+- Update **AGENTS.md**: crawler in the layout tree; the net8.0 target as the
   explicit exception to "shipped projects are netstandard2.0"; the ENA Portal
   (discovery) + Browser (fetch) endpoints; the offline-tests rule.
 

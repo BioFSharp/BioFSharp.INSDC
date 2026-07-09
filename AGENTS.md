@@ -64,7 +64,7 @@ dotnet tool restore     # installs the pinned dotnet-xscgen
 `src/BioFSharp.INSDC.Crawler` pulls real records from ENA so their output can be
 inspected. It is the one project that does **not** target `netstandard2.0`: it
 uses [FsHttp](https://www.nuget.org/packages/FsHttp) for HTTP, which needs
-.NET 6+, so it is **net8.0** with `IsPackable=false` (kept out of `pack`).
+.NET 6+, so it is **net8.0**. It ships to NuGet like every other `src/` project.
 
 - **Public surface** (`Crawler` module): `crawl : accession -> CrawlResult` and
   `crawlToSqlite : accession -> sqlitePath -> ()`, plus `*Async` and
@@ -118,7 +118,7 @@ Concretely:
 ## Things to avoid
 
 - Do not add an fsdocs / FsDocs site here — usage examples live in the base BioFSharp docs.
-- Do not change `TargetFramework` away from `netstandard2.0` for the shipped projects. The `BioFSharp.INSDC.Crawler` dev tool is the sole exception (net8.0, `IsPackable=false`) because FsHttp needs .NET 6+.
+- Do not change `TargetFramework` away from `netstandard2.0` for the shipped projects. `BioFSharp.INSDC.Crawler` is the sole exception (net8.0) because FsHttp needs .NET 6+; it is still packed and published to NuGet like the rest.
 - Do not bypass the generator by hand-writing C# types under `BioFSharp.FileFormats.INSDC`.
 - Do not fetch test fixtures from the network at test time. Download once from `https://www.ebi.ac.uk/ena/browser/api/xml/<ACCESSION>` and commit under `tests/fixtures/`. The crawler tests follow this too: they stub `Fetch` against committed fixtures, and the live path is opt-in via `INSDC_LIVE_TESTS=1`.
 - Do not wire `regenerateInsdcTypes` into the default build — generated code is committed precisely so day-to-day builds don't require the tool.
