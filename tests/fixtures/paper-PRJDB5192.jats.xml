@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+  <front>
+    <journal-meta>
+      <journal-title-group>
+        <journal-title>Journal of Test Genomics</journal-title>
+      </journal-title-group>
+    </journal-meta>
+    <article-meta>
+      <article-id pub-id-type="pmid">12345678</article-id>
+      <article-id pub-id-type="doi">10.1000/testgenomics.2017.001</article-id>
+      <title-group>
+        <article-title>Epigenetic regulation in Arabidopsis thaliana Col-0</article-title>
+      </title-group>
+      <contrib-group>
+        <contrib contrib-type="author">
+          <contrib-id contrib-id-type="orcid">0000-0002-1825-0097</contrib-id>
+          <name>
+            <surname>Kakutani</surname>
+            <given-names>Tetsuji</given-names>
+          </name>
+          <email>kakutani@example.org</email>
+          <xref ref-type="aff" rid="aff1"/>
+        </contrib>
+        <contrib contrib-type="author">
+          <name>
+            <surname>Doe</surname>
+            <given-names>Jane</given-names>
+          </name>
+          <email>jane@example.org</email>
+          <xref ref-type="aff" rid="aff2"/>
+        </contrib>
+      </contrib-group>
+      <aff id="aff1">National Institute of Genetics</aff>
+      <aff id="aff2">Department of Integrative Genetics</aff>
+    </article-meta>
+  </front>
+</article>

@@ -49,6 +49,9 @@ module Vocabulary =
         let hasContact = term "hasContact" // entity -> Agent
         let hasRole = term "hasRole" // Agent -> Role
 
+        // Ingested supplementary sources (see plans/arcir-ingest.md).
+        let hasColumn = term "hasColumn" // count matrix file -> a per-run column fragment
+
     /// Object DTypes — the open, IRI-typed semantic tags carried on `ArcObject.DTypes`.
     [<RequireQualifiedAccess>]
     module DType =
@@ -73,3 +76,8 @@ module Vocabulary =
         let person = term "Person"
         let organization = term "Organization"
         let role = term "Role"
+
+        // Ingested supplementary sources (see plans/arcir-ingest.md).
+        let publication = term "Publication" // a paper/article resource describing a dataset
+        let countMatrix = term "CountMatrix" // a count/expression matrix file
+        let countColumn = term "CountColumn" // one column of a count matrix (a per-run profile)

@@ -803,6 +803,136 @@ type IdentifierAnnotationTests() =
         Assert.Empty edges
 
 
+type IngestVocabularyTests() =
+
+    // Lock the ingest vocabulary IRIs (house rule: vocabulary/term changes ship with a regression test).
+    [<Fact>]
+    member _.``ingest DTypes and predicates use stable controlled-vocabulary IRIs`` () =
+        Assert.Equal("http://purl.org/arc/insdc#Publication", Vocabulary.DType.publication.Value)
+        Assert.Equal("http://purl.org/arc/insdc#CountMatrix", Vocabulary.DType.countMatrix.Value)
+        Assert.Equal("http://purl.org/arc/insdc#CountColumn", Vocabulary.DType.countColumn.Value)
+        Assert.Equal("http://purl.org/arc/insdc#hasColumn", Vocabulary.Rel.hasColumn.Value)
+
+
+type IngestPaperTests() =
+
+    // Ingesting a paper: the file becomes a `publication` Resource, its authors become deduped person
+    // Agents, and it links to the dataset it describes via `references` edges that resolve once the INSDC
+    // record is present. See plans/arcir-ingest.md.
+    let read reader file = reader (TestFiles.fixture file) |> Seq.exactlyOne
+    let project = read BioProject.read "PRJDB5192.xml"
+    let projectIr = [ INSDC.bioProject project ] |> INSDC.build
+
+    let jats = TestFiles.fixture "paper-PRJDB5192.jats.xml"
+    let meta = IngestReaders.readJats jats
+    let ir = Ingest.incorporate projectIr [ Ingest.paperFromJats jats [ project.Accession ] ]
+
+    let paperId = ArcId.Create "doi:10.1000/testgenomics.2017.001"
+    let outgoing predicate = ArcIR.outgoing paperId ir |> Seq.filter (fun r -> r.Predicate = predicate) |> List.ofSeq
+
+    [<Fact>]
+    member _.``readJats extracts title, doi and both authors`` () =
+        Assert.Equal(Some "Epigenetic regulation in Arabidopsis thaliana Col-0", meta.Title)
+        Assert.Equal(Some "10.1000/testgenomics.2017.001", meta.Doi)
+        Assert.Equal(2, meta.Authors.Length)
+        let names = meta.Authors |> List.choose (fun a -> a.Name)
+        Assert.Contains("Tetsuji Kakutani", names)
+        Assert.Contains("Jane Doe", names)
+
+    [<Fact>]
+    member _.``the paper is a publication Resource keyed by its doi, annotations-first`` () =
+        let node = ir.Objects.[paperId]
+        Assert.Equal(ArcObjectKind.Resource, node.Kind)
+        Assert.True(node.DTypes.Contains Vocabulary.DType.publication)
+        // paper-level metadata lands in annotations (house style); file metadata in Properties.
+        Assert.True(node.Annotations |> List.exists (fun a -> a.Property.Name = Some "Title"))
+        Assert.True(node.Properties.ContainsKey(Iri.Create "Filename"))
+
+    [<Fact>]
+    member _.``each author is a person Agent linked by hasContact`` () =
+        let contacts = outgoing Vocabulary.Rel.hasContact
+        Assert.Equal(2, contacts.Length)
+        for edge in contacts do
+            Assert.True((ir.Objects.[edge.Object]).DTypes.Contains Vocabulary.DType.person)
+
+    [<Fact>]
+    member _.``the paper references the dataset, resolving onto the real project node`` () =
+        let edge = outgoing Vocabulary.Rel.references |> List.exactlyOne
+        Assert.Equal(ArcId.Create project.Accession, edge.Object)
+        Assert.True(ir.Objects.ContainsKey edge.Object) // resolved, not dangling
+
+
+type IngestAuthorMergeTests() =
+
+    // An author whose email matches an existing contact's Agent id collapses to one enriched node
+    // (merge-on-id): the paper enriches, rather than duplicates, a person already in the graph.
+    let existingContact =
+        ArcObject.create
+            "agent:jane@example.org"
+            ArcObjectKind.Agent
+            [ Vocabulary.DType.agent; Vocabulary.DType.person ]
+            [ Iri.Create "Organisation", ArcValue.String "Department of Integrative Genetics" ]
+            []
+
+    let paperResult =
+        Ingest.paper
+            { Title = Some "T"
+              Doi = Some "10.1/x"
+              Journal = None
+              Authors = [ { Name = Some "Jane Doe"; Email = Some "jane@example.org"; Affiliation = None; Orcid = None } ] }
+            { Name = "paper.pdf"; ByteSize = None; Checksum = None; MediaType = None }
+            []
+
+    let ir = Ingest.incorporate (ArcIR.Empty |> ArcIR.addObject existingContact) [ paperResult ]
+
+    [<Fact>]
+    member _.``a shared email collapses author and contact to one Agent with merged properties`` () =
+        let node = ir.Objects.[ArcId.Create "agent:jane@example.org"]
+        Assert.True(node.Properties.ContainsKey(Iri.Create "Organisation")) // from the pre-existing contact
+        Assert.True(node.Properties.ContainsKey(Iri.Create "Name")) // from the paper author
+        let personNodes = ir.Objects.Values |> Seq.filter (fun o -> o.DTypes.Contains Vocabulary.DType.person) |> Seq.length
+        Assert.Equal(1, personNodes)
+
+
+type IngestCountDataTests() =
+
+    // Ingesting count data: the file is a `countMatrix` Resource; each run-accession column becomes a
+    // `countColumn` fragment addressed by the RFC 7111 CSV selector `#col=<n>`, with a `producesData` edge
+    // from its run (dangling until the run is merged). See plans/arcir-ingest.md.
+    let tsv = IngestReaders.readCountFile (TestFiles.fixture "counts-PRJDB5192.tsv")
+    let ir = [ Ingest.countData tsv ] |> INSDC.build
+    let fileId = "count:counts-PRJDB5192.tsv"
+
+    [<Fact>]
+    member _.``the header parses to run-accession columns with 1-based positions`` () =
+        Assert.Equal<CountColumn list>(
+            [ { Index = 2; RunAccession = "DRR072834" }; { Index = 3; RunAccession = "DRR072835" } ],
+            tsv.Columns)
+
+    [<Fact>]
+    member _.``the file is a countMatrix Resource with a countColumn fragment per run using RFC 7111 selectors`` () =
+        Assert.True((ir.Objects.[ArcId.Create fileId]).DTypes.Contains Vocabulary.DType.countMatrix)
+        let col2 = ir.Objects.[ArcId.Create(fileId + "#col=2")]
+        Assert.True(col2.DTypes.Contains Vocabulary.DType.countColumn)
+        Assert.Equal(ArcValue.String "#col=2", col2.Properties.[Iri.Create "FragmentSelector"])
+        Assert.Equal(ArcValue.String "DRR072834", col2.Properties.[Iri.Create "RunAccession"])
+        Assert.True(ir.Objects.ContainsKey(ArcId.Create(fileId + "#col=3")))
+        Assert.True(
+            ArcIR.outgoing (ArcId.Create fileId) ir
+            |> Seq.exists (fun r -> r.Predicate = Vocabulary.Rel.hasColumn && r.Object = ArcId.Create(fileId + "#col=2")))
+
+    [<Fact>]
+    member _.``each column receives a producesData edge from its run`` () =
+        Assert.True(
+            ArcIR.outgoing (ArcId.Create "DRR072834") ir
+            |> Seq.exists (fun r -> r.Predicate = Vocabulary.Rel.producesData && r.Object = ArcId.Create(fileId + "#col=2")))
+
+    [<Fact>]
+    member _.``the zip reader yields the same count file as the loose tsv`` () =
+        let fromZip = IngestReaders.readCountArchive (TestFiles.fixture "counts-PRJDB5192.zip") |> List.exactlyOne
+        Assert.Equal<CountFile>(tsv, fromZip)
+
+
 type GraphMlExportTests() =
 
     // The GraphML serializer renders the assembled ArcIR property graph so it can be opened in Gephi

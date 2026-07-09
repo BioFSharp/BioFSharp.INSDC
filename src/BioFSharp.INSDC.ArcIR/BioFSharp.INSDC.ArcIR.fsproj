@@ -30,6 +30,11 @@
     <Compile Include="Mapping\Submission\Submission.fs" />
     <Compile Include="Mapping\Receipt\Receipt.fs" />
     <Compile Include="Mapping\INSDC.fs" />
+    <Compile Include="Ingest\Types.fs" />
+    <Compile Include="Ingest\Paper.fs" />
+    <Compile Include="Ingest\CountData.fs" />
+    <Compile Include="Ingest\Readers.fs" />
+    <Compile Include="Ingest\Ingest.fs" />
     <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
     <None Include="..\..\README.md" Pack="true" PackagePath="" />
   </ItemGroup>

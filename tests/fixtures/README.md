@@ -25,6 +25,22 @@ Downloaded 2026-05-21.
 | `DRA005154.xml`        | Submission | <https://www.ebi.ac.uk/ena/browser/api/xml/DRA005154>       |
 | `receipt-sample.xml`   | Receipt    | Hand-crafted — `RECEIPT` is a submission-API response document and has no accession-based endpoint. The shape mirrors the example response in the ENA programmatic submission guide. |
 
+## Ingest fixtures
+
+Inputs for the supplementary-source ingestion tests (see `plans/arcir-ingest.md`). Hand-crafted, not real records: a paper describing `PRJDB5192` and a count matrix whose columns are `DRR*` run accessions (`DRR072834` is the `DRR072834.xml` run above; `DRR072835` is deliberately absent, to exercise a dangling `producesData` edge).
+
+| Fixture                     | Kind                | Notes                                                                                     |
+| --------------------------- | ------------------- | ----------------------------------------------------------------------------------------- |
+| `paper-PRJDB5192.jats.xml`  | Paper (JATS XML)    | Minimal JATS: title, DOI, journal, two authors (name/email/ORCID/affiliation).            |
+| `counts-PRJDB5192.tsv`      | Count matrix (TSV)  | Header `gene_id`, `DRR072834`, `DRR072835`; a few gene rows.                               |
+| `counts-PRJDB5192.zip`      | Count matrix (zip)  | The same `counts-PRJDB5192.tsv` zipped, to exercise the archive reader (regenerate below). |
+
+Regenerate the zip after editing the TSV:
+
+```bash
+cd tests/fixtures && python3 -c "import zipfile; zipfile.ZipFile('counts-PRJDB5192.zip','w',zipfile.ZIP_DEFLATED).write('counts-PRJDB5192.tsv', arcname='counts-PRJDB5192.tsv')"
+```
+
 ## Refreshing a fixture
 
 ```bash

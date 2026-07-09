@@ -29,8 +29,12 @@ module SubObjects =
         let node = ArcObject.create id ArcObjectKind.Observable [ Vocabulary.DType.organism; Vocabulary.DType.taxon ] props []
         node, ArcRelation.create parentId Vocabulary.Rel.hasOrganism id [] []
 
-    let private agentNode id props =
-        ArcObject.create id ArcObjectKind.Agent [ Vocabulary.DType.agent; Vocabulary.DType.person ] props []
+    /// A person Agent node (id typically `agent:<email|name>` so people dedup across parents) plus a
+    /// `hasContact` edge from its parent. The shared shape behind DAC/submission contacts and, in the
+    /// ingest layer, paper authors — so a contact and an author with the same id collapse to one node.
+    let person (parentId: string) (id: string) (props: (Iri * ArcValue) list) : ArcObject * ArcRelation =
+        let node = ArcObject.create id ArcObjectKind.Agent [ Vocabulary.DType.agent; Vocabulary.DType.person ] props []
+        node, ArcRelation.create parentId Vocabulary.Rel.hasContact id [] []
 
     /// A DAC contact (name/email/phone/org) as an Agent. Deduped by email, else by name+organisation.
     let dacContact (parentId: string) (c: DacContactsContact) : (ArcObject * ArcRelation) option =
@@ -45,7 +49,7 @@ module SubObjects =
                       strProp "Email" c.Email
                       strProp "TelephoneNumber" c.TelephoneNumber
                       strProp "Organisation" c.Organisation ]
-            Some(agentNode id props, ArcRelation.create parentId Vocabulary.Rel.hasContact id [] [])
+            Some(person parentId id props)
 
     /// A submission contact (name + notify addresses) as an Agent, deduped by name.
     let submissionContact (parentId: string) (c: SubmissionContactsContact) : (ArcObject * ArcRelation) option =
@@ -58,7 +62,7 @@ module SubObjects =
                     [ strProp "Name" c.Name
                       strProp "InformOnStatus" c.InformOnStatus
                       strProp "InformOnError" c.InformOnError ]
-            Some(agentNode id props, ArcRelation.create parentId Vocabulary.Rel.hasContact id [] [])
+            Some(person parentId id props)
 
     /// An institution (center/broker/lab name) as an Agent(organization), deduped by name.
     let organization (parentId: string) (institution: string) : (ArcObject * ArcRelation) option =
