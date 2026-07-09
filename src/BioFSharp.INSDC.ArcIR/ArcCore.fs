@@ -46,15 +46,15 @@ type ArcId =
 /// `DTypes` (see [Vocabulary]); this is the coarse category. INSDC concept → kind mapping lives in the
 /// mapping docs.
 type ArcObjectKind =
-    | Observable // an entity/material an activity observes or consumes (orig. ISA Entity)
-    | Instrument // a device/instrument an activity is carried out with
-    | Resource // data or an addressable resource (a file, a URL)
-    | Activity // a process/activity (orig. ISA Process)
-    | Agent // a person, institution, or software agent
-    | Role // the role an agent plays in an activity
-    | Recipe // a plan/protocol (orig. ISA Plan)
-    | Collection // a grouping dataset (ISA Investigation / Study / Assay)
-    | Selector // an addressing/provenance selector (e.g. an XPath into a source record)
+    | Observable    // an entity/material an activity observes or consumes
+    | Instrument    // a device/instrument an activity is carried out with
+    | Resource      // data or an addressable resource (a file, a URL)
+    | Activity      // a process/activity
+    | Agent         // a person, institution, or software agent
+    | Role          // the role an agent plays in an activity
+    | Recipe        // a plan/protocol
+    | Collection    // a grouping dataset or generic object container
+    | Selector      // an addressing/provenance selector (e.g. an XPath into a source record)
 
 
 type ArcValue =

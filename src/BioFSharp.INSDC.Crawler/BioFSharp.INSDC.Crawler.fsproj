@@ -1,15 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!--
-    The crawler is a net8.0 dev/inspection tool, NOT a shipped netstandard2.0
-    package: it does live HTTP via FsHttp (which requires .NET 6+), so it cannot
-    match the netstandard2.0 convention of the shipped libraries. IsPackable is
-    false so the `src/**/*.*proj` Pack glob skips it.
-  -->
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,7 +14,24 @@
     <Compile Include="CrawlOptions.fs" />
     <Compile Include="Discovery.fs" />
     <Compile Include="Crawler.fs" />
+    <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
+    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <Authors>Kevin Schneider, BioFSharp contributors</Authors>
+    <Description>Crawls INSDC (International Nucleotide Sequence Database Collaboration) records from ENA — enumerates every run, experiment, sample, and study connected to a project accession and persists them via the BioFSharp.INSDC.SQLite store.</Description>
+    <Summary>ENA crawler for BioFSharp.INSDC entities.</Summary>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BioFSharp/BioFSharp.INSDC</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>bioinformatics F# fsharp INSDC ENA SRA crawler BioProject Sample Study Experiment Run</PackageTags>
+    <RepositoryUrl>https://github.com/BioFSharp/BioFSharp.INSDC</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <FsDocsLicenseLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/LICENSE</FsDocsLicenseLink>
+    <FsDocsReleaseNotesLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BioFSharp.FileFormats.INSDC\BioFSharp.FileFormats.INSDC.csproj" />

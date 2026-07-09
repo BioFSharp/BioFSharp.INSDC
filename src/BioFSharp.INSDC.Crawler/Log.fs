@@ -49,6 +49,12 @@ module Log =
     let console (event: CrawlEvent) : unit =
         printfn "[crawler %s] %s" (DateTime.Now.ToString("HH:mm:ss")) (format event)
 
+    let file (path: string) : CrawlEvent -> unit =
+        let writer = new IO.StreamWriter(path, append = true)
+        fun event ->
+            writer.WriteLine(sprintf "[crawler %s] %s" (DateTime.Now.ToString("HH:mm:ss")) (format event))
+            writer.Flush()
+
     /// A sink that discards every event — use in tests or when the caller wires
     /// its own logging.
     let silent (_: CrawlEvent) : unit = ()
