@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns">
+  <key id="label" for="node" attr.name="label" attr.type="string" />
+  <key id="kind" for="node" attr.name="kind" attr.type="string" />
+  <key id="dtypes" for="node" attr.name="dtypes" attr.type="string" />
+  <key id="nd0" for="node" attr.name="Alias" attr.type="string" />
+  <key id="nd1" for="node" attr.name="AnalysisType" attr.type="string" />
+  <key id="nd2" for="node" attr.name="BioProject" attr.type="string" />
+  <key id="nd3" for="node" attr.name="BioSample" attr.type="string" />
+  <key id="nd4" for="node" attr.name="BioSampleModel" attr.type="string" />
+  <key id="nd5" for="node" attr.name="Checksum" attr.type="string" />
+  <key id="nd6" for="node" attr.name="ChecksumMethod" attr.type="string" />
+  <key id="nd7" for="node" attr.name="CommonName" attr.type="string" />
+  <key id="nd8" for="node" attr.name="Description" attr.type="string" />
+  <key id="nd9" for="node" attr.name="ENA-BASE-COUNT" attr.type="string" />
+  <key id="nd10" for="node" attr.name="ENA-FIRST-PUBLIC" attr.type="string" />
+  <key id="nd11" for="node" attr.name="ENA-LAST-UPDATE" attr.type="string" />
+  <key id="nd12" for="node" attr.name="ENA-REFSEQ" attr.type="string" />
+  <key id="nd13" for="node" attr.name="ENA-SPOT-COUNT" attr.type="string" />
+  <key id="nd14" for="node" attr.name="ENA-STATUS" attr.type="string" />
+  <key id="nd15" for="node" attr.name="European Bioinformatics Institute" attr.type="string" />
+  <key id="nd16" for="node" attr.name="Filename" attr.type="string" />
+  <key id="nd17" for="node" attr.name="Filetype" attr.type="string" />
+  <key id="nd18" for="node" attr.name="INSDC secondary accession" attr.type="string" />
+  <key id="nd19" for="node" attr.name="InstrumentModel" attr.type="string" />
+  <key id="nd20" for="node" attr.name="Kakutani lab, Department of Integrative Genetics, National Institute of Genetics" attr.type="string" />
+  <key id="nd21" for="node" attr.name="LabName" attr.type="string" />
+  <key id="nd22" for="node" attr.name="LibraryConstructionProtocol" attr.type="string" />
+  <key id="nd23" for="node" attr.name="LibrarySelection" attr.type="string" />
+  <key id="nd24" for="node" attr.name="LibrarySource" attr.type="string" />
+  <key id="nd25" for="node" attr.name="LibraryStrategy" attr.type="string" />
+  <key id="nd26" for="node" attr.name="NCBI submission package" attr.type="string" />
+  <key id="nd27" for="node" attr.name="NCBI-PROJECT-TYPE" attr.type="string" />
+  <key id="nd28" for="node" attr.name="NIG" attr.type="string" />
+  <key id="nd29" for="node" attr.name="Name" attr.type="string" />
+  <key id="nd30" for="node" attr.name="PROJECT-ID" attr.type="string" />
+  <key id="nd31" for="node" attr.name="Platform" attr.type="string" />
+  <key id="nd32" for="node" attr.name="ReceiptDate" attr.type="string" />
+  <key id="nd33" for="node" attr.name="ScientificName" attr.type="string" />
+  <key id="nd34" for="node" attr.name="StudyAbstract" attr.type="string" />
+  <key id="nd35" for="node" attr.name="StudyTitle" attr.type="string" />
+  <key id="nd36" for="node" attr.name="StudyType" attr.type="string" />
+  <key id="nd37" for="node" attr.name="SubmissionFile" attr.type="string" />
+  <key id="nd38" for="node" attr.name="Success" attr.type="string" />
+  <key id="nd39" for="node" attr.name="TaxonId" attr.type="string" />
+  <key id="nd40" for="node" attr.name="Title" attr.type="string" />
+  <key id="nd41" for="node" attr.name="ecotype" attr.type="string" />
+  <key id="nd42" for="node" attr.name="organism" attr.type="string" />
+  <key id="nd43" for="node" attr.name="primaryId" attr.type="string" />
+  <key id="nd44" for="node" attr.name="sample_name" attr.type="string" />
+  <key id="nd45" for="node" attr.name="secondaryId" attr.type="string" />
+  <key id="predicate" for="edge" attr.name="predicate" attr.type="string" />
+  <graph id="G" edgedefault="directed">
+    <node id="DRA005154">
+      <data key="label">DRA005154</data>
+      <data key="kind">Collection</data>
+      <data key="dtypes">Submission</data>
+      <data key="nd21">Kakutani lab, Department of Integrative Genetics, National Institute of Genetics</data>
+      <data key="nd28">DRA005154</data>
+      <data key="nd40">Submitted by NIG on 28-JAN-2017</data>
+      <data key="nd43">DRA005154</data>
+    </node>
+    <node id="DRP003416">
+      <data key="label">DRP003416</data>
+      <data key="kind">Collection</data>
+      <data key="dtypes">Study</data>
+      <data key="nd2">PRJDB5192</data>
+      <data key="nd10">2017-01-28</data>
+      <data key="nd11">2017-01-28</data>
+      <data key="nd14">PUBLIC</data>
+      <data key="nd28">DRP003416</data>
+      <data key="nd34">Constitutively silent heterochromatin is marked by methylation of lysine 9 on histone H3 (H3K9me). A puzzling feature of H3K9me is that this modification generally localizes not only in promoters but also in internal regions (bodies) of silent transcription units. Despite its prevalence, biological significance of gene-body H3K9me remains enigmatic. Here we show that H3K9me-directed removal of H3K4 monomethylation (H3K4me1) in the gene-bodies mediates transcriptional silencing. Mutations in an Arabidopsis H3K9 demethylase gene IBM1 induce ectopic H3K9me2 accumulation in gene-bodies, which is associated with severe developmental defects. Through suppressor screening of the ibm1- induced developmental defects, we identified LDL2 gene, which encodes a homolog of conserved H3K4 demethylases. The ldl2 mutation suppressed the developmental defects, but it did not suppress the ibm1-induced ectopic H3K9me2. The ectopic H3K9m2 directed reduced body H3K4me1 and transcriptional repression, which depend on the LDL2 function. Furthermore, mutations of H3K9 methylases induced drastic increases in H3K4me1 in the bodies of diverse transposable elements. Our results uncovered an unexpected role of gene-body H3K9me2/H3K4me1 dynamics as a mediator of heterochromatin silencing and epigenome differentiation.</data>
+      <data key="nd35">The gene-body chromatin modifications dynamics mediates epigenome differentiation in Arabidopsis</data>
+      <data key="nd36">http://purl.org/arc/insdc/enum#StudyDescriptorStudyTypeExistingStudyType/WholeGenomeSequencing</data>
+      <data key="nd43">DRP003416</data>
+      <data key="nd45">PRJDB5192</data>
+    </node>
+    <node id="DRR072834">
+      <data key="label">DRR072834</data>
+      <data key="kind">Activity</data>
+      <data key="dtypes">Run</data>
+      <data key="nd9">1037391408</data>
+      <data key="nd10">2017-01-28</data>
+      <data key="nd11">2017-01-28</data>
+      <data key="nd13">20341008</data>
+      <data key="nd14">PUBLIC</data>
+      <data key="nd28">DRR072834</data>
+      <data key="nd40">WT_H3K4me3_2</data>
+      <data key="nd43">DRR072834</data>
+    </node>
+    <node id="DRX066772">
+      <data key="label">DRX066772</data>
+      <data key="kind">Activity</data>
+      <data key="dtypes">Assay Experiment</data>
+      <data key="nd14">PUBLIC</data>
+      <data key="nd28">DRX066772</data>
+      <data key="nd40">WT_H3K4me3_2</data>
+      <data key="nd43">DRX066772</data>
+    </node>
+    <node id="DRX066772#library">
+      <data key="label">DRX066772#library</data>
+      <data key="kind">Recipe</data>
+      <data key="dtypes">Protocol</data>
+      <data key="nd22">KAPA Hyper Prep Kit</data>
+      <data key="nd23">http://purl.org/arc/insdc/enum#LibrarySelection/ChIp</data>
+      <data key="nd24">http://purl.org/arc/insdc/enum#LibrarySource/Genomic</data>
+      <data key="nd25">http://purl.org/arc/insdc/enum#LibraryStrategy/ChIpSeq</data>
+    </node>
+    <node id="ERZ496533">
+      <data key="label">ERZ496533</data>
+      <data key="kind">Activity</data>
+      <data key="dtypes">Analysis</data>
+      <data key="nd1">SequenceVariation</data>
+      <data key="nd8">Exon 7 was PCR amplified from dwarf and non-dwarf ponies then sequenced and compared</data>
+      <data key="nd10">2018-03-07</data>
+      <data key="nd11">2018-03-07</data>
+      <data key="nd14">PUBLIC</data>
+      <data key="nd15">DNA sequencing ACAN</data>
+      <data key="nd40">DNA sequencing ACAN</data>
+      <data key="nd43">ERZ496533</data>
+    </node>
+    <node id="ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz">
+      <data key="label">ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz</data>
+      <data key="kind">Resource</data>
+      <data key="dtypes">Data</data>
+      <data key="nd5">e83207c712242079577aa07566e5e32d</data>
+      <data key="nd6">http://purl.org/arc/insdc/enum#AnalysisFileChecksumMethod/Md5</data>
+      <data key="nd16">ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz</data>
+      <data key="nd17">http://purl.org/arc/insdc/enum#AnalysisFileFiletype/Vcf</data>
+    </node>
+    <node id="ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz.tbi">
+      <data key="label">ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz.tbi</data>
+      <data key="kind">Resource</data>
+      <data key="dtypes">Data</data>
+      <data key="nd5">59c8ff847a438c8e91288fda1610206d</data>
+      <data key="nd6">http://purl.org/arc/insdc/enum#AnalysisFileChecksumMethod/Md5</data>
+      <data key="nd16">ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz.tbi</data>
+      <data key="nd17">http://purl.org/arc/insdc/enum#AnalysisFileFiletype/Tabix</data>
+    </node>
+    <node id="PRJDB5192">
+      <data key="label">PRJDB5192</data>
+      <data key="kind">Collection</data>
+      <data key="dtypes">BioProject Investigation</data>
+      <data key="nd0">PRJDB5192</data>
+      <data key="nd8">Constitutively silent heterochromatin is marked by methylation of lysine 9 on histone H3 (H3K9me). A puzzling feature of H3K9me is that this modification generally localizes not only in promoters but also in internal regions (bodies) of silent transcription units. Despite its prevalence, biological significance of gene-body H3K9me remains enigmatic. Here we show that H3K9me-directed removal of H3K4 monomethylation (H3K4me1) in the gene-bodies mediates transcriptional silencing. Mutations in an Arabidopsis H3K9 demethylase gene IBM1 induce ectopic H3K9me2 accumulation in gene-bodies, which is associated with severe developmental defects. Through suppressor screening of the ibm1- induced developmental defects, we identified LDL2 gene, which encodes a homolog of conserved H3K4 demethylases. The ldl2 mutation suppressed the developmental defects, but it did not suppress the ibm1-induced ectopic H3K9me2. The ectopic H3K9m2 directed reduced body H3K4me1 and transcriptional repression, which depend on the LDL2 function. Furthermore, mutations of H3K9 methylases induced drastic increases in H3K4me1 in the bodies of diverse transposable elements. Our results uncovered an unexpected role of gene-body H3K9me2/H3K4me1 dynamics as a mediator of heterochromatin silencing and epigenome differentiation.</data>
+      <data key="nd10">2017-04-19</data>
+      <data key="nd11">2026-05-04</data>
+      <data key="nd12">N</data>
+      <data key="nd14">PUBLIC</data>
+      <data key="nd20">PRJDB5192</data>
+      <data key="nd27">SUBMISSION</data>
+      <data key="nd29">Arabidopsis thaliana strain:Col-0</data>
+      <data key="nd30">362567</data>
+      <data key="nd40">The gene-body chromatin modifications dynamics mediates epigenome differentiation in Arabidopsis</data>
+      <data key="nd43">PRJDB5192</data>
+      <data key="nd45">DRP003416</data>
+    </node>
+    <node id="SAMD00064197">
+      <data key="label">SAMD00064197</data>
+      <data key="kind">Observable</data>
+      <data key="dtypes">BioSample Sample</data>
+      <data key="nd3">SAMD00064197</data>
+      <data key="nd4">Generic</data>
+      <data key="nd8">reference</data>
+      <data key="nd10">2017-01-18</data>
+      <data key="nd11">2023-10-29</data>
+      <data key="nd18">DRS039895</data>
+      <data key="nd26">Generic.1.0</data>
+      <data key="nd40">WT Col-0</data>
+      <data key="nd41">Col-0</data>
+      <data key="nd42">Arabidopsis thaliana</data>
+      <data key="nd43">SAMD00064197</data>
+      <data key="nd44">WT</data>
+      <data key="nd45">DRS039895</data>
+    </node>
+    <node id="instrument:http://purl.org/arc/insdc/enum#IlluminaModel/IlluminaHiSeq4000">
+      <data key="label">instrument:http://purl.org/arc/insdc/enum#IlluminaModel/IlluminaHiSeq4000</data>
+      <data key="kind">Instrument</data>
+      <data key="dtypes">Instrument</data>
+      <data key="nd19">http://purl.org/arc/insdc/enum#IlluminaModel/IlluminaHiSeq4000</data>
+      <data key="nd31">Illumina</data>
+    </node>
+    <node id="org:ddbj">
+      <data key="label">DDBJ</data>
+      <data key="kind">Agent</data>
+      <data key="dtypes">Agent Organization</data>
+      <data key="nd29">DDBJ</data>
+    </node>
+    <node id="org:european bioinformatics institute">
+      <data key="label">European Bioinformatics Institute</data>
+      <data key="kind">Agent</data>
+      <data key="dtypes">Agent Organization</data>
+      <data key="nd29">European Bioinformatics Institute</data>
+    </node>
+    <node id="org:kakutani lab, department of integrative genetics, national institute of genetics">
+      <data key="label">Kakutani lab, Department of Integrative Genetics, National Institute of Genetics</data>
+      <data key="kind">Agent</data>
+      <data key="dtypes">Agent Organization</data>
+      <data key="nd29">Kakutani lab, Department of Integrative Genetics, National Institute of Genetics</data>
+    </node>
+    <node id="org:nig">
+      <data key="label">NIG</data>
+      <data key="kind">Agent</data>
+      <data key="dtypes">Agent Organization</data>
+      <data key="nd29">NIG</data>
+    </node>
+    <node id="submission.xml">
+      <data key="label">submission.xml</data>
+      <data key="kind">Activity</data>
+      <data key="dtypes">Receipt</data>
+      <data key="nd32">2017-07-25T15:07:50.2480000+00:00</data>
+      <data key="nd37">submission.xml</data>
+      <data key="nd38">true</data>
+    </node>
+    <node id="taxon:3702">
+      <data key="label">taxon:3702</data>
+      <data key="kind">Observable</data>
+      <data key="dtypes">Organism Taxon</data>
+      <data key="nd7">thale cress</data>
+      <data key="nd33">Arabidopsis thaliana</data>
+      <data key="nd39">3702</data>
+    </node>
+    <node id="DRS039895">
+      <data key="label">DRS039895</data>
+      <data key="kind">Missing</data>
+    </node>
+    <node id="ERA970284">
+      <data key="label">ERA970284</data>
+      <data key="kind">Missing</data>
+    </node>
+    <node id="ERP107353">
+      <data key="label">ERP107353</data>
+      <data key="kind">Missing</data>
+    </node>
+    <node id="ERS1838367">
+      <data key="label">ERS1838367</data>
+      <data key="kind">Missing</data>
+    </node>
+    <node id="PRJNA9506">
+      <data key="label">PRJNA9506</data>
+      <data key="kind">Missing</data>
+    </node>
+    <edge id="e0" source="DRA005154" target="org:ddbj">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e1" source="DRA005154" target="org:kakutani lab, department of integrative genetics, national institute of genetics">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e2" source="DRA005154" target="org:nig">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e3" source="DRP003416" target="org:ddbj">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e4" source="DRP003416" target="org:nig">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e5" source="DRP003416" target="PRJDB5192">
+      <data key="predicate">references</data>
+    </edge>
+    <edge id="e6" source="DRR072834" target="org:ddbj">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e7" source="DRR072834" target="org:nig">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e8" source="DRR072834" target="DRX066772">
+      <data key="predicate">hasExperiment</data>
+    </edge>
+    <edge id="e9" source="DRX066772" target="org:ddbj">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e10" source="DRX066772" target="org:nig">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e11" source="DRX066772" target="DRX066772#library">
+      <data key="predicate">hasProtocol</data>
+    </edge>
+    <edge id="e12" source="DRX066772" target="DRS039895">
+      <data key="predicate">hasSample</data>
+    </edge>
+    <edge id="e13" source="DRX066772" target="DRP003416">
+      <data key="predicate">hasStudy</data>
+    </edge>
+    <edge id="e14" source="DRX066772" target="instrument:http://purl.org/arc/insdc/enum#IlluminaModel/IlluminaHiSeq4000">
+      <data key="predicate">usesInstrument</data>
+    </edge>
+    <edge id="e15" source="ERZ496533" target="org:european bioinformatics institute">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e16" source="ERZ496533" target="ERP107353">
+      <data key="predicate">hasStudy</data>
+    </edge>
+    <edge id="e17" source="ERZ496533" target="ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz">
+      <data key="predicate">producesData</data>
+    </edge>
+    <edge id="e18" source="ERZ496533" target="ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz.tbi">
+      <data key="predicate">producesData</data>
+    </edge>
+    <edge id="e19" source="PRJDB5192" target="org:ddbj">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e20" source="PRJDB5192" target="org:kakutani lab, department of integrative genetics, national institute of genetics">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e21" source="PRJDB5192" target="PRJNA9506">
+      <data key="predicate">hasParentProject</data>
+    </edge>
+    <edge id="e22" source="SAMD00064197" target="org:ddbj">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e23" source="SAMD00064197" target="org:kakutani lab, department of integrative genetics, national institute of genetics">
+      <data key="predicate">hasContact</data>
+    </edge>
+    <edge id="e24" source="SAMD00064197" target="taxon:3702">
+      <data key="predicate">hasOrganism</data>
+    </edge>
+    <edge id="e25" source="submission.xml" target="ERA970284">
+      <data key="predicate">acknowledges</data>
+    </edge>
+    <edge id="e26" source="submission.xml" target="ERS1838367">
+      <data key="predicate">acknowledges</data>
+    </edge>
+  </graph>
+</graphml>

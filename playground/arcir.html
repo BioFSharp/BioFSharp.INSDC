@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ArcIR graph</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+#app{display:flex;height:100vh}
+#main{flex:1;position:relative;min-width:0}
+#graph{width:100%;height:100%;background:#fafafa;cursor:grab;display:block}
+#graph:active{cursor:grabbing}
+.edge{stroke:#d0d0d0;stroke-width:1}
+.elabel{fill:#a0a0a0;font-size:9px;pointer-events:none}
+.nlabel{fill:#333;font-size:11px;pointer-events:none}
+.node{cursor:pointer}
+.node circle{stroke:#fff;stroke-width:1.5}
+.node.sel circle{stroke:#222;stroke-width:2.5}
+#panel{flex:0 0 auto;width:340px;min-width:220px;max-width:80vw;background:#fff;display:flex}
+#pbody{flex:1 1 auto;overflow:auto;padding:16px;min-width:0}
+#panel h2{font-size:15px;margin:0 0 8px;word-break:break-word}
+#panel h3{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin:16px 0 6px}
+.badge{display:inline-block;color:#fff;font-size:11px;padding:2px 9px;border-radius:10px;margin-bottom:10px}
+#grip{flex:0 0 8px;cursor:col-resize;background:#e3e3e3;border-right:1px solid #d8d8d8}
+#grip:hover{background:#9aa0a6}
+.row{padding:5px 0;border-bottom:1px solid #f0f0f0}
+.row .k{color:#888;font-size:11px;word-break:break-word;margin-bottom:1px}
+.row .v{font-size:13px;word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap}
+#bar{position:absolute;top:10px;left:10px;font-size:12px;color:#555;background:rgba(255,255,255,.88);padding:6px 10px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+#bar button{font-size:11px;margin-left:8px;cursor:pointer}
+.hint{color:#aaa}
+#legend{position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.92);padding:8px 10px;border-radius:6px;font-size:11px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+#legend div{display:flex;align-items:center;margin:2px 0}
+#legend span{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:6px}
+@media (prefers-color-scheme:dark){
+ html,body{background:#1e1e1e;color:#ddd}
+ #graph{background:#1e1e1e}
+ .edge{stroke:#3a3a3a}.elabel{fill:#777}.nlabel{fill:#ccc}
+ #panel{background:#252525}
+ #panel h2{color:#eee}
+ #grip{background:#333;border-color:#444}#grip:hover{background:#555}
+ .row{border-color:#333}.row .k{color:#999}
+ #bar,#legend{background:rgba(42,42,42,.92);color:#ccc}
+}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="main">
+  <svg id="graph"><g id="viewport"></g></svg>
+  <div id="bar"><span id="counts"></span><button id="reset">Reset view</button><span class="hint"> &middot; scroll = zoom, drag background = pan, drag node = move, click node = details</span></div>
+  <div id="legend"></div>
+ </div>
+ <aside id="panel"><div id="grip"></div><div id="pbody"><h2>ArcIR graph</h2><p class="hint">Click a node to see its properties and annotations.</p></div></aside>
+</div>
+<script>
+const DATA = {"nodes":[{"id":"DRA005154","label":"DRA005154","kind":"Collection","dtypes":"Submission","props":[],"annotations":[["Title","Submitted by NIG on 28-JAN-2017"],["LabName","Kakutani lab, Department of Integrative Genetics, National Institute of Genetics"],["primaryId","DRA005154"],["NIG","DRA005154"]]},{"id":"DRP003416","label":"DRP003416","kind":"Collection","dtypes":"Study","props":[],"annotations":[["StudyTitle","The gene-body chromatin modifications dynamics mediates epigenome differentiation in Arabidopsis"],["StudyAbstract","Constitutively silent heterochromatin is marked by methylation of lysine 9 on histone H3 (H3K9me). A puzzling feature of H3K9me is that this modification generally localizes not only in promoters but also in internal regions (bodies) of silent transcription units. Despite its prevalence, biological significance of gene-body H3K9me remains enigmatic. Here we show that H3K9me-directed removal of H3K4 monomethylation (H3K4me1) in the gene-bodies mediates transcriptional silencing. Mutations in an Arabidopsis H3K9 demethylase gene IBM1 induce ectopic H3K9me2 accumulation in gene-bodies, which is associated with severe developmental defects. Through suppressor screening of the ibm1- induced developmental defects, we identified LDL2 gene, which encodes a homolog of conserved H3K4 demethylases. The ldl2 mutation suppressed the developmental defects, but it did not suppress the ibm1-induced ectopic H3K9me2. The ectopic H3K9m2 directed reduced body H3K4me1 and transcriptional repression, which depend on the LDL2 function. Furthermore, mutations of H3K9 methylases induced drastic increases in H3K4me1 in the bodies of diverse transposable elements. Our results uncovered an unexpected role of gene-body H3K9me2/H3K4me1 dynamics as a mediator of heterochromatin silencing and epigenome differentiation."],["StudyType","http://purl.org/arc/insdc/enum#StudyDescriptorStudyTypeExistingStudyType/WholeGenomeSequencing"],["ENA-STATUS","PUBLIC"],["ENA-FIRST-PUBLIC","2017-01-28"],["ENA-LAST-UPDATE","2017-01-28"],["primaryId","DRP003416"],["secondaryId","PRJDB5192"],["BioProject","PRJDB5192"],["NIG","DRP003416"]]},{"id":"DRR072834","label":"DRR072834","kind":"Activity","dtypes":"Run","props":[],"annotations":[["Title","WT_H3K4me3_2"],["ENA-STATUS","PUBLIC"],["ENA-FIRST-PUBLIC","2017-01-28"],["ENA-LAST-UPDATE","2017-01-28"],["ENA-BASE-COUNT","1037391408"],["ENA-SPOT-COUNT","20341008"],["primaryId","DRR072834"],["NIG","DRR072834"]]},{"id":"DRX066772","label":"DRX066772","kind":"Activity","dtypes":"Assay Experiment","props":[],"annotations":[["Title","WT_H3K4me3_2"],["ENA-STATUS","PUBLIC"],["primaryId","DRX066772"],["NIG","DRX066772"]]},{"id":"DRX066772#library","label":"DRX066772#library","kind":"Recipe","dtypes":"Protocol","props":[["LibraryConstructionProtocol","KAPA Hyper Prep Kit"],["LibrarySelection","http://purl.org/arc/insdc/enum#LibrarySelection/ChIp"],["LibrarySource","http://purl.org/arc/insdc/enum#LibrarySource/Genomic"],["LibraryStrategy","http://purl.org/arc/insdc/enum#LibraryStrategy/ChIpSeq"]],"annotations":[]},{"id":"ERZ496533","label":"ERZ496533","kind":"Activity","dtypes":"Analysis","props":[],"annotations":[["Title","DNA sequencing ACAN"],["Description","Exon 7 was PCR amplified from dwarf and non-dwarf ponies then sequenced and compared"],["AnalysisType","SequenceVariation"],["ENA-STATUS","PUBLIC"],["ENA-FIRST-PUBLIC","2018-03-07"],["ENA-LAST-UPDATE","2018-03-07"],["primaryId","ERZ496533"],["European Bioinformatics Institute","DNA sequencing ACAN"]]},{"id":"ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz","label":"ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz","kind":"Resource","dtypes":"Data","props":[["Checksum","e83207c712242079577aa07566e5e32d"],["ChecksumMethod","http://purl.org/arc/insdc/enum#AnalysisFileChecksumMethod/Md5"],["Filename","ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz"],["Filetype","http://purl.org/arc/insdc/enum#AnalysisFileFiletype/Vcf"]],"annotations":[]},{"id":"ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz.tbi","label":"ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz.tbi","kind":"Resource","dtypes":"Data","props":[["Checksum","59c8ff847a438c8e91288fda1610206d"],["ChecksumMethod","http://purl.org/arc/insdc/enum#AnalysisFileChecksumMethod/Md5"],["Filename","ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz.tbi"],["Filetype","http://purl.org/arc/insdc/enum#AnalysisFileFiletype/Tabix"]],"annotations":[]},{"id":"PRJDB5192","label":"PRJDB5192","kind":"Collection","dtypes":"BioProject Investigation","props":[],"annotations":[["Alias","PRJDB5192"],["Name","Arabidopsis thaliana strain:Col-0"],["Title","The gene-body chromatin modifications dynamics mediates epigenome differentiation in Arabidopsis"],["Description","Constitutively silent heterochromatin is marked by methylation of lysine 9 on histone H3 (H3K9me). A puzzling feature of H3K9me is that this modification generally localizes not only in promoters but also in internal regions (bodies) of silent transcription units. Despite its prevalence, biological significance of gene-body H3K9me remains enigmatic. Here we show that H3K9me-directed removal of H3K4 monomethylation (H3K4me1) in the gene-bodies mediates transcriptional silencing. Mutations in an Arabidopsis H3K9 demethylase gene IBM1 induce ectopic H3K9me2 accumulation in gene-bodies, which is associated with severe developmental defects. Through suppressor screening of the ibm1- induced developmental defects, we identified LDL2 gene, which encodes a homolog of conserved H3K4 demethylases. The ldl2 mutation suppressed the developmental defects, but it did not suppress the ibm1-induced ectopic H3K9me2. The ectopic H3K9m2 directed reduced body H3K4me1 and transcriptional repression, which depend on the LDL2 function. Furthermore, mutations of H3K9 methylases induced drastic increases in H3K4me1 in the bodies of diverse transposable elements. Our results uncovered an unexpected role of gene-body H3K9me2/H3K4me1 dynamics as a mediator of heterochromatin silencing and epigenome differentiation."],["ENA-REFSEQ","N"],["PROJECT-ID","362567"],["NCBI-PROJECT-TYPE","SUBMISSION"],["ENA-STATUS","PUBLIC"],["ENA-FIRST-PUBLIC","2017-04-19"],["ENA-LAST-UPDATE","2026-05-04"],["primaryId","PRJDB5192"],["secondaryId","DRP003416"],["Kakutani lab, Department of Integrative Genetics, National Institute of Genetics","PRJDB5192"]]},{"id":"SAMD00064197","label":"SAMD00064197","kind":"Observable","dtypes":"BioSample Sample","props":[],"annotations":[["Title","WT Col-0"],["Description","reference"],["INSDC secondary accession","DRS039895"],["NCBI submission package","Generic.1.0"],["organism","Arabidopsis thaliana"],["ecotype","Col-0"],["sample_name","WT"],["BioSampleModel","Generic"],["ENA-FIRST-PUBLIC","2017-01-18"],["ENA-LAST-UPDATE","2023-10-29"],["primaryId","SAMD00064197"],["secondaryId","DRS039895"],["BioSample","SAMD00064197"]]},{"id":"instrument:http://purl.org/arc/insdc/enum#IlluminaModel/IlluminaHiSeq4000","label":"instrument:http://purl.org/arc/insdc/enum#IlluminaModel/IlluminaHiSeq4000","kind":"Instrument","dtypes":"Instrument","props":[["InstrumentModel","http://purl.org/arc/insdc/enum#IlluminaModel/IlluminaHiSeq4000"],["Platform","Illumina"]],"annotations":[]},{"id":"org:ddbj","label":"DDBJ","kind":"Agent","dtypes":"Agent Organization","props":[["Name","DDBJ"]],"annotations":[]},{"id":"org:european bioinformatics institute","label":"European Bioinformatics Institute","kind":"Agent","dtypes":"Agent Organization","props":[["Name","European Bioinformatics Institute"]],"annotations":[]},{"id":"org:kakutani lab, department of integrative genetics, national institute of genetics","label":"Kakutani lab, Department of Integrative Genetics, National Institute of Genetics","kind":"Agent","dtypes":"Agent Organization","props":[["Name","Kakutani lab, Department of Integrative Genetics, National Institute of Genetics"]],"annotations":[]},{"id":"org:nig","label":"NIG","kind":"Agent","dtypes":"Agent Organization","props":[["Name","NIG"]],"annotations":[]},{"id":"submission.xml","label":"submission.xml","kind":"Activity","dtypes":"Receipt","props":[],"annotations":[["Success","true"],["ReceiptDate","2017-07-25T15:07:50.2480000+00:00"],["SubmissionFile","submission.xml"]]},{"id":"taxon:3702","label":"taxon:3702","kind":"Observable","dtypes":"Organism Taxon","props":[["CommonName","thale cress"],["ScientificName","Arabidopsis thaliana"],["TaxonId","3702"]],"annotations":[]},{"id":"DRS039895","label":"DRS039895","kind":"Missing","dtypes":"","props":[],"annotations":[]},{"id":"ERA970284","label":"ERA970284","kind":"Missing","dtypes":"","props":[],"annotations":[]},{"id":"ERP107353","label":"ERP107353","kind":"Missing","dtypes":"","props":[],"annotations":[]},{"id":"ERS1838367","label":"ERS1838367","kind":"Missing","dtypes":"","props":[],"annotations":[]},{"id":"PRJNA9506","label":"PRJNA9506","kind":"Missing","dtypes":"","props":[],"annotations":[]}],"edges":[{"source":"DRA005154","target":"org:ddbj","predicate":"hasContact"},{"source":"DRA005154","target":"org:kakutani lab, department of integrative genetics, national institute of genetics","predicate":"hasContact"},{"source":"DRA005154","target":"org:nig","predicate":"hasContact"},{"source":"DRP003416","target":"org:ddbj","predicate":"hasContact"},{"source":"DRP003416","target":"org:nig","predicate":"hasContact"},{"source":"DRP003416","target":"PRJDB5192","predicate":"references"},{"source":"DRR072834","target":"org:ddbj","predicate":"hasContact"},{"source":"DRR072834","target":"org:nig","predicate":"hasContact"},{"source":"DRR072834","target":"DRX066772","predicate":"hasExperiment"},{"source":"DRX066772","target":"org:ddbj","predicate":"hasContact"},{"source":"DRX066772","target":"org:nig","predicate":"hasContact"},{"source":"DRX066772","target":"DRX066772#library","predicate":"hasProtocol"},{"source":"DRX066772","target":"DRS039895","predicate":"hasSample"},{"source":"DRX066772","target":"DRP003416","predicate":"hasStudy"},{"source":"DRX066772","target":"instrument:http://purl.org/arc/insdc/enum#IlluminaModel/IlluminaHiSeq4000","predicate":"usesInstrument"},{"source":"ERZ496533","target":"org:european bioinformatics institute","predicate":"hasContact"},{"source":"ERZ496533","target":"ERP107353","predicate":"hasStudy"},{"source":"ERZ496533","target":"ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz","predicate":"producesData"},{"source":"ERZ496533","target":"ERZ496533#file:ERZ496/ERZ496533/Bailey_ACAN_306.vcf.gz.tbi","predicate":"producesData"},{"source":"PRJDB5192","target":"org:ddbj","predicate":"hasContact"},{"source":"PRJDB5192","target":"org:kakutani lab, department of integrative genetics, national institute of genetics","predicate":"hasContact"},{"source":"PRJDB5192","target":"PRJNA9506","predicate":"hasParentProject"},{"source":"SAMD00064197","target":"org:ddbj","predicate":"hasContact"},{"source":"SAMD00064197","target":"org:kakutani lab, department of integrative genetics, national institute of genetics","predicate":"hasContact"},{"source":"SAMD00064197","target":"taxon:3702","predicate":"hasOrganism"},{"source":"submission.xml","target":"ERA970284","predicate":"acknowledges"},{"source":"submission.xml","target":"ERS1838367","predicate":"acknowledges"}]};
+const KIND_COLORS={Collection:'#4e79a7',Activity:'#f28e2b',Observable:'#59a14f',Agent:'#e15759',Instrument:'#b07aa1',Recipe:'#edc948',Resource:'#76b7b2',Role:'#ff9da7',Selector:'#9c755f',Missing:'#bab0ac'};
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('graph');
+const viewport=document.getElementById('viewport');
+const r0=svg.getBoundingClientRect();
+const W=r0.width||900, H=r0.height||600;
+const nodes=DATA.nodes.map((n,i)=>{const a=2*Math.PI*i/Math.max(1,DATA.nodes.length);return Object.assign({},n,{x:W/2+Math.cos(a)*Math.min(W,H)/3,y:H/2+Math.sin(a)*Math.min(W,H)/3,vx:0,vy:0,fixed:false});});
+const byId=new Map(nodes.map(n=>[n.id,n]));
+const edges=DATA.edges.map(e=>({source:byId.get(e.source),target:byId.get(e.target),predicate:e.predicate})).filter(e=>e.source&&e.target);
+document.getElementById('counts').textContent=nodes.length+' nodes · '+edges.length+' edges';
+const legend=document.getElementById('legend');
+[...new Set(nodes.map(n=>n.kind))].sort().forEach(k=>{const d=document.createElement('div');const s=document.createElement('span');s.style.background=KIND_COLORS[k]||'#888';d.appendChild(s);d.appendChild(document.createTextNode(k));legend.appendChild(d);});
+const edgeEls=edges.map(e=>{const line=document.createElementNS(NS,'line');line.setAttribute('class','edge');viewport.appendChild(line);const lbl=document.createElementNS(NS,'text');lbl.setAttribute('class','elabel');lbl.textContent=e.predicate;viewport.appendChild(lbl);return{e,line,lbl};});
+const nodeEls=nodes.map(n=>{const g=document.createElementNS(NS,'g');g.setAttribute('class','node');const c=document.createElementNS(NS,'circle');c.setAttribute('r','10');c.setAttribute('fill',KIND_COLORS[n.kind]||'#888');g.appendChild(c);const t=document.createElementNS(NS,'text');t.setAttribute('class','nlabel');t.setAttribute('x','13');t.setAttribute('y','4');t.textContent=n.label;g.appendChild(t);viewport.appendChild(g);g.addEventListener('mousedown',ev=>startDrag(ev,n));return{n,g};});
+let alpha=1;
+function step(){
+ for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const a=nodes[i],b=nodes[j];let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;if(d2<0.01){d2=0.01;dx=Math.random()-0.5;dy=Math.random()-0.5;}const d=Math.sqrt(d2),f=7000/d2,fx=dx/d*f,fy=dy/d*f;a.vx+=fx;a.vy+=fy;b.vx-=fx;b.vy-=fy;}
+ edges.forEach(e=>{const dx=e.target.x-e.source.x,dy=e.target.y-e.source.y,d=Math.sqrt(dx*dx+dy*dy)||0.01,f=(d-140)*0.03,fx=dx/d*f,fy=dy/d*f;e.source.vx+=fx;e.source.vy+=fy;e.target.vx-=fx;e.target.vy-=fy;});
+ nodes.forEach(n=>{n.vx+=(W/2-n.x)*0.003;n.vy+=(H/2-n.y)*0.003;});
+ nodes.forEach(n=>{if(n.fixed)return;const sp=Math.hypot(n.vx,n.vy),cap=30;if(sp>cap){n.vx=n.vx/sp*cap;n.vy=n.vy/sp*cap;}n.x+=n.vx*alpha;n.y+=n.vy*alpha;n.vx*=0.82;n.vy*=0.82;});
+ alpha*=0.985;
+}
+function render(){
+ edgeEls.forEach(({e,line,lbl})=>{line.setAttribute('x1',e.source.x);line.setAttribute('y1',e.source.y);line.setAttribute('x2',e.target.x);line.setAttribute('y2',e.target.y);lbl.setAttribute('x',(e.source.x+e.target.x)/2);lbl.setAttribute('y',(e.source.y+e.target.y)/2);});
+ nodeEls.forEach(({n,g})=>g.setAttribute('transform','translate('+n.x+','+n.y+')'));
+}
+function tick(){if(alpha>0.02){step();step();}render();requestAnimationFrame(tick);}
+tick();
+let tx=0,ty=0,scale=1;
+function applyView(){viewport.setAttribute('transform','translate('+tx+','+ty+') scale('+scale+')');}
+svg.addEventListener('wheel',ev=>{ev.preventDefault();const r=svg.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top,f=ev.deltaY<0?1.1:1/1.1;tx=mx-(mx-tx)*f;ty=my-(my-ty)*f;scale*=f;applyView();},{passive:false});
+document.getElementById('reset').addEventListener('click',()=>{tx=0;ty=0;scale=1;applyView();});
+let panning=false,px=0,py=0,drag=null;
+svg.addEventListener('mousedown',ev=>{if(ev.target===svg||ev.target===viewport){panning=true;px=ev.clientX;py=ev.clientY;}});
+window.addEventListener('mousemove',ev=>{
+ if(drag){const r=svg.getBoundingClientRect();drag.x=(ev.clientX-r.left-tx)/scale;drag.y=(ev.clientY-r.top-ty)/scale;alpha=Math.max(alpha,0.25);}
+ else if(panning){tx+=ev.clientX-px;ty+=ev.clientY-py;px=ev.clientX;py=ev.clientY;applyView();}
+});
+window.addEventListener('mouseup',()=>{panning=false;if(drag){drag.fixed=false;drag=null;}});
+function startDrag(ev,n){ev.stopPropagation();ev.preventDefault();drag=n;n.fixed=true;select(n);}
+const panel=document.getElementById('panel');
+const pbody=document.getElementById('pbody');
+// Drag the grip on the panel's left edge to resize the inspection pane.
+const grip=document.getElementById('grip');
+let resizing=false;
+grip.addEventListener('mousedown',ev=>{ev.preventDefault();resizing=true;document.body.style.userSelect='none';document.body.style.cursor='col-resize';});
+window.addEventListener('mousemove',ev=>{if(resizing){panel.style.width=Math.min(Math.max(window.innerWidth-ev.clientX,220),window.innerWidth-160)+'px';}});
+window.addEventListener('mouseup',()=>{if(resizing){resizing=false;document.body.style.userSelect='';document.body.style.cursor='';}});
+// Stacked key-over-value rows so a long term name never squeezes the value.
+function row(container,k,v){const r=document.createElement('div');r.className='row';const kk=document.createElement('div');kk.className='k';kk.textContent=k;const vv=document.createElement('div');vv.className='v';vv.textContent=v;r.appendChild(kk);r.appendChild(vv);container.appendChild(r);}
+function section(title,pairs){if(!pairs||!pairs.length)return null;const frag=document.createDocumentFragment(),h=document.createElement('h3');h.textContent=title+' ('+pairs.length+')';frag.appendChild(h);pairs.forEach(p=>row(frag,p[0],p[1]));return frag;}
+function select(n){
+ nodeEls.forEach(({n:m,g})=>g.classList.toggle('sel',m===n));
+ pbody.innerHTML='';
+ const h=document.createElement('h2');h.textContent=n.label;pbody.appendChild(h);
+ const b=document.createElement('div');b.className='badge';b.textContent=n.kind;b.style.background=KIND_COLORS[n.kind]||'#888';pbody.appendChild(b);
+ const meta=document.createElement('div');row(meta,'id',n.id);if(n.dtypes)row(meta,'dtypes',n.dtypes);pbody.appendChild(meta);
+ const ps=section('Properties',n.props);if(ps)pbody.appendChild(ps);
+ const an=section('Annotations',n.annotations);if(an)pbody.appendChild(an);
+}
+</script>
+</body>
+</html>
