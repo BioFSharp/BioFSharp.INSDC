@@ -13,6 +13,8 @@
     <Compile Include="Internal\Http.fs" />
     <Compile Include="CrawlOptions.fs" />
     <Compile Include="Discovery.fs" />
+    <Compile Include="Paper.fs" />
+    <Compile Include="Dee2.fs" />
     <Compile Include="Crawler.fs" />
     <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
     <None Include="README.md" Pack="true" PackagePath="" />

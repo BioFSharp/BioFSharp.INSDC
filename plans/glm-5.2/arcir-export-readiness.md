@@ -1,24 +1,28 @@
 # ArcIR → AI-readiness export plan (F2)
 
 > Refines `plans/arcir-export-readiness.md` with the three locked decisions from the 2026-07-10 design
-> session. Focuses on **R0** as the implementation baseline; R1–R4 are sketched to fix the shape. Each rung
-> gets its own detail pass before implementation.
+> session. Focuses on **R0** as the implementation baseline; R1–R4 are sketched to fix the shape. Each
+> AI readiness level format gets its own detail pass before implementation.
+>
+> **Superseded in part (2026-07-13).** The canonical plan is now
+> [`plans/claude/arcir-export-readiness.md`](../claude/arcir-export-readiness.md). R1 and R2 have since
+> been redefined as raw-artifact formats and built in the crawler — see the R1/R2 sections below.
 
 ## Overview
 
-The F2 export functions take a built `ArcIR` graph and **materialize a dataset folder** whose metadata
-richness climbs a five-rung *AI-readiness* scale. Same input, same project, progressively more context and
-structure emitted around the same primary data (a count matrix):
+The F2 export functions take a built `ArcIR` graph and **materialize a dataset folder** in one of five
+**AI readiness level formats**, each carrying more metadata and structure than the last. Same input, same
+project, progressively more context emitted around the same primary data (a count matrix):
 
-| Rung | Name | One-liner |
+| Format | Name | One-liner |
 |---|---|---|
 | **R0** | Plain data | Count matrix in a named folder, sample-labelled headers, nothing else. |
-| **R1** | Un/weakly structured | + a prose description and the paper; source is *obscured* (not obviously INSDC). |
+| **R1** | Un/weakly structured | The DEE2 count archive verbatim + the paper; source is *obscured* (no INSDC XML). |
 | **R2** | Structured standard | The full INSDC XML record tree in a folder layout + counts (+ paper). |
 | **R3** | Ontology-backed | The full ArcIR itself (the graph is already ontology-annotated). |
 | **R4** | FAIR digital object | An ARC in the new non-ISA YAML form: investigation + assay/sample provenance. |
 
-Each rung is one function `ArcIR -> … -> ExportTree` (plus a thin `writeTo dir` sink). This mirrors the
+Each AI readiness level format is one function `ArcIR -> … -> ExportTree` (plus a thin `writeTo dir` sink). This mirrors the
 existing serializers (`GraphMl.toString`/`writeFile`, `Html.toString`/`writeFile`): a pure transform to an
 in-memory artifact, and a separate disk sink, so the transform is unit-testable without touching the
 filesystem.
@@ -32,12 +36,12 @@ filesystem.
 | **Sample name** | `sample_name` attr → `<TITLE>` → alias → accession. Collision or any unmapped column → `S_0…S_N` for all columns. |
 | **Count body source** | Pass count file path(s) to the F2 function. The IR keeps only matrix identity + column→run mapping; the body is re-read from a caller-supplied source. |
 
-## Constraints discovered (these shape every rung)
+## Constraints discovered (these shape every format)
 
 1. **The IR is metadata-only. Count *values* are not in it.** `Ingest/Readers.fs` parses only the *header
    line* of a count matrix: it keeps run-accession columns as `CountColumn { Index; RunAccession }` and
    drops everything else (including the `gene_id` feature column, which fails the run-accession regex). The
-   cell matrix never enters the graph. **Consequence:** any rung that emits the count file (R0, R1, R2, R4)
+   cell matrix never enters the graph. **Consequence:** any format that emits the count file (R0, R2, R4)
    must re-read the raw bytes from a caller-supplied source, and use the IR only to *rewrite the header* and
    *choose the folder/name*. The export signature therefore carries a `CountMatrixSource` alongside the IR.
 
@@ -187,7 +191,7 @@ are named and some are `S_k`.
 
 ### Goal
 
-The lowest rung: the count matrix, in a folder named for the project, with sample-labelled column headers,
+The lowest readiness format: the count matrix, in a folder named for the project, with sample-labelled column headers,
 and **nothing else** — no README, no provenance, no hint of INSDC. It answers "can a model do anything with
 just the numbers and the barest labels?"
 
@@ -304,12 +308,23 @@ changes.
 `Export.r0 ir (Export.countSourceFromFolder …) (ArcId.Create "PRJDB5192") |> Export.writeTo "./out"` and
 print the tree.
 
-## R1 — Un/weakly structured (sketch)
+## R1 — Un/weakly structured (superseded; implemented as a crawl)
+
+> **Superseded 2026-07-13.** The sketch below is kept for history only. R1 was redefined and built: it is
+> now the **DEE2 count archive verbatim + the paper**, with **R1A = JATS XML and R1B = PDF** — note this
+> **inverts** the old A=pdf / B=jats assignment — and **R1C is dropped** (shipping the archive verbatim
+> already retains the run-accession headers that were R1C's only distinguishing feature). There is no
+> `description.txt` and no re-headered count matrix, so R1 needs neither `titleAbbrev` nor `PaperSource`
+> nor any IR: it is materialized entirely by the crawler. See
+> [`plans/claude/r1-crawlers.md`](../claude/r1-crawlers.md) and the canonical
+> [`plans/claude/arcir-export-readiness.md`](../claude/arcir-export-readiness.md).
+
+*Historical sketch:*
 
 Same folder, but *decontextualized*: strip the obvious INSDC surface so the record isn't trivially
 re-identifiable, and add human context.
 
-```
+```text
 <slug>/
   description.txt            # BioProject Description annotation, verbatim prose
   <title-abbrev>.tsv        # counts; filename = abbreviation of the project Title (not the accession)
@@ -361,7 +376,7 @@ An **ARC in the new non-ISA YAML form**.
   assays over the DEE2 counts, **no datamap**.
 - **R4B** — adds a datamap for the counts, plus **sample provenance** as assays (curated by hand now,
   LLM-assisted first pass later for scaling).
-- Depends on the target YAML schema (the new ARC format), which isn't pinned here. This rung is specified
+- Depends on the target YAML schema (the new ARC format), which isn't pinned here. This readiness format is specified
   once that schema is available; the ArcIR→ARC mapping doc (`plans/arcir-mapping.md`) already establishes
   the Kind→ISA correspondence to build on.
 
@@ -376,7 +391,10 @@ regression test per the ontology-change policy. **Not required for the R0 baseli
 
 1. **R0** — `Export/Readiness.fs` (ExportTree, CountMatrixSource, ProjectView single-project, name helpers)
    + `Export/R0.fs` + tests + playground. Self-contained; no enabling change needed.
-2. **R1** — add `PaperSource` + `titleAbbrev`; R1A/B/C are header/paper-format variants over R0's writer.
+2. ~~**R1**~~ — **done, and it left the export layer entirely**: R1 is two raw artifacts (the DEE2 archive
+   + the paper), crawler-materialized, needing no `PaperSource`, no `titleAbbrev` and no IR. See
+   [`plans/claude/r1-crawlers.md`](../claude/r1-crawlers.md).
 3. **Enabling change** — BioProject↔Study edge (unblocks correct multi-project scoping).
-4. **R2** — decide the XML source strategy, then the record-tree writer.
+4. ~~**R2**~~ — **done, likewise crawler-materialized.** See
+   [`plans/claude/r2-crawlers.md`](../claude/r2-crawlers.md).
 5. **R3 / R4** — after their formats (RDF/JSON-LD; the new ARC YAML) are pinned.

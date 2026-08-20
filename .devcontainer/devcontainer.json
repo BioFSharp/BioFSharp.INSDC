@@ -28,6 +28,7 @@
       "installTools": false
     },
     "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/git-lfs:1": {},
     "ghcr.io/va-h/devcontainers-features/uv:1": {},
     "ghcr.io/rails/devcontainer/features/sqlite3:latest": {}
   },

@@ -23,16 +23,33 @@ module Http =
             return! response |> Response.toTextAsync
         }
 
+    /// Performs a single HTTP GET for `url` and returns the response body as
+    /// a raw byte array. Throws on a non-2xx status. This is the production
+    /// `CrawlOptions.FetchBytes`; used only by PDF (binary) fetches so the
+    /// text `Fetch` path is preserved unchanged.
+    let getBytes (url: string) : Async<byte[]> =
+        async {
+            let! response = http { GET url } |> Request.sendAsync
+            let status = int response.statusCode
+
+            if status < 200 || status >= 300 then
+                failwithf "HTTP %d for %s" status url
+
+            return! response |> Response.toBytesAsync
+        }
+
     /// Wraps `fetch` with up to `retries` re-attempts on any exception, using
     /// exponential backoff (100ms, 200ms, 400ms, ...). A `Retrying` event is
     /// emitted through `log` before each re-attempt; the final failure is
-    /// rethrown for the caller to handle.
+    /// rethrown for the caller to handle. Generic over the body type so both
+    /// the text `Fetch` and the binary `FetchBytes` seams can share the retry
+    /// policy — the exception handler does not inspect the body.
     let withRetry
         (retries: int)
         (log: CrawlEvent -> unit)
-        (fetch: string -> Async<string>)
+        (fetch: string -> Async<'T>)
         (url: string)
-        : Async<string> =
+        : Async<'T> =
         let rec attempt (n: int) =
             async {
                 try
