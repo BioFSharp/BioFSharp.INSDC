@@ -1,5 +1,7 @@
 # Plan: BioFSharp.INSDC.SQLite — Schema + Deconstruction/Reconstruction Layer
 
+> **Status: SUPERSEDED (2026-08-20).** The core store was implemented, but its focused acceptance suite and migration work remain incomplete. Implemented portions remain historical context; outstanding work is consolidated in [the active implementation plan](../implementation.md).
+
 ## Context
 
 The next phase of `BioFSharp.INSDC` is a SQLite-backed store for the INSDC entity hierarchy (`BioProject > Study > BioSample > Experiment > Run`), intended to feed a crawler for these metadata records.

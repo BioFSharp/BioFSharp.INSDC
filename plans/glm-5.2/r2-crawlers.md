@@ -1,5 +1,7 @@
 # R2 crawlers — fetch the raw artifacts (INSDC XML, paper, DEE2 counts)
 
+> **Status: SUPERSEDED (2026-08-20).** This draft was replaced directly by the [as-built R2 crawler plan](../claude/r2-crawlers.md) and is no longer authoritative. Implemented portions remain historical context; current replacement work is consolidated in [the active implementation plan](../implementation.md).
+
 > The ArcIR export plan (`plans/glm-5.2/arcir-export-readiness.md`) defines R2 as "the full INSDC XML
 > record tree in a folder layout + counts (+ paper)". R2 needs no IR at all — it just needs the three
 > raw source artifacts on disk in a canonical tree. This plan covers the **source-side** crawlers that

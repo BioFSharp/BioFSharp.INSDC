@@ -1,5 +1,7 @@
 # R1 crawlers — fetch the raw artifacts (DEE2 archive + paper)
 
+> **Status: DONE (2026-08-20).** The original acceptance criteria are implemented. This document is retained as an as-built historical record; future evolution is governed by [the active implementation plan](../implementation.md).
+
 > The ArcIR export plan (`plans/claude/arcir-export-readiness.md`) defines **R1** — the
 > *un/weakly structured* AI readiness level format — as the DEE2 count archive verbatim plus the paper,
 > with the source *obscured* (no INSDC XML). Like R2, **R1 needs no IR at all**: it just needs two raw

@@ -1,5 +1,7 @@
 # ArcIR → GraphML visualization plan
 
+> **Status: DONE (2026-08-20).** The original GraphML and embedded HTML-viewer acceptance criteria are implemented. This document is retained as historical design context; replacement of the barebones HTML viewer and future visualization work are governed by [the active implementation plan](../implementation.md).
+
 ## Overview
 
 The INSDC → ArcIR mapping (`plans/arcir-mapping.md`) assembles a **property graph** —

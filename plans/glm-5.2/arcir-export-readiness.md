@@ -1,5 +1,7 @@
 # ArcIR → AI-readiness export plan (F2)
 
+> **Status: SUPERSEDED (2026-08-20).** This draft is no longer authoritative. Implemented portions remain historical context; replacement work is consolidated in [the active implementation plan](../implementation.md).
+
 > Refines `plans/arcir-export-readiness.md` with the three locked decisions from the 2026-07-10 design
 > session. Focuses on **R0** as the implementation baseline; R1–R4 are sketched to fix the shape. Each
 > AI readiness level format gets its own detail pass before implementation.

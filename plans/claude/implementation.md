@@ -1,5 +1,7 @@
 # BioFSharp.INSDC implementation plan
 
+> **Status: DONE (2026-08-20).** The original acceptance criteria are implemented. This document is retained as historical design context; future evolution is governed by [the active implementation plan](../implementation.md).
+
 ## Overview
 
 This repo ships two packages that together give BioFSharp users an INSDC (International Nucleotide Sequence Database Collaboration) read/write surface:

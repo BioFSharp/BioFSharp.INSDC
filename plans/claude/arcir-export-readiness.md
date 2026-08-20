@@ -1,5 +1,7 @@
 # ArcIR → AI-readiness export plan (F2)
 
+> **Status: SUPERSEDED (2026-08-20).** R1 and R2 were implemented by the crawler, but the proposed R0/R3/R4 export architecture is incomplete and no longer authoritative. Implemented portions remain historical context; replacement work is consolidated in [the active implementation plan](../implementation.md).
+
 > Canonical plan. Merges the original shape doc with the 2026-07-10 design-session refinements
 > (`plans/glm-5.2/arcir-export-readiness.md`): the locked decisions are authoritative, the name-helper
 > implementations and tests are grounded against the committed fixtures, and the *rationale* behind each

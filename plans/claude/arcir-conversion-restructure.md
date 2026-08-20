@@ -1,5 +1,7 @@
 # Per-entity conversion restructure (BioProject exemplar)
 
+> **Status: DONE (2026-08-20).** The original acceptance criteria are implemented. This document is retained as historical design context; future evolution is governed by [the active implementation plan](../implementation.md).
+
 ## Goal
 
 Give each accession type its own conversion, authored explicitly so **object integrity is preserved** —

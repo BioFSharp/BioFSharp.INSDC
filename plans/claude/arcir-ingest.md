@@ -1,5 +1,7 @@
 # Ingesting supplementary sources (paper + count data) into the ArcIR
 
+> **Status: DONE (2026-08-20).** The original acceptance criteria are implemented. This document is retained as historical design context; future evolution is governed by [the active implementation plan](../implementation.md).
+
 ## Context
 
 The forward mapping turns INSDC records into the ArcIR property graph (`Arc.Build.ArcIR` — typed

@@ -1,5 +1,7 @@
 # R2 crawlers — fetch the raw artifacts (INSDC XML, paper, DEE2 counts)
 
+> **Status: DONE (2026-08-20).** The original acceptance criteria are implemented. This document is retained as an as-built historical record; future evolution is governed by [the active implementation plan](../implementation.md).
+
 > The ArcIR export plan (`plans/claude/arcir-export-readiness.md`) defines R2 as "the full INSDC XML
 > record tree in a folder layout + counts (+ paper)". R2 needs no IR at all — it just needs the three
 > raw source artifacts on disk in a canonical tree. This plan covers the **source-side** crawlers that

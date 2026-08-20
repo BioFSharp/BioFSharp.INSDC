@@ -1,5 +1,7 @@
 # XML Fragment Selectors for INSDC Types
 
+> **Status: DONE (2026-08-20).** The source-XML selector generation, runtime XPath/XPointer lookup, and serializable XPath-entry acceptance criteria are implemented. This document is retained as historical design context; persistent ArcIR selector work is governed by [the active implementation plan](../implementation.md).
+
 ## Context
 
 We want every property of the INSDC XML type model to carry a **fragment selector** — a

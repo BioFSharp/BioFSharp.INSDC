@@ -1,5 +1,7 @@
 # INSDC → ArcIR mapping plan
 
+> **Status: SUPERSEDED (2026-08-20).** The graph foundation was implemented, but the hybrid structural-ontology overlay described here is no longer authoritative. Implemented portions remain historical context; replacement work is consolidated in [the active implementation plan](../implementation.md).
+
 ## Overview
 
 `BioFSharp.INSDC.ArcIR` maps parsed INSDC records into **ArcIR** — an ARC-oriented intermediate

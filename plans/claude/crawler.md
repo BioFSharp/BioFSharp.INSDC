@@ -1,5 +1,7 @@
 # BioFSharp.INSDC.Crawler implementation plan
 
+> **Status: DONE (2026-08-20).** The original acceptance criteria are implemented. This document is retained as historical design context; future evolution is governed by [the active implementation plan](../implementation.md).
+
 ## Context
 
 The repo can already read/write and model INSDC records, but every record it has
