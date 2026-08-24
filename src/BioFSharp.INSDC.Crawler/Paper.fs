@@ -83,14 +83,17 @@ module Paper =
     let private sanitize (id: string) : string =
         id.Replace('/', '_')
 
+    let private paperPath (outDir: string) (id: string) extension =
+        Path.Combine(outDir, PaperFolder, sanitize id + extension)
+
     /// Writes `xml` to `<outDir>/paper/<sanitized>.jats.xml`, creating the
     /// folder if needed. Returns the written path.
     let private writeJats (outDir: string) (id: string) (xml: string) : string =
         let dir = Path.Combine(outDir, PaperFolder)
         Directory.CreateDirectory dir |> ignore
 
-        let path = Path.Combine(dir, sanitize id + ".jats.xml")
-        File.WriteAllText(path, xml)
+        let path = paperPath outDir id ".jats.xml"
+        Internal.Files.writeText path xml
         path
 
     /// Writes `bytes` to `<outDir>/paper/<sanitized>.pdf`, creating the
@@ -99,8 +102,8 @@ module Paper =
         let dir = Path.Combine(outDir, PaperFolder)
         Directory.CreateDirectory dir |> ignore
 
-        let path = Path.Combine(dir, sanitize id + ".pdf")
-        File.WriteAllBytes(path, bytes)
+        let path = paperPath outDir id ".pdf"
+        Internal.Files.writeBytes path bytes
         path
 
     /// True if `xml` looks like a JATS / article XML body (starts with `<`
@@ -113,6 +116,15 @@ module Paper =
         && trimmed.StartsWith("<")
         && xml.Contains("<article")
 
+    /// Checks the signature required at the start of a PDF file.
+    let private looksLikePdf (bytes: byte[]) =
+        bytes.Length >= 5
+        && bytes.[0] = byte '%'
+        && bytes.[1] = byte 'P'
+        && bytes.[2] = byte 'D'
+        && bytes.[3] = byte 'F'
+        && bytes.[4] = byte '-'
+
     /// Runs `fetch url` inside `Async.Catch`, returning `Some x` on success
     /// or `None` on any exception. Stays properly asynchronous (unlike
     /// `try/with` inside an async workflow, `Async.Catch` does not break
@@ -123,6 +135,7 @@ module Paper =
 
             match choice with
             | Choice1Of2 x -> return Some x
+            | Choice2Of2 (:? OperationCanceledException as ex) -> return raise ex
             | Choice2Of2 _ -> return None
         }
 
@@ -215,6 +228,7 @@ module Paper =
             let! outcome = Async.Catch(searchAsync options query 1)
 
             match outcome, publication with
+            | Choice2Of2 (:? OperationCanceledException as ex), _ -> return raise ex
             | Choice1Of2 (article :: _), _ -> return Some article
             | _, Pmc pmcid ->
                 // The PMCID is already in hand; a search miss/error must not lose it.
@@ -230,16 +244,22 @@ module Paper =
     /// back to the PDF is the caller's decision.
     let private tryJatsAsync (options: CrawlOptions) (id: string) (outDir: string) : Async<string option> =
         async {
-            let url = Endpoints.europePmcFullTextXml options.EuropePmcBaseUrl id
-            let fetch = Internal.Http.withRetry options.Retries options.Log options.Fetch
-            let! jats = tryFetchAsync fetch url
+            let existingPath = paperPath outDir id ".jats.xml"
 
-            match jats with
-            | Some xml when looksLikeJats xml ->
-                let path = writeJats outDir id xml
-                options.Log(FetchedPaperFormat(id, "jats", path))
-                return Some path
-            | _ -> return None
+            if File.Exists(existingPath) && looksLikeJats (File.ReadAllText(existingPath)) then
+                options.Log(ReusedArtifact("paper/jats", existingPath))
+                return Some existingPath
+            else
+                let url = Endpoints.europePmcFullTextXml options.EuropePmcBaseUrl id
+                let fetch = Internal.Http.withRetry options.Retries options.Log options.Fetch
+                let! jats = tryFetchAsync fetch url
+
+                match jats with
+                | Some xml when looksLikeJats xml ->
+                    let path = writeJats outDir id xml
+                    options.Log(FetchedPaperFormat(id, "jats", path))
+                    return Some path
+                | _ -> return None
         }
 
     /// The article versions tried, in order, when fetching a PDF from the PMC Open
@@ -259,27 +279,33 @@ module Paper =
     /// tests passed happily on a stubbed byte array. See `Endpoints.pmcOaPdf`.
     let private tryPdfAsync (options: CrawlOptions) (id: string) (outDir: string) : Async<string option> =
         async {
-            let fetch = Internal.Http.withRetry options.Retries options.Log options.FetchBytes
+            let existingPath = paperPath outDir id ".pdf"
 
-            // Walk the version ladder, stopping at the first version that serves a
-            // non-empty body. `tryFetchAsync` swallows the 404s in between.
-            let rec attempt versions =
-                async {
-                    match versions with
-                    | [] -> return None
-                    | version :: rest ->
-                        let url = Endpoints.pmcOaPdf options.PmcOaBaseUrl id version
-                        let! pdf = tryFetchAsync fetch url
+            if File.Exists(existingPath) && looksLikePdf (File.ReadAllBytes(existingPath)) then
+                options.Log(ReusedArtifact("paper/pdf", existingPath))
+                return Some existingPath
+            else
+                let fetch = Internal.Http.withRetry options.Retries options.Log options.FetchBytes
 
-                        match pdf with
-                        | Some bytes when bytes.Length > 0 ->
-                            let path = writePdf outDir id bytes
-                            options.Log(FetchedPaperFormat(id, "pdf", path))
-                            return Some path
-                        | _ -> return! attempt rest
-                }
+                // Walk the version ladder, stopping at the first version that serves a
+                // valid PDF signature. `tryFetchAsync` swallows the 404s in between.
+                let rec attempt versions =
+                    async {
+                        match versions with
+                        | [] -> return None
+                        | version :: rest ->
+                            let url = Endpoints.pmcOaPdf options.PmcOaBaseUrl id version
+                            let! pdf = tryFetchAsync fetch url
 
-            return! attempt PmcOaVersions
+                            match pdf with
+                            | Some bytes when looksLikePdf bytes ->
+                                let path = writePdf outDir id bytes
+                                options.Log(FetchedPaperFormat(id, "pdf", path))
+                                return Some path
+                            | _ -> return! attempt rest
+                    }
+
+                return! attempt PmcOaVersions
         }
 
     /// Fetches the full text of paper `id` from EuropePMC in exactly `format` —

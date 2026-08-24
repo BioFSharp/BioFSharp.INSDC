@@ -11,6 +11,7 @@ module StudyConversion =
     [<Literal>]
     let private source = "INSDC Study"
 
+    /// Converts one Study record into its explicit ArcIR graph fragment.
     let convert (study: Study) : ConversionResult =
         let nodeId = Convert.entityId study
 

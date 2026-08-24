@@ -75,8 +75,10 @@ module private Fetch =
         Async.Parallel(items |> List.map throttled, max 1 options.MaxConcurrency)
 
     /// Fetches every accession for one entity `kind` in chunked Browser API
-    /// batches (each returns a `*_SET`) and parses them with `readString`. A
-    /// failed batch is logged and yields no records rather than aborting.
+    /// batches (each returns a `*_SET`) and parses them with `readString`.
+    /// Exhausted fetches and malformed XML are collected across all in-flight
+    /// batches, then fail the crawl unless best-effort partial results were
+    /// explicitly enabled in `CrawlOptions`.
     let entity
         (options: CrawlOptions)
         (kind: string)
@@ -99,13 +101,40 @@ module private Fetch =
 
                             try
                                 let! xml = fetch url
-                                return readString xml |> Seq.toArray
-                            with ex ->
+                                return Choice1Of2(readString xml |> Seq.toArray)
+                            with
+                            | :? OperationCanceledException as ex -> return raise ex
+                            | ex ->
                                 options.Log(Failed(sprintf "fetch %s [%s]" kind (String.concat "," batch), ex.Message))
-                                return [||]
+                                return Choice2Of2(batch, ex.Message)
                         })
 
-                let records = batches |> Array.collect id
+                let failures =
+                    batches
+                    |> Array.choose (function
+                        | Choice2Of2 failure -> Some failure
+                        | Choice1Of2 _ -> None)
+
+                if failures.Length > 0 && not options.ContinueOnPartialFailure then
+                    let details =
+                        failures
+                        |> Array.map (fun (batch, error) -> sprintf "[%s]: %s" (String.concat "," batch) error)
+                        |> String.concat "; "
+
+                    return
+                        raise (
+                            InvalidOperationException(
+                                sprintf "Incomplete %s crawl: %d batch(es) failed after retries. %s" kind failures.Length details
+                            )
+                        )
+
+                let records =
+                    batches
+                    |> Array.choose (function
+                        | Choice1Of2 records -> Some records
+                        | Choice2Of2 _ -> None)
+                    |> Array.collect id
+
                 options.Log(Parsed(kind, records.Length))
                 return records
         }
@@ -176,21 +205,6 @@ module private Persist =
         connection.Open()
         connection
 
-    /// Turns foreign-key enforcement off on `connection`. Must run *after*
-    /// `Schema.init`, whose SQL includes `PRAGMA foreign_keys = ON`.
-    let private disableForeignKeys (connection: SqliteConnection) : unit =
-        use cmd = connection.CreateCommand()
-        cmd.CommandText <- "PRAGMA foreign_keys = OFF;"
-        cmd.ExecuteNonQuery() |> ignore
-
-    /// True when the bundled schema has already been applied (the `bioproject`
-    /// table exists) — used to init only a fresh database.
-    let private schemaApplied (connection: SqliteConnection) : bool =
-        use cmd = connection.CreateCommand()
-        cmd.CommandText <- "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'bioproject' LIMIT 1;"
-        use reader = cmd.ExecuteReader()
-        reader.Read()
-
     /// Inserts each of `records` whose accession is not already in `existing`,
     /// returning (inserted, skipped) and adding inserted accessions to `existing`.
     let private insertNew
@@ -226,8 +240,7 @@ module private Persist =
         (result: CrawlResult)
         (discovered: DiscoveredSet)
         : unit =
-        if not (schemaApplied connection) then
-            Schema.init connection
+        Schema.init connection
 
         // Run the inserts without FK enforcement: the store's soft references
         // legitimately dangle in a crawl — an experiment's SAMPLE_DESCRIPTOR
@@ -236,14 +249,14 @@ module private Persist =
         // returns), the same sample under two accessions — and a crawl may hold
         // only part of a project. Hard, NOT NULL FK order (study -> experiment
         // -> run) is guaranteed by the insertion order below instead.
-        disableForeignKeys connection
+        Schema.setForeignKeyMode connection ForeignKeyMode.AllowCrawlerSoftReferences
 
         // One surrounding transaction for the whole insert pass. Each entity
         // `insert` opens its own `Sql.withTransaction`, but that is reentrant
         // and joins this one, so the ~half-million per-record commits collapse
         // into a single commit at the end — the difference between a trickle and
-        // a bulk load. `disableForeignKeys` stays *outside* it: `PRAGMA
-        // foreign_keys` is a no-op while a transaction is open.
+        // a bulk load. The explicit soft-reference mode stays *outside* it:
+        // `PRAGMA foreign_keys` is a no-op while a transaction is open.
         Sql.withTransaction connection (fun _tx ->
 
         let hashSet (accessions: string seq) =
@@ -316,7 +329,14 @@ module private Persist =
                     Experiment.insert connection study experiment
                     experiments.Add experiment.Accession |> ignore
                     eIns <- eIns + 1
-                | _ -> options.Log(Failed(sprintf "persist Experiment %s" experiment.Accession, "no stored parent study"))
+                | _ when options.ContinueOnPartialFailure ->
+                    options.Log(Failed(sprintf "persist Experiment %s" experiment.Accession, "no stored parent study"))
+                | _ ->
+                    raise (
+                        InvalidOperationException(
+                            sprintf "Cannot persist Experiment %s: no stored parent study." experiment.Accession
+                        )
+                    )
 
         options.Log(Persisted("Experiment", eIns, eSkip))
 
@@ -333,7 +353,14 @@ module private Persist =
                     Run.insert connection experiment run
                     runs.Add run.Accession |> ignore
                     rIns <- rIns + 1
-                | _ -> options.Log(Failed(sprintf "persist Run %s" run.Accession, "no stored parent experiment"))
+                | _ when options.ContinueOnPartialFailure ->
+                    options.Log(Failed(sprintf "persist Run %s" run.Accession, "no stored parent experiment"))
+                | _ ->
+                    raise (
+                        InvalidOperationException(
+                            sprintf "Cannot persist Run %s: no stored parent experiment." run.Accession
+                        )
+                    )
 
         options.Log(Persisted("Run", rIns, rSkip)))
 
@@ -504,14 +531,14 @@ module Crawler =
         | "Run" -> "runs"
         | _ -> ""
 
-    /// Writes `records` to `<outDir>/<folder>/<accession>.xml` via the IO
-    /// `write` function, skipping files that already exist (idempotent
-    /// resume). Returns `(written, skipped)`.
+    /// Serializes `records` to `<outDir>/<folder>/<accession>.xml`, skipping
+    /// files that already exist (idempotent resume). Each new file is written
+    /// through a same-directory temp file and atomically renamed.
     let private writeRecords
         (outDir: string)
         (kind: string)
         (accessionOf: 'T -> string)
-        (writeOne: string -> 'T -> unit)
+        (serialize: 'T -> string)
         (records: 'T[])
         : int * int =
         let dir = Path.Combine(outDir, folderFor kind)
@@ -526,7 +553,7 @@ module Crawler =
             if File.Exists path then
                 skipped <- skipped + 1
             else
-                writeOne path record
+                Internal.Files.writeText path (serialize record)
                 written <- written + 1
 
         written, skipped
@@ -542,27 +569,27 @@ module Crawler =
             let! result, discovered = Fetch.crawlCore options accession
 
             let pW, pS =
-                writeRecords outDir "BioProject" (fun (r: BioProject) -> r.Accession) BioProject.write result.BioProjects
+                writeRecords outDir "BioProject" (fun (r: BioProject) -> r.Accession) BioProject.writeString result.BioProjects
 
             options.Log(WritingXml(pW, pS, "BioProject"))
 
             let sW, sS =
-                writeRecords outDir "Study" (fun (r: Study) -> r.Accession) Study.write result.Studies
+                writeRecords outDir "Study" (fun (r: Study) -> r.Accession) Study.writeString result.Studies
 
             options.Log(WritingXml(sW, sS, "Study"))
 
             let smW, smS =
-                writeRecords outDir "BioSample" (fun (r: BioSample) -> r.Accession) BioSample.write result.BioSamples
+                writeRecords outDir "BioSample" (fun (r: BioSample) -> r.Accession) BioSample.writeString result.BioSamples
 
             options.Log(WritingXml(smW, smS, "BioSample"))
 
             let eW, eS =
-                writeRecords outDir "Experiment" (fun (r: Experiment) -> r.Accession) Experiment.write result.Experiments
+                writeRecords outDir "Experiment" (fun (r: Experiment) -> r.Accession) Experiment.writeString result.Experiments
 
             options.Log(WritingXml(eW, eS, "Experiment"))
 
             let rW, rS =
-                writeRecords outDir "Run" (fun (r: Run) -> r.Accession) Run.write result.Runs
+                writeRecords outDir "Run" (fun (r: Run) -> r.Accession) Run.writeString result.Runs
 
             options.Log(WritingXml(rW, rS, "Run"))
 

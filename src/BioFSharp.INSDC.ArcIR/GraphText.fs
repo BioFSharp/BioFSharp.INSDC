@@ -39,7 +39,7 @@ module internal GraphText =
         let name = term.Name |> Option.defaultValue (localName term.Id.Value)
         sprintf "%s (%s)" name term.Id.Value
 
-    /// Render an annotation's value so the ontology overlay is *shown*, not just counted.
+    /// Render an annotation's value so graph diagnostics show the mapped value, not just a count.
     let renderAnnotationValue (av: AnnotationValue) =
         match av with
         | AnnotationValue.Literal v -> renderValue v

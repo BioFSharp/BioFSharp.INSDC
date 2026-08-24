@@ -1,5 +1,8 @@
 ﻿module BasicTasks
 
+open System
+open System.IO
+open System.Text
 open BlackFox.Fake
 open Fake.IO
 open Fake.DotNet
@@ -27,21 +30,65 @@ let clean = BuildTask.create "Clean" [] {
 //   -i l                 : map xs:integer to System.Int64
 //   --tnsf <file>        : substitute generated type names per schemas/typename-substitutions.txt
 //                           (strips the Type infix from top-level + child types; cleans Type* enum prefixes)
-let regenerateInsdcTypes = BuildTask.create "regenerateInsdcTypes" [] {
-    let schemasDir       = "src/BioFSharp.FileFormats.INSDC/schemas"
-    let generatedDir     = "src/BioFSharp.FileFormats.INSDC/Generated"
-    let substitutionFile = schemasDir + "/typename-substitutions.txt"
-    Shell.cleanDir generatedDir
+let private schemasDir = "src/BioFSharp.FileFormats.INSDC/schemas"
+let private generatedDir = "src/BioFSharp.FileFormats.INSDC/Generated"
+let private substitutionFile = schemasDir + "/typename-substitutions.txt"
+
+let private schemaFiles () =
+    Directory.GetFiles(schemasDir, "*.xsd")
+    |> Array.map (fun path -> path.Replace('\\', '/'))
+    |> Array.sortWith (fun left right -> String.CompareOrdinal(left, right))
+
+let private canonicalGeneratorCommand () =
+    let inputs = schemaFiles () |> String.concat " "
+    sprintf
+        "// xscgen --separateFiles -n BioFSharp.FileFormats.INSDC -0 -i l --tnsf %s -o %s %s"
+        substitutionFile
+        generatedDir
+        inputs
+
+let private normalizeGeneratedFiles (outputDir: string) =
+    let canonicalCommand = canonicalGeneratorCommand ()
+    let utf8NoBom = UTF8Encoding(false)
+
+    for path in Directory.GetFiles(outputDir, "*.cs", SearchOption.AllDirectories) do
+        let normalized =
+            File.ReadAllLines(path)
+            |> Array.map (fun line ->
+                if line.StartsWith("// xscgen ", StringComparison.Ordinal) then
+                    canonicalCommand
+                else
+                    line)
+            |> String.concat "\n"
+
+        File.WriteAllText(path, normalized + "\n", utf8NoBom)
+
+/// Restores the repository-local tools pinned in `.config/dotnet-tools.json`.
+/// Generator targets depend on this so they also work on a clean CI runner.
+let restoreTools = BuildTask.create "RestoreTools" [] {
+    let result = DotNet.exec id "tool" "restore"
+    if not result.OK then
+        failwithf "dotnet tool restore failed (exit %d): %A" result.ExitCode result.Errors
+}
+
+/// Runs the pinned xscgen tool into `outputDir` and normalizes generator
+/// metadata and line endings so output is byte-reproducible across machines.
+let generateInsdcTypesTo (outputDir: string) =
+    Shell.cleanDir outputDir
     let schemaArgs =
-        !! (schemasDir + "/*.xsd")
-        |> Seq.map (fun p -> sprintf "\"%s\"" p)
+        schemaFiles ()
+        |> Seq.map (sprintf "\"%s\"")
         |> String.concat " "
     let args =
         sprintf "--separateFiles -n BioFSharp.FileFormats.INSDC -0 -i l --tnsf \"%s\" -o \"%s\" %s"
-            substitutionFile generatedDir schemaArgs
+            substitutionFile outputDir schemaArgs
     let result = DotNet.exec id "xscgen" args
     if not result.OK then
         failwithf "dotnet xscgen failed (exit %d): %A" result.ExitCode result.Errors
+    normalizeGeneratedFiles outputDir
+
+let regenerateInsdcTypes = BuildTask.create "regenerateInsdcTypes" [ restoreTools ] {
+    generateInsdcTypesTo generatedDir
 }
 
 
@@ -62,4 +109,3 @@ let buildSolution =
             |> DotNet.Options.withCustomParams (Some "-tl")
         )
     }
-

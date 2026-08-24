@@ -14,12 +14,16 @@ module ArcValueConversion =
     let ofString (value: string) : ArcValue option =
         if String.IsNullOrWhiteSpace value then None else Some(ArcValue.String value)
 
+    /// Converts a Boolean to a typed ArcIR value.
     let ofBool (value: bool) : ArcValue = ArcValue.Boolean value
 
+    /// Converts a 32-bit integer to the graph's 64-bit integer value.
     let ofInt (value: int) : ArcValue = ArcValue.Integer(int64 value)
 
+    /// Converts a 64-bit integer to a typed ArcIR value.
     let ofInt64 (value: int64) : ArcValue = ArcValue.Integer value
 
+    /// Converts a double-precision value to a typed ArcIR value.
     let ofFloat (value: float) : ArcValue = ArcValue.Float value
 
     /// A CLR `DateTime` as an `ArcValue.DateTime` (carrying the value's own offset).

@@ -11,6 +11,7 @@ module ExperimentConversion =
     [<Literal>]
     let private source = "INSDC Experiment"
 
+    /// Converts one Experiment record into its explicit ArcIR graph fragment.
     let convert (experiment: Experiment) : ConversionResult =
         let nodeId = Convert.entityId experiment
 

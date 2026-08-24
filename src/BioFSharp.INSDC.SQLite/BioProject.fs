@@ -83,6 +83,52 @@ module BioProject =
                 ]
             |> ignore)
 
+    let private organismParameters (organism: Organism) =
+        if isNull organism then
+            [ "@hasOrganism", box 0
+              "@taxon", null
+              "@scientific", null
+              "@common", null
+              "@strain", null
+              "@breed", null
+              "@cultivar", null
+              "@isolate", null ]
+        else
+            [ "@hasOrganism", box 1
+              "@taxon", box organism.TaxonId
+              "@scientific", box organism.ScientificName
+              "@common", box organism.CommonName
+              "@strain", box organism.Strain
+              "@breed", box organism.Breed
+              "@cultivar", box organism.Cultivar
+              "@isolate", box organism.Isolate ]
+
+    let private insertProjectCompositions (connection: SqliteConnection) (project: BioProject) =
+        let insertOrganism table organism =
+            Sql.execNonQuery
+                connection
+                (sprintf
+                    "INSERT INTO %s (bioproject_accession, has_organism, taxon_id, scientific_name, common_name, strain, breed, cultivar, isolate) \
+                     VALUES (@acc, @hasOrganism, @taxon, @scientific, @common, @strain, @breed, @cultivar, @isolate);"
+                    table)
+                (("@acc", box project.Accession) :: organismParameters organism)
+            |> ignore
+
+        if not (isNull project.SubmissionProject) then
+            insertOrganism "bioproject_submission_project" project.SubmissionProject.Organism
+
+            project.SubmissionProject.SequencingProject
+            |> Seq.iteri (fun ordinal prefix ->
+                Sql.execNonQuery
+                    connection
+                    "INSERT INTO bioproject_submission_locus_tags (bioproject_accession, ordinal, locus_tag_prefix) \
+                     VALUES (@acc, @ordinal, @prefix);"
+                    [ "@acc", box project.Accession; "@ordinal", box ordinal; "@prefix", box prefix ]
+                |> ignore)
+
+        if not (isNull project.UmbrellaProject) then
+            insertOrganism "bioproject_umbrella_project" project.UmbrellaProject.Organism
+
     /// Persists `project` and every row it deconstructs into. Wraps all
     /// inserts in a single transaction so FK or constraint violations leave
     /// the database untouched.
@@ -93,7 +139,8 @@ module BioProject =
             Attributes.write connection (attributeOwner project.Accession) project.ProjectAttributes
             Links.write connection (linkOwner project.Accession) project.ProjectLinks
             insertCollaborators connection project
-            insertRelatedProjects connection project)
+            insertRelatedProjects connection project
+            insertProjectCompositions connection project)
 
     /// Reconstructs a `BioProject` from its accession by joining all owner
     /// tables. Returns `None` when no core row exists.
@@ -156,16 +203,68 @@ module BioProject =
                         failwithf "Unexpected related-project kind '%s' for bioproject '%s'" other accession
                     related)
             |> List.iter project.RelatedProjects.Add
+
+            let readOrganism table =
+                Sql.tryQueryOne
+                    connection
+                    (sprintf
+                        "SELECT has_organism, taxon_id, scientific_name, common_name, strain, breed, cultivar, isolate \
+                         FROM %s WHERE bioproject_accession = @acc;"
+                        table)
+                    [ "@acc", box accession ]
+                    (fun reader ->
+                        let hasOrganism = reader.GetInt32(0) <> 0
+
+                        let organism =
+                            if not hasOrganism then
+                                null
+                            else
+                                let value = Organism()
+                                value.TaxonId <- if reader.IsDBNull(1) then 0 else reader.GetInt32(1)
+                                value.ScientificName <- Sql.readStringOrNull reader 2
+                                value.CommonName <- Sql.readStringOrNull reader 3
+                                value.Strain <- Sql.readStringOrNull reader 4
+                                value.Breed <- Sql.readStringOrNull reader 5
+                                value.Cultivar <- Sql.readStringOrNull reader 6
+                                value.Isolate <- Sql.readStringOrNull reader 7
+                                value
+
+                        organism)
+
+            match readOrganism "bioproject_submission_project" with
+            | Some organism ->
+                let submission = BioProjectSubmissionProject()
+                submission.Organism <- organism
+
+                Sql.queryAll
+                    connection
+                    "SELECT locus_tag_prefix FROM bioproject_submission_locus_tags \
+                     WHERE bioproject_accession = @acc ORDER BY ordinal;"
+                    [ "@acc", box accession ]
+                    (fun reader -> Sql.readStringOrNull reader 0)
+                |> List.iter submission.SequencingProject.Add
+
+                project.SubmissionProject <- submission
+            | None -> ()
+
+            match readOrganism "bioproject_umbrella_project" with
+            | Some organism ->
+                let umbrella = BioProjectUmbrellaProject()
+                umbrella.Organism <- organism
+                project.UmbrellaProject <- umbrella
+            | None -> ()
+
             Some project
 
     /// Removes the row from `bioproject`; every owned table's rows are deleted
     /// via the schema's ON DELETE CASCADE.
     let delete (connection: SqliteConnection) (accession: string) : unit =
-        Sql.execNonQuery
-            connection
-            "DELETE FROM bioproject WHERE accession = @acc;"
-            [ "@acc", box accession ]
-        |> ignore
+        Sql.withTransaction connection (fun _ ->
+            Sql.execNonQuery
+                connection
+                "DELETE FROM bioproject WHERE accession = @acc;"
+                [ "@acc", box accession ]
+            |> ignore)
 
     /// Lists every BioProject accession currently stored, in lexicographic
     /// order. Suitable for crawler resume / dedup bookkeeping.

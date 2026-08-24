@@ -11,6 +11,7 @@ module BioSampleConversion =
     [<Literal>]
     let private source = "INSDC BioSample"
 
+    /// Converts one BioSample record into its explicit ArcIR graph fragment.
     let convert (sample: BioSample) : ConversionResult =
         let nodeId = Convert.entityId sample
 

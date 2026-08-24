@@ -84,18 +84,43 @@ module Discovery =
 
     /// Parses the tab-separated `filereport` body into a `DiscoveredSet`. The
     /// header row is required and columns are located by name (order-independent).
-    /// Rows with blank cells are tolerated; blank accessions are dropped.
+    /// A header-only report is a valid childless project/study. Empty bodies,
+    /// missing required columns, truncated rows, misaligned FASTQ metadata, and
+    /// conflicting parent relationships raise `FormatException`.
     let parse (tsv: string) : DiscoveredSet =
+        if isNull tsv then
+            raise (FormatException("ENA filereport response is null."))
+
         let lines =
             tsv.Replace("\r\n", "\n").Split('\n')
             |> Array.filter nonEmpty
 
         match Array.toList lines with
-        | []
-        | [ _ ] -> empty
+        | [] -> raise (FormatException("ENA filereport response is empty."))
         | header :: rows ->
-            let columns = header.Split('\t') |> Array.map (fun c -> c.Trim())
-            let indexOf name = Array.findIndex (fun c -> c = name) columns
+            let columns =
+                header.TrimStart('\uFEFF').Split('\t')
+                |> Array.map (fun c -> c.Trim())
+
+            let requiredColumns =
+                [ "run_accession"
+                  "experiment_accession"
+                  "sample_accession"
+                  "study_accession"
+                  "secondary_study_accession" ]
+
+            let missing =
+                requiredColumns
+                |> List.filter (fun name -> columns |> Array.contains name |> not)
+
+            if not (List.isEmpty missing) then
+                raise (
+                    FormatException(
+                        sprintf "ENA filereport is missing required column(s): %s" (String.concat ", " missing)
+                    )
+                )
+
+            let indexOf name = Array.findIndex ((=) name) columns
             let iRun = indexOf "run_accession"
             let iExperiment = indexOf "experiment_accession"
             let iSample = indexOf "sample_accession"
@@ -121,6 +146,21 @@ module Discovery =
                 let md5 = splitList fields iFastqMd5
                 let bytes = splitList fields iFastqBytes
 
+                let validateAligned (name: string) (values: string[]) =
+                    if values.Length > 0 && values.Length <> ftp.Length then
+                        raise (
+                            FormatException(
+                                sprintf
+                                    "ENA filereport FASTQ column '%s' has %d value(s), but fastq_ftp has %d."
+                                    name
+                                    values.Length
+                                    ftp.Length
+                            )
+                        )
+
+                validateAligned "fastq_md5" md5
+                validateAligned "fastq_bytes" bytes
+
                 ftp
                 |> Array.mapi (fun i url ->
                     {
@@ -131,10 +171,24 @@ module Discovery =
                 |> Array.filter (fun f -> nonEmpty f.Url)
                 |> List.ofArray
 
+            let highestRequiredIndex =
+                [ iRun; iExperiment; iSample; iProject; iStudy ] |> List.max
+
             let parsedRows =
                 rows
-                |> List.map (fun row ->
+                |> List.mapi (fun rowIndex row ->
                     let fields = row.Split('\t')
+
+                    if fields.Length <= highestRequiredIndex then
+                        raise (
+                            FormatException(
+                                sprintf
+                                    "ENA filereport row %d is truncated: expected at least %d columns, found %d."
+                                    (rowIndex + 2)
+                                    (highestRequiredIndex + 1)
+                                    fields.Length
+                            )
+                        )
 
                     {
                         RunAccession = cell fields iRun
@@ -145,12 +199,28 @@ module Discovery =
                         FastqFiles = fastqOf fields
                     })
 
-            let mapOf (key: DiscoveryRow -> string) (value: DiscoveryRow -> string) =
-                parsedRows
-                |> List.choose (fun r ->
-                    let k, v = key r, value r
-                    if nonEmpty k && nonEmpty v then Some(k, v) else None)
-                |> Map.ofList
+            let mapOf relationship (key: DiscoveryRow -> string) (value: DiscoveryRow -> string) =
+                let pairs =
+                    parsedRows
+                    |> List.choose (fun r ->
+                        let k, v = key r, value r
+                        if nonEmpty k && nonEmpty v then Some(k, v) else None)
+
+                for keyValue, grouped in pairs |> List.groupBy fst do
+                    let parents = grouped |> List.map snd |> List.distinct
+
+                    if List.length parents > 1 then
+                        raise (
+                            FormatException(
+                                sprintf
+                                    "ENA filereport contains conflicting %s parents for '%s': %s"
+                                    relationship
+                                    keyValue
+                                    (String.concat ", " parents)
+                            )
+                        )
+
+                Map.ofList pairs
 
             {
                 Rows = parsedRows
@@ -159,9 +229,9 @@ module Discovery =
                 BioSamples = parsedRows |> List.map (fun r -> r.SampleAccession) |> distinctList
                 Experiments = parsedRows |> List.map (fun r -> r.ExperimentAccession) |> distinctList
                 Runs = parsedRows |> List.map (fun r -> r.RunAccession) |> distinctList
-                StudyToProject = mapOf (fun r -> r.StudyAccession) (fun r -> r.ProjectAccession)
-                ExperimentToStudy = mapOf (fun r -> r.ExperimentAccession) (fun r -> r.StudyAccession)
-                RunToExperiment = mapOf (fun r -> r.RunAccession) (fun r -> r.ExperimentAccession)
+                StudyToProject = mapOf "study-to-project" (fun r -> r.StudyAccession) (fun r -> r.ProjectAccession)
+                ExperimentToStudy = mapOf "experiment-to-study" (fun r -> r.ExperimentAccession) (fun r -> r.StudyAccession)
+                RunToExperiment = mapOf "run-to-experiment" (fun r -> r.RunAccession) (fun r -> r.ExperimentAccession)
             }
 
     /// Ensures `rootAccession` is present in the discovered set even when the

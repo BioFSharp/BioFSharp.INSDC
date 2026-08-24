@@ -42,22 +42,23 @@ module AccessionRelations =
     /// replaces the previous row (`INSERT OR REPLACE`), so a re-crawl refreshes
     /// `RootAccession`/`FetchedAt` instead of erroring.
     let insert (connection: SqliteConnection) (relation: AccessionRelation) : unit =
-        Sql.execNonQuery
-            connection
-            "INSERT OR REPLACE INTO accession_relations \
-                (run_accession, experiment_accession, sample_accession, \
-                 study_accession, project_accession, root_accession, fetched_at) \
-             VALUES (@run, @exp, @sample, @study, @project, @root, @fetched);"
-            [
-                "@run", box relation.RunAccession
-                "@exp", box relation.ExperimentAccession
-                "@sample", box relation.SampleAccession
-                "@study", box relation.StudyAccession
-                "@project", box relation.ProjectAccession
-                "@root", box relation.RootAccession
-                "@fetched", box relation.FetchedAt
-            ]
-        |> ignore
+        Sql.withTransaction connection (fun _ ->
+            Sql.execNonQuery
+                connection
+                "INSERT OR REPLACE INTO accession_relations \
+                    (run_accession, experiment_accession, sample_accession, \
+                     study_accession, project_accession, root_accession, fetched_at) \
+                 VALUES (@run, @exp, @sample, @study, @project, @root, @fetched);"
+                [
+                    "@run", box relation.RunAccession
+                    "@exp", box relation.ExperimentAccession
+                    "@sample", box relation.SampleAccession
+                    "@study", box relation.StudyAccession
+                    "@project", box relation.ProjectAccession
+                    "@root", box relation.RootAccession
+                    "@fetched", box relation.FetchedAt
+                ]
+            |> ignore)
 
     let private readRow (reader: SqliteDataReader) : AccessionRelation =
         {

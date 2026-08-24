@@ -9,7 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Tests.fs" />
+    <Compile Include="TestHelpers.fs" />
+    <Compile Include="IOTests.fs" />
+    <Compile Include="ArcIRTests.fs" />
+    <Compile Include="SQLiteTests.fs" />
+    <Compile Include="CrawlerTests.fs" />
+    <Compile Include="CrawlerHardeningTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

@@ -1,23 +1,32 @@
 # BioFSharp.FileFormats.INSDC
 
-The C# type model for [INSDC](https://www.insdc.org/) (International Nucleotide Sequence
-Database Collaboration) sequence-database records, and the foundation of the
-[`BioFSharp.INSDC`](https://github.com/BioFSharp/BioFSharp.INSDC) suite.
+The generated C# type model for [INSDC](https://www.insdc.org/) XML records and
+the foundation of the `BioFSharp.INSDC` package suite.
 
-The types are generated directly from the official ENA/SRA XML schemas, so the model
-stays faithful to the upstream standard and covers the full record set — BioProject,
-Study, Sample, Experiment, Run, Analysis, Submission, and Receipt. Generation is
-mechanical and repeatable, so the model is regenerated rather than hand-maintained when
-the schemas change.
+The types are generated directly from the committed ENA/SRA 1.5 schemas and
+cover BioProject, Study, Sample, Experiment, Run, Analysis, Submission, and
+Receipt. `FragmentSelectors.cs` is generated from the same serialization
+metadata and records the XPath/XPointer location of record fields for structural
+inspection in higher layers.
 
-The package also carries the generated *fragment selectors*: for every field of every
-record it records the exact XPath/XPointer location that field occupies in the source
-XML, derived from the same serialization metadata the parser uses. Higher layers of the
-suite build on this to address, track, and semantically annotate individual values
-without ever drifting from the type model.
+All C# under `Generated/` and `FragmentSelectors.cs` is generator-owned.
+Type-name changes belong in `schemas/typename-substitutions.txt`, never in
+generated source. From the repository root, regenerate and verify in this order:
 
-This package is consumed by [`BioFSharp.IO.INSDC`](https://www.nuget.org/packages/BioFSharp.IO.INSDC)
-and the rest of the suite; most users depend on those higher-level packages rather than
-referencing the type model directly.
+```bash
+./build.sh regenerateInsdcTypes
+./build.sh generateFragmentSelectors
+./build.sh generateStructuralOntology
+./build.sh verifyGeneratedArtifacts
+```
 
-Part of [BioFSharp.INSDC](https://github.com/BioFSharp/BioFSharp.INSDC). Released under the MIT license.
+Use the matching `build.cmd` targets on Windows. The generators sort inputs and
+normalize headers, encoding, and line endings so the drift gate is
+byte-reproducible.
+
+Most applications reference
+[`BioFSharp.IO.INSDC`](https://www.nuget.org/packages/BioFSharp.IO.INSDC)
+instead of consuming the generated types directly.
+
+Part of [BioFSharp.INSDC](https://github.com/BioFSharp/BioFSharp.INSDC).
+Released under the MIT license.

@@ -111,11 +111,12 @@ module BioSample =
 
     /// Removes the row from `biosample`; cascades through every owned table.
     let delete (connection: SqliteConnection) (accession: string) : unit =
-        Sql.execNonQuery
-            connection
-            "DELETE FROM biosample WHERE accession = @acc;"
-            [ "@acc", box accession ]
-        |> ignore
+        Sql.withTransaction connection (fun _ ->
+            Sql.execNonQuery
+                connection
+                "DELETE FROM biosample WHERE accession = @acc;"
+                [ "@acc", box accession ]
+            |> ignore)
 
     /// Lists every BioSample accession in the database, lexicographically.
     let listAccessions (connection: SqliteConnection) : string seq =

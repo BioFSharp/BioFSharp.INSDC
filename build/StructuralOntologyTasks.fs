@@ -2,6 +2,7 @@ module StructuralOntologyTasks
 
 open System
 open System.IO
+open System.Text
 open System.Reflection
 open System.Collections.Generic
 
@@ -214,26 +215,34 @@ module private Engine =
               "" ]
         String.Join("\n", Seq.append header (OboOntology.toLines onto)) + "\n"
 
+let private modelDirectory = "src/BioFSharp.FileFormats.INSDC"
+let private modelProject = modelDirectory + "/BioFSharp.FileFormats.INSDC.csproj"
+let private outputFile = "src/BioFSharp.IO.INSDC/StructuralOntology.obo"
+
+let private findModelAssembly () =
+    !!(modelDirectory + "/bin/**/BioFSharp.FileFormats.INSDC.dll")
+    |> Seq.sortByDescending File.GetLastWriteTimeUtc
+    |> Seq.tryHead
+    |> Option.defaultWith (fun () ->
+        failwith "Could not locate built BioFSharp.FileFormats.INSDC.dll to reflect over.")
+
+/// Computes the canonical ontology source from the already-built type model.
+let generatedStructuralOntologyContent () =
+    let asm = findModelAssembly () |> Path.GetFullPath |> Assembly.LoadFrom
+    (Engine.generate asm).Replace("\r\n", "\n").Replace("\r", "\n")
+
+let private writeCanonical (path: string) (content: string) =
+    File.WriteAllText(path, content, UTF8Encoding(false))
+
 /// Regenerate `src/BioFSharp.IO.INSDC/StructuralOntology.obo` from the built type model's
 /// FragmentSelectors maps. On-demand only; the default build does NOT depend on this target.
 let generateStructuralOntology =
     BuildTask.create "generateStructuralOntology" [] {
-        let ffDir = "src/BioFSharp.FileFormats.INSDC"
-        let ffProj = ffDir + "/BioFSharp.FileFormats.INSDC.csproj"
-        let outFile = "src/BioFSharp.IO.INSDC/StructuralOntology.obo"
 
-        ffProj
+        modelProject
         |> DotNet.build (fun p ->
             { p with MSBuildParams = { p.MSBuildParams with DisableInternalBinLog = true } })
 
-        let dll =
-            !!(ffDir + "/bin/**/BioFSharp.FileFormats.INSDC.dll")
-            |> Seq.sortByDescending File.GetLastWriteTimeUtc
-            |> Seq.tryHead
-            |> Option.defaultWith (fun () ->
-                failwith "Could not locate built BioFSharp.FileFormats.INSDC.dll to reflect over.")
-
-        let asm = Assembly.LoadFrom(Path.GetFullPath dll)
-        File.WriteAllText(outFile, Engine.generate asm)
-        printfn "Wrote structural ontology to %s" outFile
+        writeCanonical outputFile (generatedStructuralOntologyContent ())
+        printfn "Wrote structural ontology to %s" outputFile
     }

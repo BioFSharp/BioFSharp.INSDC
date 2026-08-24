@@ -23,5 +23,3 @@ let rec promptYesNo msg =
 
 let releaseMsg = """This will stage all uncommitted changes, push them to the origin and bump the release version to the latest number in the RELEASE_NOTES.md file. 
     Do you want to continue?"""
-
-let releaseDocsMsg = """This will push the docs to gh-pages. Remember building the docs prior to this. Do you want to continue?"""

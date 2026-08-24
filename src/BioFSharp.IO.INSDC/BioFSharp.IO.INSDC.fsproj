@@ -35,8 +35,6 @@
     <PackageTags>bioinformatics F# fsharp INSDC ENA SRA BioProject Sample Study Experiment Run</PackageTags>
     <RepositoryUrl>https://github.com/BioFSharp/BioFSharp.INSDC</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <FsDocsLicenseLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/LICENSE</FsDocsLicenseLink>
-    <FsDocsReleaseNotesLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,3 +1,13 @@
+### 0.3.0 (Unreleased)
+
+Phase 1 repository stabilization.
+
+- Added dependency-vulnerability and generated-artifact drift gates to the full FAKE test path; generators now produce deterministic committed output.
+- Added a versioned, forward-migrated SQLite schema with explicit foreign-key modes, transactional public writes, and exact fixture round-trip coverage for all five stored entities.
+- Hardened crawler cancellation, bounded retries, strict partial-failure handling, upstream parsing, atomic writes, validation, and resume behavior while preserving injectable offline fetch seams.
+- Split the test suite into focused IO, ArcIR, SQLite, crawler, and crawler-hardening modules; refreshed package-boundary and ArcIR terminology documentation; removed the stale local fsdocs publication path.
+- Removed the unused structural-decompilation overlay from the proof-of-concept ArcIR package; its explicit converters remain the current mapping surface.
+
 ### 0.2.1 (2026-07-09)
 
 Crawler fixes surfaced by large-scale crawls (incl. ENA umbrella projects such as `PRJNA9506`, which fans out to thousands of child projects).

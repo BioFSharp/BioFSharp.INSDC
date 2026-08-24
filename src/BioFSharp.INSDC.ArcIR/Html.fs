@@ -5,12 +5,13 @@ open System.Text
 
 open Arc.Build.GraphText
 
-/// Serializes an [ArcIR] property graph to a single self-contained interactive HTML page: an embedded
+/// Serializes the current proof-of-concept [ArcIR] property graph to a single self-contained interactive HTML page: an embedded
 /// force-directed SVG graph (no external scripts, CDN, or network) where nodes are colored by `Kind`,
 /// edges are labeled by predicate, and clicking a node opens a side panel listing its full properties
 /// and rendered annotations. The graph is embedded as a JSON literal; all rendering JS/CSS is inline, so
 /// the file works offline. Relations pointing at ids absent from `Objects` become `Missing` placeholder
 /// nodes. Pure — no dependency beyond the BCL.
+/// This renderer is a derived inspection artifact, not the final workbench architecture.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Html =
 

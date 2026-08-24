@@ -7,9 +7,9 @@ open Arc.Build
 /// and type identity is defined — converters and the resolver reference these constants instead of
 /// hand-typing strings, so the whole graph speaks one vocabulary.
 ///
-/// Field-level property keys are deliberately NOT formalized here: the ontology-termed identity of every
-/// leaf already lives in the annotation overlay (`Ontology`, from the structural ontology), so
-/// `ArcObject.Properties` keys stay as short convenience names.
+/// Field-level property keys are deliberately not formalized here. The current proof-of-concept
+/// converters write explicit annotations and keep `ArcObject.Properties` keys as short convenience
+/// names; the Phase 2 target-neutral model will replace these shapes in one breaking change.
 [<RequireQualifiedAccess>]
 module Vocabulary =
 

@@ -90,8 +90,8 @@ module Run =
                     Sql.execNonQuery
                         connection
                         "INSERT INTO run_spot_descriptor \
-                            (run_accession, read_index, spot_length, item, read_class, read_label, read_type) \
-                         VALUES (@acc, @idx, @spotLen, @item, @class, @label, @type);"
+                            (run_accession, read_index, spot_length, item, read_class, read_label, read_type, base_coord) \
+                         VALUES (@acc, @idx, @spotLen, @item, @class, @label, @type, @baseCoord);"
                         [
                             "@acc", box run.Accession
                             "@idx", box rs.ReadIndex
@@ -100,6 +100,7 @@ module Run =
                             "@class", box (string rs.ReadClass)
                             "@label", box rs.ReadLabel
                             "@type", box (string rs.ReadType)
+                            "@baseCoord", (if rs.BaseCoord.HasValue then box rs.BaseCoord.Value else null)
                         ]
                     |> ignore
 
@@ -137,7 +138,7 @@ module Run =
         let rows =
             Sql.queryAll
                 connection
-                "SELECT read_index, spot_length, read_class, read_label, read_type \
+                "SELECT read_index, spot_length, read_class, read_label, read_type, base_coord \
                  FROM run_spot_descriptor WHERE run_accession = @acc ORDER BY read_index;"
                 [ "@acc", box accession ]
                 (fun reader ->
@@ -145,16 +146,17 @@ module Run =
                     (if reader.IsDBNull(1) then Nullable<int64>() else Nullable(reader.GetInt64(1))),
                     Sql.readStringOrNull reader 2,
                     Sql.readStringOrNull reader 3,
-                    Sql.readStringOrNull reader 4)
+                    Sql.readStringOrNull reader 4,
+                    (if reader.IsDBNull(5) then Nullable<int64>() else Nullable(reader.GetInt64(5))))
         if List.isEmpty rows then null else
 
         let descriptor = SpotDescriptor()
         let spec = SpotDescriptorSpotDecodeSpec()
-        let firstSpotLength = rows |> List.tryPick (fun (_, len, _, _, _) -> if len.HasValue then Some len.Value else None)
+        let firstSpotLength = rows |> List.tryPick (fun (_, len, _, _, _, _) -> if len.HasValue then Some len.Value else None)
         match firstSpotLength with
         | Some len -> spec.SpotLength <- Nullable(len)
         | None -> ()
-        for (idx, _, cls, label, rtype) in rows do
+        for (idx, _, cls, label, rtype, baseCoord) in rows do
             let rs = SpotDescriptorSpotDecodeSpecReadSpec()
             rs.ReadIndex <- idx
             rs.ReadLabel <- label
@@ -162,6 +164,7 @@ module Run =
                 rs.ReadClass <- parseEnum<SpotDescriptorSpotDecodeSpecReadSpecReadClass> cls
             if not (isNull rtype) then
                 rs.ReadType <- parseEnum<SpotDescriptorSpotDecodeSpecReadSpecReadType> rtype
+            rs.BaseCoord <- baseCoord
             spec.ReadSpec.Add(rs)
         descriptor.SpotDecodeSpec <- spec
         descriptor
@@ -205,11 +208,12 @@ module Run =
 
     /// Removes the row from `run`; cascades through every owned table.
     let delete (connection: SqliteConnection) (accession: string) : unit =
-        Sql.execNonQuery
-            connection
-            "DELETE FROM run WHERE accession = @acc;"
-            [ "@acc", box accession ]
-        |> ignore
+        Sql.withTransaction connection (fun _ ->
+            Sql.execNonQuery
+                connection
+                "DELETE FROM run WHERE accession = @acc;"
+                [ "@acc", box accession ]
+            |> ignore)
 
     /// Lists every Run accession in the database, lexicographically.
     let listAccessions (connection: SqliteConnection) : string seq =

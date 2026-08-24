@@ -13,6 +13,7 @@ module BioProjectConversion =
     [<Literal>]
     let private source = "INSDC BioProject"
 
+    /// Converts one BioProject record into its explicit ArcIR graph fragment.
     let convert (project: BioProject) : ConversionResult =
         let nodeId = Convert.entityId project
 

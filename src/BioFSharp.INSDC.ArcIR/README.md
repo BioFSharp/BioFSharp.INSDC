@@ -1,23 +1,28 @@
 # BioFSharp.INSDC.ArcIR
 
-Maps [INSDC](https://www.insdc.org/) (International Nucleotide Sequence Database
-Collaboration) records into **ArcIR**, an ARC-oriented intermediate representation, as
-part of the [`BioFSharp.INSDC`](https://github.com/BioFSharp/BioFSharp.INSDC) suite.
+Maps [INSDC](https://www.insdc.org/) records into the repository's current
+proof-of-concept **ArcIR** property graph.
 
-ArcIR is a property graph: parsed records become typed, related objects — projects,
-studies, samples, experiments, runs, and the organisms, instruments, protocols, data
-files, and organizations they reference — connected by labeled relations drawn from a
-single controlled vocabulary. Shared entities collapse to one node, so a taxon or an
-institution referenced by many records is represented once and linked from everywhere it
-appears.
+Parsed records become typed, related objects - projects, studies, samples,
+experiments, runs, organisms, instruments, protocols, data files, and
+organizations. Explicit per-entity converters create graph properties and
+annotations; they do not consume the IO package's structural decompilation.
+Shared entities collapse to one object and labeled relations connect them.
 
-Each node carries two complementary layers: structural properties set by per-entity
-converters, and a semantic annotation overlay derived from the structural ontology, so
-every leaf value of a source record is tagged with what it means. The resulting graph can
-be serialized to **GraphML** for desktop network tools (Gephi, yEd, Cytoscape) and to a
-self-contained **interactive HTML** viewer. The package can also ingest supplementary
-material — related papers and count data — into the same graph.
+The graph can be rendered as text, GraphML, or a self-contained HTML page and
+can ingest supplementary papers and count data. Those renderers are derived
+inspection tools for the current model. In particular, the embedded HTML page
+is not the intended final workbench architecture.
 
-Built on [`BioFSharp.IO.INSDC`](https://www.nuget.org/packages/BioFSharp.IO.INSDC).
+The authoritative repository roadmap will replace these proof-of-concept shapes
+in a breaking change: a target-neutral `BioFSharp.ArcIR` core will own the
+canonical graph, while this package becomes the INSDC-specific F1 adapter. In
+that terminology, F1 ingests source metadata, curation produces later IR
+revisions, and F2 compiles a selected revision without mutating it. No concrete
+production F2 target exists yet.
 
-Part of [BioFSharp.INSDC](https://github.com/BioFSharp/BioFSharp.INSDC). Released under the MIT license.
+Built on
+[`BioFSharp.IO.INSDC`](https://www.nuget.org/packages/BioFSharp.IO.INSDC).
+
+Part of [BioFSharp.INSDC](https://github.com/BioFSharp/BioFSharp.INSDC).
+Released under the MIT license.

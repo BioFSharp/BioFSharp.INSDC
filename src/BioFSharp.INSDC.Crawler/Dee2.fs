@@ -57,6 +57,17 @@ module Dee2 =
     let resolveBundleUrl (species: string) (accession: string) : string option =
         resolveBundleUrlAsync species accession |> Async.RunSynchronously
 
+    let private hasZipSignature (bytes: byte[]) =
+        bytes.Length >= 4
+        && bytes.[0] = 0x50uy
+        && bytes.[1] = 0x4Buy
+        && ((bytes.[2] = 0x03uy && bytes.[3] = 0x04uy)
+            || (bytes.[2] = 0x05uy && bytes.[3] = 0x06uy)
+            || (bytes.[2] = 0x07uy && bytes.[3] = 0x08uy))
+
+    let private validExistingZip path =
+        File.Exists(path) && hasZipSignature (File.ReadAllBytes(path))
+
     /// Downloads the DEE2 project bundle for SRA study `accession` — resolved
     /// via `search2.sh` (`resolveBundleUrlWithAsync`) — and writes it to
     /// `<outDir>/counts/<accession>.zip`. Returns the written path, or `None`
@@ -76,32 +87,35 @@ module Dee2 =
                 options.Log(BundleNotFound(species, "<none>"))
                 return None
             else
-                let! bundleUrl = resolveBundleUrlWithAsync options species accession
+                let finalPath = Path.Combine(outDir, CountsFolder, accession + ".zip")
 
-                match bundleUrl with
-                | None ->
-                    options.Log(BundleNotFound(species, accession))
-                    return None
-                | Some bundleUrl ->
-                    let fetchBytes = Internal.Http.withRetry options.Retries options.Log options.FetchBytes
+                if validExistingZip finalPath then
+                    options.Log(ReusedArtifact("dee2", finalPath))
+                    return Some finalPath
+                else
+                    let! bundleUrl = resolveBundleUrlWithAsync options species accession
 
-                    try
-                        let! bytes = fetchBytes bundleUrl
-                        let dir = Path.Combine(outDir, CountsFolder)
-                        Directory.CreateDirectory dir |> ignore
-
-                        let finalPath = Path.Combine(dir, accession + ".zip")
-                        let tempPath = Path.Combine(dir, accession + ".zip.tmp")
-
-                        File.WriteAllBytes(tempPath, bytes)
-                        File.Delete(finalPath)
-                        File.Move(tempPath, finalPath)
-
-                        options.Log(FetchedBundle(accession, finalPath))
-                        return Some finalPath
-                    with ex ->
-                        options.Log(Failed(sprintf "fetch dee2 %s/%s" species accession, ex.Message))
+                    match bundleUrl with
+                    | None ->
+                        options.Log(BundleNotFound(species, accession))
                         return None
+                    | Some bundleUrl ->
+                        let fetchBytes = Internal.Http.withRetry options.Retries options.Log options.FetchBytes
+
+                        try
+                            let! bytes = fetchBytes bundleUrl
+
+                            if not (hasZipSignature bytes) then
+                                raise (InvalidDataException(sprintf "DEE2 response for %s is not a ZIP archive." accession))
+
+                            Internal.Files.writeBytes finalPath bytes
+                            options.Log(FetchedBundle(accession, finalPath))
+                            return Some finalPath
+                        with
+                        | :? OperationCanceledException as ex -> return raise ex
+                        | ex ->
+                            options.Log(Failed(sprintf "fetch dee2 %s/%s" species accession, ex.Message))
+                            return None
         }
 
     /// `crawlDee2WithAsync` with `CrawlOptions.Default`.

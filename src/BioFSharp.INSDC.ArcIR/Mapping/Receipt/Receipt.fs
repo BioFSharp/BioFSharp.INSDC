@@ -12,6 +12,7 @@ module ReceiptConversion =
     [<Literal>]
     let private source = "INSDC Receipt"
 
+    /// Converts one Receipt record into its explicit ArcIR graph fragment.
     let convert (receipt: Receipt) : ConversionResult =
         let nodeId =
             let bySubmission = if isNull receipt.Submission then null else receipt.Submission.Accession

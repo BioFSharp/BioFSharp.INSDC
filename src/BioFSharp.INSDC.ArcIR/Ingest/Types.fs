@@ -18,6 +18,7 @@ type ResourceFile =
     }
 
 
+/// Helpers for turning ingested file metadata into graph properties.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ResourceFile =
 
@@ -34,9 +35,13 @@ module ResourceFile =
 /// so an author and an INSDC contact with the same key collapse to one enriched node.
 type PaperAuthor =
     {
+        /// The author's display name, when present.
         Name: string option
+        /// The author's email address, when present.
         Email: string option
+        /// The author's affiliation text, when present.
         Affiliation: string option
+        /// The author's ORCID, when present.
         Orcid: string option
     }
 
@@ -44,9 +49,13 @@ type PaperAuthor =
 /// Paper-level metadata extracted from a JATS XML article (or supplied for a PDF).
 type PaperMetadata =
     {
+        /// The article title, when present.
         Title: string option
+        /// The article DOI, when present.
         Doi: string option
+        /// The journal title, when present.
         Journal: string option
+        /// Authors in source order.
         Authors: PaperAuthor list
     }
 
@@ -65,6 +74,8 @@ type CountColumn =
 /// A count-matrix file plus the run-accession columns parsed from its header line.
 type CountFile =
     {
+        /// Metadata for the count-matrix resource.
         File: ResourceFile
+        /// Run-accession columns parsed from the header.
         Columns: CountColumn list
     }

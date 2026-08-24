@@ -10,6 +10,7 @@
   <ItemGroup>
     <Compile Include="Endpoints.fs" />
     <Compile Include="Log.fs" />
+    <Compile Include="Internal\Files.fs" />
     <Compile Include="Internal\Http.fs" />
     <Compile Include="CrawlOptions.fs" />
     <Compile Include="Discovery.fs" />
@@ -31,8 +32,6 @@
     <PackageTags>bioinformatics F# fsharp INSDC ENA SRA crawler BioProject Sample Study Experiment Run</PackageTags>
     <RepositoryUrl>https://github.com/BioFSharp/BioFSharp.INSDC</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <FsDocsLicenseLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/LICENSE</FsDocsLicenseLink>
-    <FsDocsReleaseNotesLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,7 +42,7 @@
 
   <ItemGroup>
     <PackageReference Include="FsHttp" Version="15.0.3" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.30" />
   </ItemGroup>
 
 </Project>

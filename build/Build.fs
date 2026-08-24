@@ -14,31 +14,32 @@ initializeContext()
 open BasicTasks
 open FragmentSelectorTasks
 open StructuralOntologyTasks
+open GeneratedArtifactTasks
+open DependencyAuditTasks
 open TestTasks
 open PackageTasks
-open DocumentationTasks
 open ReleaseTasks
 open ReleaseFromNotesTask
 
-/// Full release of nuget package, git tag, and documentation for the stable version.
+/// Full release of NuGet packages and the stable git tag.
 let _release = 
     BuildTask.createEmpty 
         "Release" 
-        [clean; buildSolution; runTests; pack; buildDocs; createTag; publishNuget; releaseDocs]
+        [clean; buildSolution; runTests; pack; createTag; publishNuget]
 
-/// Full release of nuget package, git tag, and documentation for the prerelease version.
+/// Full release of NuGet packages and the prerelease git tag.
 let _preRelease = 
     BuildTask.createEmpty 
         "PreRelease" 
-        [setPrereleaseTag; clean; buildSolution; runTests; packPrerelease; buildDocsPrerelease; createPrereleaseTag; publishNugetPrerelease; prereleaseDocs]
+        [setPrereleaseTag; clean; buildSolution; runTests; packPrerelease; createPrereleaseTag; publishNugetPrerelease]
 
-/// Full release of nuget package for the prerelease version.
+/// Legacy alias for `Release`, retained after local docs publishing was removed.
 let _releaseNoDocs = 
     BuildTask.createEmpty 
         "ReleaseNoDocs" 
         [clean; buildSolution; runTests; pack; createTag; publishNuget;]
 
-/// Full release of nuget package for the prerelease version.
+/// Legacy alias for `PreRelease`, retained after local docs publishing was removed.
 let _preReleaseNoDocs =
     BuildTask.createEmpty
         "PreReleaseNoDocs"
@@ -55,6 +56,10 @@ let _generateFragmentSelectors = generateFragmentSelectors
 
 // Same forced-init reason: register `generateStructuralOntology` for the CLI.
 let _generateStructuralOntology = generateStructuralOntology
+
+// Register the Phase 1 verification gates for direct CLI use.
+let _verifyGeneratedArtifacts = verifyGeneratedArtifacts
+let _dependencyAudit = dependencyAudit
 
 [<EntryPoint>]
 let main args = 

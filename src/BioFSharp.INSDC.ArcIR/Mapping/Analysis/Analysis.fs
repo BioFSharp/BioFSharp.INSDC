@@ -11,6 +11,7 @@ module AnalysisConversion =
     [<Literal>]
     let private source = "INSDC Analysis"
 
+    /// Converts one Analysis record into its explicit ArcIR graph fragment.
     let convert (analysis: Analysis) : ConversionResult =
         let nodeId = Convert.entityId analysis
 

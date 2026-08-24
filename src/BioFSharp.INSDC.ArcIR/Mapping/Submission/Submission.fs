@@ -11,6 +11,7 @@ module SubmissionConversion =
     [<Literal>]
     let private source = "INSDC Submission"
 
+    /// Converts one Submission record into its explicit ArcIR graph fragment.
     let convert (submission: Submission) : ConversionResult =
         let nodeId = Convert.entityId submission
 

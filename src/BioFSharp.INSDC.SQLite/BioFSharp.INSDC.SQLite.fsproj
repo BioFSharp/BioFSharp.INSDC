@@ -23,6 +23,7 @@
     <Compile Include="Run.fs" />
     <Compile Include="AccessionRelations.fs" />
     <EmbeddedResource Include="schema\insdc_schema.sql" />
+    <EmbeddedResource Include="schema\migrations\*.sql" />
     <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
     <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
@@ -38,8 +39,6 @@
     <PackageTags>bioinformatics F# fsharp INSDC ENA SRA SQLite BioProject Sample Study Experiment Run</PackageTags>
     <RepositoryUrl>https://github.com/BioFSharp/BioFSharp.INSDC</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <FsDocsLicenseLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/LICENSE</FsDocsLicenseLink>
-    <FsDocsReleaseNotesLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
   </PropertyGroup>
 
   <ItemGroup>
@@ -48,7 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.30" />
   </ItemGroup>
 
 </Project>

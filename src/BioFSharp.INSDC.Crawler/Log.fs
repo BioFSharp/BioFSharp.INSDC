@@ -39,6 +39,9 @@ type CrawlEvent =
     | FetchPaperFailed of id: string * error: string
     /// A DEE2 project bundle was downloaded and written to `path`.
     | FetchedBundle of srp: string * path: string
+    /// A valid artifact already existed at `path`, so its network request and
+    /// rewrite were skipped during resume.
+    | ReusedArtifact of kind: string * path: string
     /// No DEE2 bundle for the SRP accession was found under the requested
     /// species listing; no file was written.
     | BundleNotFound of species: string * srp: string
@@ -76,6 +79,7 @@ module Log =
         | FetchedPaperFormat (id, fmt, path) -> sprintf "paper %s -> %s (%s)" id fmt path
         | FetchPaperFailed (id, error) -> sprintf "paper %s FAILED: %s" id error
         | FetchedBundle (srp, path) -> sprintf "dee2 %s -> %s" srp path
+        | ReusedArtifact (kind, path) -> sprintf "reused %s (%s)" kind path
         | BundleNotFound (species, srp) -> sprintf "dee2 %s/%s bundle not found" species srp
         | Failed (context, error) -> sprintf "FAILED %s: %s" context error
         | Completed summary -> sprintf "done — %s" summary
@@ -85,6 +89,8 @@ module Log =
     let console (event: CrawlEvent) : unit =
         printfn "[crawler %s] %s" (DateTime.Now.ToString("HH:mm:ss")) (format event)
 
+    /// Creates a sink that appends timestamped events to `path` and flushes
+    /// each event before returning.
     let file (path: string) : CrawlEvent -> unit =
         let writer = new IO.StreamWriter(path, append = true)
         fun event ->

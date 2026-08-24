@@ -201,29 +201,38 @@ module private Engine =
         sb.AppendLine("}") |> ignore
         sb.ToString()
 
+let private projectDir = "src/BioFSharp.FileFormats.INSDC"
+let private projectFile = projectDir + "/BioFSharp.FileFormats.INSDC.csproj"
+let private outputFile = projectDir + "/FragmentSelectors.cs"
+
+let private findModelAssembly () =
+    !!(projectDir + "/bin/**/BioFSharp.FileFormats.INSDC.dll")
+    |> Seq.sortByDescending File.GetLastWriteTimeUtc
+    |> Seq.tryHead
+    |> Option.defaultWith (fun () ->
+        failwith "Could not locate built BioFSharp.FileFormats.INSDC.dll to reflect over.")
+
+/// Computes the canonical selector source from the already-built type model.
+/// Newlines are normalized so the committed file is identical on every OS.
+let generatedFragmentSelectorsContent () =
+    let asm = findModelAssembly () |> Path.GetFullPath |> Assembly.LoadFrom
+    (Engine.generate asm).Replace("\r\n", "\n").Replace("\r", "\n")
+
+let private writeCanonical (path: string) (content: string) =
+    File.WriteAllText(path, content, UTF8Encoding(false))
+
 /// Regenerate `src/BioFSharp.FileFormats.INSDC/FragmentSelectors.cs` from the built type model.
 /// On-demand only; the default build does NOT depend on this target.
 let generateFragmentSelectors =
     BuildTask.create "generateFragmentSelectors" [] {
-        let projectDir = "src/BioFSharp.FileFormats.INSDC"
-        let proj = projectDir + "/BioFSharp.FileFormats.INSDC.csproj"
-        let outFile = projectDir + "/FragmentSelectors.cs"
 
         // Remove any prior output first so a stale/broken file can't block the build we reflect over.
-        if File.Exists outFile then File.Delete outFile
+        if File.Exists outputFile then File.Delete outputFile
 
-        proj
+        projectFile
         |> DotNet.build (fun p ->
             { p with MSBuildParams = { p.MSBuildParams with DisableInternalBinLog = true } })
 
-        let dll =
-            !!(projectDir + "/bin/**/BioFSharp.FileFormats.INSDC.dll")
-            |> Seq.sortByDescending File.GetLastWriteTimeUtc
-            |> Seq.tryHead
-            |> Option.defaultWith (fun () ->
-                failwith "Could not locate built BioFSharp.FileFormats.INSDC.dll to reflect over.")
-
-        let asm = Assembly.LoadFrom(Path.GetFullPath dll)
-        File.WriteAllText(outFile, Engine.generate asm)
-        printfn "Wrote fragment selectors to %s" outFile
+        writeCanonical outputFile (generatedFragmentSelectorsContent ())
+        printfn "Wrote fragment selectors to %s" outputFile
     }

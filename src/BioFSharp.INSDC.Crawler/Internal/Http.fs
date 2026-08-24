@@ -50,14 +50,20 @@ module Http =
         (fetch: string -> Async<'T>)
         (url: string)
         : Async<'T> =
+        let retryLimit = max 0 retries
+
         let rec attempt (n: int) =
             async {
                 try
                     return! fetch url
-                with ex when n < retries ->
+                with
+                | :? System.OperationCanceledException as ex -> return raise ex
+                | ex when n < retryLimit ->
                     log (Retrying(url, n + 1, ex.Message))
-                    do! Async.Sleep(100 * (pown 2 n))
+                    let delayMs = 100 * (1 <<< min n 8)
+                    do! Async.Sleep delayMs
                     return! attempt (n + 1)
+                | ex -> return raise ex
             }
 
         attempt 0

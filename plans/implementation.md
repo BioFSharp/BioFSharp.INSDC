@@ -34,6 +34,10 @@ source artifacts + SSSOM --F1 once--> canonical ArcIR --curation*--> selected re
 
 ## Phase 1 — Stabilize the existing repository
 
+> **Status: COMPLETE (2026-08-24).** The pre-change inventory is recorded in
+> [`phase-1-baseline.md`](phase-1-baseline.md). The FAKE `RunTests` acceptance
+> path now includes dependency auditing and generated-artifact drift checks.
+
 Complete this phase before changing the ArcIR model so failures introduced by the redesign are distinguishable from existing debt.
 
 ### Build, dependencies, and generated artifacts

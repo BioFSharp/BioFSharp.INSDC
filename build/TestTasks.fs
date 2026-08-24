@@ -5,9 +5,11 @@ open Fake.DotNet
 
 open ProjectInfo
 open BasicTasks
+open GeneratedArtifactTasks
+open DependencyAuditTasks
 
 
-let runTests = BuildTask.create "RunTests" [clean; buildSolution] {
+let runTests = BuildTask.create "RunTests" [verifyGeneratedArtifacts; dependencyAudit] {
     testProjects
     |> Seq.iter (fun testProject ->
         testProject
@@ -23,4 +25,3 @@ let runTests = BuildTask.create "RunTests" [clean; buildSolution] {
         )
     )
 }
-

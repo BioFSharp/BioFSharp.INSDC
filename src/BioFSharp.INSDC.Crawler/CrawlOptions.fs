@@ -29,6 +29,11 @@ type CrawlOptions =
         /// Maximum number of accessions batched into a single Browser API
         /// request (the endpoint returns a `*_SET` for comma-separated ids).
         ChunkSize: int
+        /// When `false` (the default), any exhausted record batch fails the
+        /// crawl after all in-flight batches finish, preventing a silently
+        /// incomplete result. Set `true` only for an explicitly best-effort
+        /// inspection crawl; failed batches are logged and omitted.
+        ContinueOnPartialFailure: bool
         /// The HTTP GET used to fetch a URL's body as text. Injectable so tests can run
         /// without network access; defaults to `Internal.Http.get` (FsHttp).
         Fetch: string -> Async<string>
@@ -55,6 +60,7 @@ type CrawlOptions =
             Retries = 3
             ThrottleMs = 100
             ChunkSize = 100
+            ContinueOnPartialFailure = false
             Fetch = Internal.Http.get
             FetchBytes = Internal.Http.getBytes
             Log = Log.console

@@ -8,6 +8,24 @@ open Microsoft.Data.Sqlite
 /// explicit transaction.
 module Sql =
 
+    /// Enables or disables SQLite foreign-key enforcement and verifies that
+    /// the connection accepted the requested mode. The PRAGMA is connection-
+    /// scoped and must be changed outside an active transaction.
+    let setForeignKeys (enabled: bool) (connection: SqliteConnection) : unit =
+        use setCommand = connection.CreateCommand()
+        setCommand.CommandText <- if enabled then "PRAGMA foreign_keys = ON;" else "PRAGMA foreign_keys = OFF;"
+        setCommand.ExecuteNonQuery() |> ignore
+
+        use verifyCommand = connection.CreateCommand()
+        verifyCommand.CommandText <- "PRAGMA foreign_keys;"
+        let actual = Convert.ToInt32(verifyCommand.ExecuteScalar()) <> 0
+
+        if actual <> enabled then
+            failwithf
+                "SQLite did not apply the requested foreign-key mode (requested %b, actual %b). Ensure no transaction is active."
+                enabled
+                actual
+
     /// Marshals an arbitrary CLR value into the form `SqliteCommand` expects:
     /// CLR `null` becomes a SQL NULL, everything else passes through as-is.
     let private toParameterValue (value: obj) : obj =
@@ -26,9 +44,7 @@ module Sql =
     let openConnection (connectionString: string) : SqliteConnection =
         let connection = new SqliteConnection(connectionString)
         connection.Open()
-        use cmd = connection.CreateCommand()
-        cmd.CommandText <- "PRAGMA foreign_keys = ON;"
-        cmd.ExecuteNonQuery() |> ignore
+        setForeignKeys true connection
         connection
 
     let private addParameters (cmd: SqliteCommand) (parameters: (string * obj) seq) : unit =

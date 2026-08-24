@@ -150,8 +150,8 @@ module Experiment =
                         Sql.execNonQuery
                             connection
                             "INSERT INTO experiment_spot_descriptor \
-                                (experiment_accession, read_index, spot_length, item, read_class, read_label, read_type) \
-                             VALUES (@acc, @idx, @spotLen, @item, @class, @label, @type);"
+                                (experiment_accession, read_index, spot_length, item, read_class, read_label, read_type, base_coord) \
+                             VALUES (@acc, @idx, @spotLen, @item, @class, @label, @type, @baseCoord);"
                             [
                                 "@acc", box exp.Accession
                                 "@idx", box rs.ReadIndex
@@ -160,6 +160,7 @@ module Experiment =
                                 "@class", box (string rs.ReadClass)
                                 "@label", box rs.ReadLabel
                                 "@type", box (string rs.ReadType)
+                                "@baseCoord", (if rs.BaseCoord.HasValue then box rs.BaseCoord.Value else null)
                             ]
                         |> ignore
 
@@ -221,7 +222,7 @@ module Experiment =
         let spotRows =
             Sql.queryAll
                 connection
-                "SELECT read_index, spot_length, read_class, read_label, read_type \
+                "SELECT read_index, spot_length, read_class, read_label, read_type, base_coord \
                  FROM experiment_spot_descriptor WHERE experiment_accession = @acc ORDER BY read_index;"
                 [ "@acc", box accession ]
                 (fun reader ->
@@ -229,7 +230,8 @@ module Experiment =
                     (if reader.IsDBNull(1) then Nullable<int64>() else Nullable(reader.GetInt64(1))),
                     Sql.readStringOrNull reader 2,
                     Sql.readStringOrNull reader 3,
-                    Sql.readStringOrNull reader 4)
+                    Sql.readStringOrNull reader 4,
+                    (if reader.IsDBNull(5) then Nullable<int64>() else Nullable(reader.GetInt64(5))))
 
         let hasAnything =
             coreRow.IsSome
@@ -281,11 +283,11 @@ module Experiment =
         if not (List.isEmpty spotRows) then
             let spotDescriptor = SpotDescriptor()
             let spec = SpotDescriptorSpotDecodeSpec()
-            let firstSpotLength = spotRows |> List.tryPick (fun (_, len, _, _, _) -> if len.HasValue then Some len.Value else None)
+            let firstSpotLength = spotRows |> List.tryPick (fun (_, len, _, _, _, _) -> if len.HasValue then Some len.Value else None)
             match firstSpotLength with
             | Some len -> spec.SpotLength <- Nullable(len)
             | None -> ()
-            for (idx, _, cls, label, rtype) in spotRows do
+            for (idx, _, cls, label, rtype, baseCoord) in spotRows do
                 let rs = SpotDescriptorSpotDecodeSpecReadSpec()
                 rs.ReadIndex <- idx
                 rs.ReadLabel <- label
@@ -293,6 +295,7 @@ module Experiment =
                     rs.ReadClass <- parseEnum<SpotDescriptorSpotDecodeSpecReadSpecReadClass> cls
                 if not (isNull rtype) then
                     rs.ReadType <- parseEnum<SpotDescriptorSpotDecodeSpecReadSpecReadType> rtype
+                rs.BaseCoord <- baseCoord
                 spec.ReadSpec.Add(rs)
             spotDescriptor.SpotDecodeSpec <- spec
             library.SpotDescriptor <- spotDescriptor
@@ -334,11 +337,12 @@ module Experiment =
 
     /// Removes the row from `experiment`; cascades through every owned table.
     let delete (connection: SqliteConnection) (accession: string) : unit =
-        Sql.execNonQuery
-            connection
-            "DELETE FROM experiment WHERE accession = @acc;"
-            [ "@acc", box accession ]
-        |> ignore
+        Sql.withTransaction connection (fun _ ->
+            Sql.execNonQuery
+                connection
+                "DELETE FROM experiment WHERE accession = @acc;"
+                [ "@acc", box accession ]
+            |> ignore)
 
     /// Lists every Experiment accession in the database, lexicographically.
     let listAccessions (connection: SqliteConnection) : string seq =

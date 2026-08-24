@@ -16,7 +16,6 @@
     <Compile Include="GraphMl.fs" />
     <Compile Include="Html.fs" />
     <Compile Include="Mapping\ArcValueConversion.fs" />
-    <Compile Include="Mapping\Ontology.fs" />
     <Compile Include="Mapping\SubObjects.fs" />
     <Compile Include="Mapping\Mapping.fs" />
     <Compile Include="Mapping\Annotations.fs" />
@@ -50,17 +49,11 @@
     <PackageTags>bioinformatics F# fsharp INSDC ENA SRA ARC ArcIR</PackageTags>
     <RepositoryUrl>https://github.com/BioFSharp/BioFSharp.INSDC</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <FsDocsLicenseLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/LICENSE</FsDocsLicenseLink>
-    <FsDocsReleaseNotesLink>https://github.com/BioFSharp/BioFSharp.INSDC/blob/main/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BioFSharp.FileFormats.INSDC\BioFSharp.FileFormats.INSDC.csproj" />
     <ProjectReference Include="..\BioFSharp.IO.INSDC\BioFSharp.IO.INSDC.fsproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="OBO.NET" Version="0.6.0" />
   </ItemGroup>
 
 </Project>

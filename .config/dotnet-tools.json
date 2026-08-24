@@ -2,13 +2,6 @@
   "version": 1,
   "isRoot": true,
   "tools": {
-    "fsdocs-tool": {
-      "version": "20.0.1",
-      "commands": [
-        "fsdocs"
-      ],
-      "rollForward": false
-    },
     "dotnet-xscgen": {
       "version": "3.0.1270",
       "commands": [

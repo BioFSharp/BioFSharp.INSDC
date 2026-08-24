@@ -11,6 +11,7 @@ module RunConversion =
     [<Literal>]
     let private source = "INSDC Run"
 
+    /// Converts one Run record into its explicit ArcIR graph fragment.
     let convert (run: Run) : ConversionResult =
         let nodeId = Convert.entityId run
 
