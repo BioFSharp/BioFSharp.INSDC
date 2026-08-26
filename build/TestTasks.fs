@@ -21,7 +21,6 @@ let runTests = BuildTask.create "RunTests" [verifyGeneratedArtifacts; dependency
                 NoBuild = true
                 MSBuildParams = { testParams.MSBuildParams with DisableInternalBinLog = true }
             }
-            |> DotNet.Options.withCustomParams (Some "-tl")
         )
     )
 }

@@ -12,7 +12,7 @@ open OBO.NET
 open BioFSharp.FileFormats.INSDC
 open BioFSharp.IO.INSDC
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.INSDC.ArcIR
 
 // Scoped here (not at the top of the file) so the crawler namespace does not

@@ -27,6 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\BioFSharp.ArcIR\BioFSharp.ArcIR.fsproj" />
     <ProjectReference Include="..\..\src\BioFSharp.FileFormats.INSDC\BioFSharp.FileFormats.INSDC.csproj" />
     <ProjectReference Include="..\..\src\BioFSharp.IO.INSDC\BioFSharp.IO.INSDC.fsproj" />
     <ProjectReference Include="..\..\src\BioFSharp.INSDC.ArcIR\BioFSharp.INSDC.ArcIR.fsproj" />

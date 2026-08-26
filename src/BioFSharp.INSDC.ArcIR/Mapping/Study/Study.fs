@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.FileFormats.INSDC
 
 /// Study -> a `Collection` node carrying its descriptor (title/abstract/type/project-id). Explicit,
@@ -40,6 +40,6 @@ module StudyConversion =
         let idAnns, idEdges = Annotations.identifierAnnotations nodeId study.Identifiers
 
         let node =
-            ArcObject.create nodeId ArcObjectKind.Collection [ Vocabulary.DType.study ] [] (descriptorAnns @ attrAnns @ idAnns)
+            GraphBuilder.object' nodeId ArcObjectKind.Collection [ Vocabulary.DType.study ] [] (descriptorAnns @ attrAnns @ idAnns)
 
         Convert.result node (Convert.institutionAgents nodeId study) idEdges

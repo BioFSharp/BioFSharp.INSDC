@@ -8,10 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ArcCore.fs" />
-    <Compile Include="ArcIR.fs" />
-    <Compile Include="ArcObject.fs" />
     <Compile Include="Vocabulary.fs" />
+    <Compile Include="GraphBuilder.fs" />
     <Compile Include="GraphText.fs" />
     <Compile Include="GraphMl.fs" />
     <Compile Include="Html.fs" />
@@ -40,8 +38,8 @@
 
   <PropertyGroup>
     <Authors>Kevin Schneider, BioFSharp contributors</Authors>
-    <Description>Maps INSDC records (BioProject, Study, Sample, Experiment, Run, Analysis, Submission) into ArcIR — an ARC-oriented intermediate representation (a property graph of typed objects and relations).</Description>
-    <Summary>INSDC to ARC intermediate representation mapping.</Summary>
+    <Description>INSDC-specific F1 adapter that maps BioProject, Study, Sample, Experiment, Run, Analysis, Submission, and Receipt records into the target-neutral BioFSharp.ArcIR graph.</Description>
+    <Summary>INSDC adapter for the target-neutral ARC intermediate representation.</Summary>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/BioFSharp/BioFSharp.INSDC</PackageProjectUrl>
     <PackageIcon>icon.png</PackageIcon>
@@ -52,6 +50,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BioFSharp.ArcIR\BioFSharp.ArcIR.fsproj" />
     <ProjectReference Include="..\BioFSharp.FileFormats.INSDC\BioFSharp.FileFormats.INSDC.csproj" />
     <ProjectReference Include="..\BioFSharp.IO.INSDC\BioFSharp.IO.INSDC.fsproj" />
   </ItemGroup>

@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.FileFormats.INSDC
 
 /// BioProject -> ArcIR, authored explicitly (object integrity preserved) and decoupled from the
@@ -30,7 +30,7 @@ module BioProjectConversion =
         let idAnns, idEdges = Annotations.identifierAnnotations nodeId project.Identifiers
 
         let node =
-            ArcObject.create
+            GraphBuilder.object'
                 nodeId
                 ArcObjectKind.Collection
                 [ Vocabulary.DType.bioProject; Vocabulary.DType.investigation ]

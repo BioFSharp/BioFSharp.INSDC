@@ -1,11 +1,12 @@
-namespace Arc.Build
+namespace BioFSharp.INSDC.ArcIR
 
 open System.IO
 open System.Text
+open BioFSharp.ArcIR
 
-open Arc.Build.GraphText
+open BioFSharp.INSDC.ArcIR.GraphText
 
-/// Serializes the current proof-of-concept [ArcIR] property graph to a single self-contained interactive HTML page: an embedded
+/// Serializes an [ArcIR] property graph to a single self-contained interactive HTML page: an embedded
 /// force-directed SVG graph (no external scripts, CDN, or network) where nodes are colored by `Kind`,
 /// edges are labeled by predicate, and clicking a node opens a side panel listing its full properties
 /// and rendered annotations. The graph is embedded as a JSON literal; all rendering JS/CSS is inline, so
@@ -59,13 +60,13 @@ module Html =
     /// The graph as a JS/JSON object literal: `{ nodes: [...], edges: [...] }`.
     let private dataJson (ir: ArcIR) =
         let objectNode (o: ArcObject) =
-            let dtypes = o.DTypes |> Seq.map (fun i -> localName i.Value) |> Seq.sort |> String.concat " "
-            let props = o.Properties |> Seq.map (fun kv -> localName kv.Key.Value, renderValue kv.Value)
-            let anns = o.Annotations |> Seq.map (fun a -> annotationName a, renderAnnotationValue a.Value)
+            let dtypes = o.Types.Values |> Seq.map (fun assertion -> localName assertion.Term.Value) |> Seq.sort |> String.concat " "
+            let props = o.Properties.Values |> Seq.map (fun property -> localName property.Predicate.Value, renderValue property.Value)
+            let anns = o.Annotations.Values |> Seq.map (fun a -> annotationName ir a, renderAnnotationValue ir a.Value)
             nodeJson o.Id.Value (nodeLabel o) (kindName o.Kind) dtypes props anns
 
         let missing =
-            ir.Relations
+            ir.Relations.Values
             |> Seq.collect (fun r -> [ r.Subject; r.Object ])
             |> Seq.distinct
             |> Seq.filter (fun id -> not (ir.Objects.ContainsKey id))
@@ -75,7 +76,7 @@ module Html =
         let nodes = Seq.append (ir.Objects.Values |> Seq.map objectNode) missing |> String.concat ","
 
         let edges =
-            ir.Relations
+            ir.Relations.Values
             |> Seq.map (fun r ->
                 sprintf
                     "{\"source\":%s,\"target\":%s,\"predicate\":%s}"

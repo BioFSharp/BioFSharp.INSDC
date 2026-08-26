@@ -1,7 +1,8 @@
-namespace Arc.Build
+namespace BioFSharp.INSDC.ArcIR
 
 open System
 open System.Globalization
+open BioFSharp.ArcIR
 
 /// Shared text rendering for the ArcIR graph serializers (`GraphMl`, `Html`): IRI local names, kind and
 /// value formatting, annotation display, node labels. Internal — not part of the package's public API.
@@ -35,30 +36,37 @@ module internal GraphText =
         | ArcValue.Ref id -> id.Value
         | ArcValue.List xs -> xs |> List.map renderValue |> String.concat "; "
 
-    let termLabel (term: OntologyTerm) =
-        let name = term.Name |> Option.defaultValue (localName term.Id.Value)
-        sprintf "%s (%s)" name term.Id.Value
+    let termLabel (ir: ArcIR) (termId: Iri) =
+        let name =
+            ir.Terms
+            |> Map.tryFind termId
+            |> Option.bind (fun term -> term.Name)
+            |> Option.defaultValue (localName termId.Value)
+        sprintf "%s (%s)" name termId.Value
 
     /// Render an annotation's value so graph diagnostics show the mapped value, not just a count.
-    let renderAnnotationValue (av: AnnotationValue) =
+    let renderAnnotationValue (ir: ArcIR) (av: AnnotationValue) =
         match av with
         | AnnotationValue.Literal v -> renderValue v
-        | AnnotationValue.Term t -> termLabel t
-        | AnnotationValue.LiteralWithUnit(v, u) -> sprintf "%s %s" (renderValue v) (termLabel u)
-        | AnnotationValue.TermWithUnit(v, u) -> sprintf "%s %s" (termLabel v) (termLabel u)
+        | AnnotationValue.Term t -> termLabel ir t
+        | AnnotationValue.LiteralWithUnit(v, u) -> sprintf "%s %s" (renderValue v) (termLabel ir u)
+        | AnnotationValue.TermWithUnit(v, u) -> sprintf "%s %s" (termLabel ir v) (termLabel ir u)
 
     /// The display name for an annotation column: its term Name, else the term IRI's local name.
-    let annotationName (a: ArcAnnotation) =
-        a.Property.Name |> Option.defaultValue (localName a.Property.Id.Value)
+    let annotationName (ir: ArcIR) (a: ArcAnnotation) =
+        ir.Terms
+        |> Map.tryFind a.Property
+        |> Option.bind (fun term -> term.Name)
+        |> Option.defaultValue (localName a.Property.Value)
 
     /// A friendly node label. Accession is the stable identity, so it always wins over the (descriptive)
     /// title/name; falls back to the node's id (which is itself the accession/alias for entity nodes).
     let nodeLabel (o: ArcObject) =
         let pick (name: string) =
-            o.Properties
-            |> Seq.tryPick (fun kv ->
-                if String.Equals(name, localName kv.Key.Value, StringComparison.OrdinalIgnoreCase) then
-                    Some(renderValue kv.Value)
+            o.Properties.Values
+            |> Seq.tryPick (fun property ->
+                if String.Equals(name, localName property.Predicate.Value, StringComparison.OrdinalIgnoreCase) then
+                    Some(renderValue property.Value)
                 else
                     None)
         pick "Accession"

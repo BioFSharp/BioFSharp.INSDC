@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.FileFormats.INSDC
 
 /// Facade over the per-accession converters (one module per entity, in its own folder) plus `build` to

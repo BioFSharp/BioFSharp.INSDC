@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.FileFormats.INSDC
 
 /// BioSample -> an `Observable` (input material) plus its organism/taxon sub-object. Explicit,
@@ -24,7 +24,7 @@ module BioSampleConversion =
         let idAnns, idEdges = Annotations.identifierAnnotations nodeId sample.Identifiers
 
         let node =
-            ArcObject.create
+            GraphBuilder.object'
                 nodeId
                 ArcObjectKind.Observable
                 [ Vocabulary.DType.bioSample; Vocabulary.DType.sample ]

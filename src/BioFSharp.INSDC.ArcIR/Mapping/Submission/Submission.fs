@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.FileFormats.INSDC
 
 /// Submission -> a `Collection` node with its contacts as Agent sub-objects. Explicit,
@@ -26,7 +26,7 @@ module SubmissionConversion =
         let idAnns, idEdges = Annotations.identifierAnnotations nodeId submission.Identifiers
 
         let node =
-            ArcObject.create nodeId ArcObjectKind.Collection [ Vocabulary.DType.submission ] [] (scalarAnns @ attrAnns @ idAnns)
+            GraphBuilder.object' nodeId ArcObjectKind.Collection [ Vocabulary.DType.submission ] [] (scalarAnns @ attrAnns @ idAnns)
 
         let contacts = submission.Contacts |> Seq.choose (SubObjects.submissionContact nodeId) |> List.ofSeq
         let lab = SubObjects.organization nodeId submission.LabName |> Option.toList

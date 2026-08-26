@@ -7,6 +7,7 @@ let project = "BioFSharp.INSDC"
 
 let testProjects = 
     [
+        "tests/BioFSharp.ArcIR.Tests/BioFSharp.ArcIR.Tests.fsproj"
         "tests/BioFSharp.INSDC.Tests/BioFSharp.INSDC.Tests.fsproj"
     ]
 
@@ -39,4 +40,3 @@ let mutable prereleaseSuffix = ""
 let mutable prereleaseTag = ""
 
 let mutable isPrerelease = false
-

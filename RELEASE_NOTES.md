@@ -1,7 +1,11 @@
 ### 0.3.0 (Unreleased)
 
-Phase 1 repository stabilization.
+Phase 1 repository stabilization and Phase 2 target-neutral ArcIR extraction.
 
+- Added the packable, target-neutral `BioFSharp.ArcIR` `netstandard2.0` package with validated absolute IRI identities, normalized identity-keyed graph collections, shared term definitions, explicit add/upsert/merge operations, validation, and persistence contracts.
+- Converted `BioFSharp.INSDC.ArcIR` into an INSDC-specific F1 adapter. All eight entity converters and supplementary paper/count ingestion now mint deterministic assertion/relation identities and consume the neutral core without retaining the proof-of-concept model shapes.
+- Added a core-only test project and adapter regression coverage for conflict reporting, reference validation, deterministic identities, complete term resolution, and deterministic eight-entity fixture conversion.
+- Limited the nested FAKE solution build to one MSBuild node, preventing runaway worker fan-out and silent process-limit failures in captured Windows builds.
 - Added dependency-vulnerability and generated-artifact drift gates to the full FAKE test path; generators now produce deterministic committed output.
 - Added a versioned, forward-migrated SQLite schema with explicit foreign-key modes, transactional public writes, and exact fixture round-trip coverage for all five stored entities.
 - Hardened crawler cancellation, bounded retries, strict partial-failure handling, upstream parsing, atomic writes, validation, and resume behavior while preserving injectable offline fetch seams.

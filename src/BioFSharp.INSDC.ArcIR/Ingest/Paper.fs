@@ -1,7 +1,7 @@
 namespace BioFSharp.INSDC.ArcIR
 
 open System
-open Arc.Build
+open BioFSharp.ArcIR
 
 /// Maps a paper (its file + extracted authors) into ArcIR fragments: a Resource node for the file, a
 /// person Agent per author (deduped, so authors merge with INSDC contacts sharing an email), and pending
@@ -54,7 +54,7 @@ module Paper =
             |> List.choose id
 
         let node =
-            ArcObject.create nodeId ArcObjectKind.Resource [ Vocabulary.DType.publication ] (ResourceFile.properties file) annotations
+            GraphBuilder.object' nodeId ArcObjectKind.Resource [ Vocabulary.DType.publication ] (ResourceFile.properties file) annotations
 
         let authors = meta.Authors |> List.choose (authorFragment nodeId)
 

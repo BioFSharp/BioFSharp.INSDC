@@ -12,7 +12,7 @@ open OBO.NET
 open BioFSharp.FileFormats.INSDC
 open BioFSharp.IO.INSDC
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.INSDC.ArcIR
 
 type BioProjectTests() =

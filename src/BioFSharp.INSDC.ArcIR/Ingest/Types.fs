@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 
 /// File metadata for a resource we ingest (a paper file, a count-matrix file) — enough to build a
 /// Resource node without reading the file's contents. Produced by the readers in `Ingest/Readers.fs`
@@ -24,10 +24,10 @@ module ResourceFile =
 
     /// The file-metadata `Properties` bag for a Resource node built from this file (absent fields dropped).
     let properties (file: ResourceFile) : (Iri * ArcValue) list =
-        [ Some(Iri.Create "Filename", ArcValue.String file.Name)
-          file.ByteSize |> Option.map (fun b -> Iri.Create "ByteSize", ArcValue.Integer b)
-          file.Checksum |> Option.map (fun c -> Iri.Create "Checksum", ArcValue.String c)
-          file.MediaType |> Option.map (fun m -> Iri.Create "MediaType", ArcValue.String m) ]
+        [ Some(Vocabulary.Property.ofName "Filename", ArcValue.String file.Name)
+          file.ByteSize |> Option.map (fun b -> Vocabulary.Property.ofName "ByteSize", ArcValue.Integer b)
+          file.Checksum |> Option.map (fun c -> Vocabulary.Property.ofName "Checksum", ArcValue.String c)
+          file.MediaType |> Option.map (fun m -> Vocabulary.Property.ofName "MediaType", ArcValue.String m) ]
         |> List.choose id
 
 

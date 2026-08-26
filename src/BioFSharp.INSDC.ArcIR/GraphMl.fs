@@ -1,10 +1,11 @@
-namespace Arc.Build
+namespace BioFSharp.INSDC.ArcIR
 
 open System.IO
 open System.Text
 open System.Xml
+open BioFSharp.ArcIR
 
-open Arc.Build.GraphText
+open BioFSharp.INSDC.ArcIR.GraphText
 
 /// Serializes an [ArcIR] property graph to GraphML (http://graphml.graphdrawing.org/xmlns), the standard
 /// interchange format read by Gephi, yEd, and Cytoscape desktop. Nodes carry `label`/`kind`/`dtypes`
@@ -25,7 +26,7 @@ module GraphMl =
 
     /// The property + annotation data of a node, merged into one column-name -> rendered-value map
     /// (values sharing a column name are joined). Column names are `safeName`d.
-    let private nodeData (o: ArcObject) =
+    let private nodeData (ir: ArcIR) (o: ArcObject) =
         let add name value m =
             m
             |> Map.change name (function
@@ -33,15 +34,15 @@ module GraphMl =
                 | None -> Some value)
 
         let withProps =
-            o.Properties
-            |> Seq.fold (fun m kv -> add (safeName (localName kv.Key.Value)) (renderValue kv.Value) m) Map.empty
+            o.Properties.Values
+            |> Seq.fold (fun m property -> add (safeName (localName property.Predicate.Value)) (renderValue property.Value) m) Map.empty
 
-        o.Annotations
-        |> List.fold (fun m a -> add (safeName (annotationName a)) (renderAnnotationValue a.Value) m) withProps
+        o.Annotations.Values
+        |> Seq.fold (fun m a -> add (safeName (annotationName ir a)) (renderAnnotationValue ir a.Value) m) withProps
 
     let private edgeData (r: ArcRelation) =
-        r.Properties
-        |> Seq.map (fun kv -> safeName (localName kv.Key.Value), renderValue kv.Value)
+        r.Properties.Values
+        |> Seq.map (fun property -> safeName (localName property.Predicate.Value), renderValue property.Value)
         |> Map.ofSeq
 
     let private writeGraph (writer: TextWriter) (ir: ArcIR) =
@@ -49,8 +50,8 @@ module GraphMl =
         let nodeColumns =
             seq {
                 for o in ir.Objects.Values do
-                    for kv in o.Properties -> safeName (localName kv.Key.Value)
-                    for a in o.Annotations -> safeName (annotationName a)
+                    for property in o.Properties.Values -> safeName (localName property.Predicate.Value)
+                    for a in o.Annotations.Values -> safeName (annotationName ir a)
             }
             |> Seq.distinct
             |> Seq.sort
@@ -58,8 +59,8 @@ module GraphMl =
 
         let edgeColumns =
             seq {
-                for r in ir.Relations do
-                    for kv in r.Properties -> safeName (localName kv.Key.Value)
+                for r in ir.Relations.Values do
+                    for property in r.Properties.Values -> safeName (localName property.Predicate.Value)
             }
             |> Seq.distinct
             |> Seq.sort
@@ -69,7 +70,7 @@ module GraphMl =
         let edgeKeyId = edgeColumns |> List.mapi (fun i n -> n, sprintf "ed%d" i) |> Map.ofList
 
         let missing =
-            ir.Relations
+            ir.Relations.Values
             |> Seq.collect (fun r -> [ r.Subject; r.Object ])
             |> Seq.distinct
             |> Seq.filter (fun id -> not (ir.Objects.ContainsKey id))
@@ -115,10 +116,10 @@ module GraphMl =
             xml.WriteAttributeString("id", o.Id.Value)
             writeData "label" (nodeLabel o)
             writeData "kind" (kindName o.Kind)
-            let dtypes = o.DTypes |> Seq.map (fun i -> localName i.Value) |> Seq.sort |> String.concat " "
+            let dtypes = o.Types.Values |> Seq.map (fun assertion -> localName assertion.Term.Value) |> Seq.sort |> String.concat " "
             if dtypes <> "" then
                 writeData "dtypes" dtypes
-            for KeyValue(name, value) in nodeData o do
+            for KeyValue(name, value) in nodeData ir o do
                 writeData nodeKeyId.[name] value
             xml.WriteEndElement()
 
@@ -130,11 +131,10 @@ module GraphMl =
             writeData "kind" "Missing"
             xml.WriteEndElement()
 
-        ir.Relations
+        ir.Relations.Values
         |> Seq.iteri (fun i r ->
             xml.WriteStartElement("edge", ns)
-            let id = r.Id |> Option.map (fun x -> x.Value) |> Option.defaultValue (sprintf "e%d" i)
-            xml.WriteAttributeString("id", id)
+            xml.WriteAttributeString("id", r.Id.Value)
             xml.WriteAttributeString("source", r.Subject.Value)
             xml.WriteAttributeString("target", r.Object.Value)
             writeData "predicate" (localName r.Predicate.Value)

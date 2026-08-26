@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 
 /// The ingest facade: fold supplementary sources (a paper, a count-data archive) into ArcIR fragments and
 /// incorporate them into an existing INSDC-derived graph. Fragments are `ConversionResult`s keyed by
@@ -38,9 +38,8 @@ module Ingest =
         let directRelations = results |> List.collect (fun r -> r.Relations)
         let pending = results |> List.collect (fun r -> r.Pending)
 
-        let withObjects = existing |> ArcIR.addObjects objects
+        let additions = GraphBuilder.assemble objects directRelations
+        let withObjects = GraphBuilder.mergeOrFail existing additions
         let resolved = Mapping.resolveRelations withObjects.Objects.Values pending
 
-        withObjects
-        |> ArcIR.addRelations directRelations
-        |> ArcIR.addRelations resolved
+        GraphBuilder.mergeOrFail withObjects (GraphBuilder.assemble [] resolved)

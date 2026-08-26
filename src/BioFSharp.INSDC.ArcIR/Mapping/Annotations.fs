@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.FileFormats.INSDC
 
 /// Shared folders that turn INSDC composite value-objects into ArcIR annotations (and, for identifiers,
@@ -13,22 +13,21 @@ module Annotations =
     [<Literal>]
     let private baseIri = "http://purl.org/arc/insdc/"
 
-    /// Sanitize a free-text key into an IRI-safe fragment (non-alphanumeric -> '_').
-    let private slug (s: string) =
-        System.String(s.Trim().ToCharArray() |> Array.map (fun c -> if System.Char.IsLetterOrDigit c then c else '_'))
+    let private escaped (s: string) = System.Uri.EscapeDataString(s.Trim())
 
     let private nz (s: string) = if isNull s then "" else s
 
-    /// One literal annotation: term (id, Name, source) + a literal value.
+    /// One literal annotation referencing a graph-level term definition.
     let private literal (termId: string) (name: string) (source: string) (value: ArcValue) : ArcAnnotation =
-        ArcAnnotation.literal (ArcAnnotation.term termId (Some name) (Some source)) value
+        let property = Iri.Create termId
+        ArcAnnotation.create property property (AnnotationValue.Literal value) None None
 
     // ---- scalar entity fields ----
 
     /// A single scalar field of an entity as an annotation (term Name = key; one field per key, so the id
     /// is key-derived). `source` records the entity provenance.
     let field (source: string) (key: string) (value: ArcValue) : ArcAnnotation =
-        literal (sprintf "%sfield/%s" baseIri (slug key)) key source value
+        literal (sprintf "%sfield/%s/%s" baseIri (escaped source) (escaped key)) key source value
 
     /// A string field as an annotation, or `None` when the value is absent/blank.
     let stringField (source: string) (key: string) (value: string) : ArcAnnotation option =
@@ -48,18 +47,17 @@ module Annotations =
             if System.String.IsNullOrWhiteSpace a.Tag then
                 None
             else
-                let property =
-                    ArcAnnotation.term (sprintf "%s%s/%d" attributeBase (slug a.Tag) (i + 1)) (Some a.Tag) (Some attributeSource)
+                let property = Iri.Create(sprintf "%s%d/%s" attributeBase (i + 1) (escaped a.Tag))
+                let annotationId = property
 
                 let value = ArcValue.String(nz a.Value)
 
                 match Option.ofObj a.Units with
                 | Some units when not (System.String.IsNullOrWhiteSpace units) ->
-                    let unit =
-                        ArcAnnotation.term (sprintf "%sunit/%s" attributeBase (slug units)) (Some units) (Some attributeSource)
+                    let unit = Iri.Create(sprintf "%sunit/%s" attributeBase (escaped units))
 
-                    Some(ArcAnnotation.literalWithUnit property value unit)
-                | _ -> Some(ArcAnnotation.literal property value))
+                    Some(ArcAnnotation.create annotationId property (AnnotationValue.LiteralWithUnit(value, unit)) None None)
+                | _ -> Some(ArcAnnotation.create annotationId property (AnnotationValue.Literal value) None None))
         |> Seq.choose id
         |> List.ofSeq
 
@@ -89,18 +87,18 @@ module Annotations =
 
             let addName (kind: string) (i: int) (n: Name) =
                 if not (isNull n) && not (System.String.IsNullOrWhiteSpace n.Value) then
-                    anns.Add(literal (sprintf "%s%s/%d" identifierBase kind (i + 1)) kind identifierSource (ArcValue.String n.Value))
+                    anns.Add(literal (sprintf "%s%d/%s" identifierBase (i + 1) (escaped kind)) kind identifierSource (ArcValue.String n.Value))
 
             let addQualified (i: int) (q: QualifiedName) =
                 if not (isNull q) && not (System.String.IsNullOrWhiteSpace q.Value) then
                     let ns =
                         if System.String.IsNullOrWhiteSpace q.Namespace then "externalId" else q.Namespace
 
-                    anns.Add(literal (sprintf "%s%s/%d" identifierBase (slug ns) (i + 1)) ns identifierSource (ArcValue.String q.Value))
+                    anns.Add(literal (sprintf "%s%d/%s" identifierBase (i + 1) (escaped ns)) ns identifierSource (ArcValue.String q.Value))
 
                     if modelledNamespaces.Contains(ns.Trim().ToLowerInvariant()) && q.Value <> subjectId then
                         edges.Add
-                            { Subject = ArcId.Create subjectId
+                            { Subject = Identity.objectId subjectId
                               Predicate = Vocabulary.Rel.references
                               TargetAccession = Some q.Value
                               TargetRefname = None

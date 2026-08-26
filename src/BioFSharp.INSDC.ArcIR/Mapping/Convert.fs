@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.FileFormats.INSDC
 
 /// Shared building blocks for the per-accession converters: id assignment, cross-entity pending
@@ -11,15 +11,15 @@ module Convert =
 
     type private InsdcObject = BioFSharp.FileFormats.INSDC.Object
 
-    /// The ArcId string for an entity: its accession, falling back to its alias.
+    /// The source identity text for an entity: its accession, falling back to its alias.
     let entityId (o: #InsdcObject) : string =
         if not (System.String.IsNullOrWhiteSpace o.Accession) then o.Accession
         elif not (System.String.IsNullOrWhiteSpace o.Alias) then o.Alias
-        else invalidArg "o" "INSDC record has neither accession nor alias; cannot assign an ArcId."
+        else invalidArg "o" "INSDC record has neither accession nor alias; cannot assign an ArcIR identity."
 
     /// A cross-entity reference (`RefObject`) as a `PendingRelation` from `subject`, resolved later.
     let pendingRef (subject: string) (predicate: Iri) (refObj: #RefObject) : PendingRelation =
-        { Subject = ArcId.Create subject
+        { Subject = Identity.objectId subject
           Predicate = predicate
           TargetAccession = Option.ofObj refObj.Accession
           TargetRefname = Option.ofObj refObj.Refname
@@ -58,7 +58,7 @@ module Convert =
             None
         else
             Some
-                { Subject = ArcId.Create subject
+                { Subject = Identity.objectId subject
                   Predicate = predicate
                   TargetAccession = Some accession
                   TargetRefname = None

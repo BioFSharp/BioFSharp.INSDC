@@ -1,7 +1,7 @@
 namespace BioFSharp.INSDC.ArcIR
 
 open System
-open Arc.Build
+open BioFSharp.ArcIR
 
 /// Turns the CLR scalar values on the generated INSDC types into typed `ArcValue`s, dropping absent
 /// (null / unspecified) values. This is what keeps the mapping faithful — a real `Integer`/`Boolean`/
@@ -52,4 +52,4 @@ module ArcValueConversion =
     /// `Some (Iri name, value)` when the string is present; `None` otherwise — for building the
     /// `Properties` bag while silently dropping absent fields.
     let stringProp (name: string) (value: string) : (Iri * ArcValue) option =
-        ofString value |> Option.map (fun v -> Iri.Create name, v)
+        ofString value |> Option.map (fun v -> Vocabulary.Property.ofName name, v)

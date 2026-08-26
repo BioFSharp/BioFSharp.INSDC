@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.FileFormats.INSDC
 
 /// Analysis -> an `Activity` (the reference hub): edges to study/sample/experiment/run/analysis, data
@@ -35,7 +35,7 @@ module AnalysisConversion =
         let idAnns, idEdges = Annotations.identifierAnnotations nodeId analysis.Identifiers
 
         let node =
-            ArcObject.create nodeId ArcObjectKind.Activity [ Vocabulary.DType.analysis ] [] (scalarAnns @ attrAnns @ idAnns)
+            GraphBuilder.object' nodeId ArcObjectKind.Activity [ Vocabulary.DType.analysis ] [] (scalarAnns @ attrAnns @ idAnns)
 
         let dataFiles = analysis.Files |> Seq.map (SubObjects.analysisFile nodeId) |> List.ofSeq
         let centerAgent = SubObjects.organization nodeId analysis.AnalysisCenter |> Option.toList

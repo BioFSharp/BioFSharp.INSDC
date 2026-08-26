@@ -71,6 +71,11 @@ Complete this phase before changing the ArcIR model so failures introduced by th
 
 ## Phase 2 — Extract the target-neutral ArcIR core
 
+> **Status: COMPLETE (2026-08-26).** `BioFSharp.ArcIR` now owns the validated,
+> normalized graph model, lossless operations, validation, and persistence
+> contracts. `BioFSharp.INSDC.ArcIR` is the INSDC-specific F1 adapter, and all
+> eight entity converters plus supplementary ingestion build against the core.
+
 Create a new packable `BioFSharp.ArcIR` project containing only the graph model, identity/value types, graph operations, validation, and persistence contracts. `BioFSharp.INSDC.ArcIR` becomes the INSDC-specific F1 adapter and depends on the core. The core must not reference generated INSDC types, INSDC vocabulary, crawler code, SQLite, or any target format.
 
 ### Public model changes

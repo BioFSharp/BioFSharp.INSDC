@@ -1,25 +1,26 @@
 # BioFSharp.INSDC.ArcIR
 
-Maps [INSDC](https://www.insdc.org/) records into the repository's current
-proof-of-concept **ArcIR** property graph.
+Maps [INSDC](https://www.insdc.org/) records into the target-neutral
+[`BioFSharp.ArcIR`](../BioFSharp.ArcIR/README.md) property graph.
 
 Parsed records become typed, related objects - projects, studies, samples,
 experiments, runs, organisms, instruments, protocols, data files, and
 organizations. Explicit per-entity converters create graph properties and
 annotations; they do not consume the IO package's structural decompilation.
-Shared entities collapse to one object and labeled relations connect them.
+Shared entities are combined through explicit conflict-reporting merge semantics
+and labeled relations connect them. Bare accessions and aliases are converted to
+absolute adapter URNs; F1 assertions and relations receive deterministic IDs that
+do not depend on their current values.
 
-The graph can be rendered as text, GraphML, or a self-contained HTML page and
-can ingest supplementary papers and count data. Those renderers are derived
-inspection tools for the current model. In particular, the embedded HTML page
-is not the intended final workbench architecture.
+All objects, type assertions, properties, annotations, and relations are stored
+in identity-keyed maps. Their predicates and values reference one shared graph-
+level term registry. The adapter covers BioProject, Study, BioSample, Experiment,
+Run, Analysis, Submission, and Receipt, plus supplementary papers and count data.
 
-The authoritative repository roadmap will replace these proof-of-concept shapes
-in a breaking change: a target-neutral `BioFSharp.ArcIR` core will own the
-canonical graph, while this package becomes the INSDC-specific F1 adapter. In
-that terminology, F1 ingests source metadata, curation produces later IR
-revisions, and F2 compiles a selected revision without mutating it. No concrete
-production F2 target exists yet.
+The graph can be rendered as text, GraphML, or a self-contained HTML page. These
+are derived inspection tools; the embedded HTML page is not the intended final
+workbench architecture. Deterministic canonical persistence and revision-bound
+fragment addressing are planned separately.
 
 Built on
 [`BioFSharp.IO.INSDC`](https://www.nuget.org/packages/BioFSharp.IO.INSDC).

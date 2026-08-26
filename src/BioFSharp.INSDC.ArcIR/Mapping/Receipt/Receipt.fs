@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.FileFormats.INSDC
 
 /// Receipt -> an `Activity` acknowledging the submitted objects. Receipt is not an INSDC `Object` (no
@@ -28,7 +28,7 @@ module ReceiptConversion =
             |> List.choose id
 
         let node =
-            ArcObject.create nodeId ArcObjectKind.Activity [ Vocabulary.DType.receipt ] [] annotations
+            GraphBuilder.object' nodeId ArcObjectKind.Activity [ Vocabulary.DType.receipt ] [] annotations
 
         let ack (bucket: seq<Id>) =
             bucket |> Seq.choose (fun i -> Convert.pendingAccession nodeId Vocabulary.Rel.acknowledges i.Accession) |> List.ofSeq

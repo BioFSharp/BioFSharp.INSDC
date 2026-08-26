@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.FileFormats.INSDC
 
 /// Run -> an `Activity`: instrument + data-file sub-objects, an edge to its experiment. Explicit,
@@ -25,7 +25,7 @@ module RunConversion =
         let idAnns, idEdges = Annotations.identifierAnnotations nodeId run.Identifiers
 
         let node =
-            ArcObject.create nodeId ArcObjectKind.Activity [ Vocabulary.DType.run ] [] (scalarAnns @ attrAnns @ idAnns)
+            GraphBuilder.object' nodeId ArcObjectKind.Activity [ Vocabulary.DType.run ] [] (scalarAnns @ attrAnns @ idAnns)
 
         let instrument =
             if isNull run.Platform then [] else SubObjects.instrument nodeId run.Platform |> Option.toList

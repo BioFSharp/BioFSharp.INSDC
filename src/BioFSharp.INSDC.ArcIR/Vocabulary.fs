@@ -1,15 +1,10 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open System
+open BioFSharp.ArcIR
 
-/// The controlled vocabulary for the INSDC -> ArcIR mapping: relation predicates (`Rel`) and object
-/// DTypes (`DType`), minted as real IRIs under one documented base. This is the single place predicate
-/// and type identity is defined — converters and the resolver reference these constants instead of
-/// hand-typing strings, so the whole graph speaks one vocabulary.
-///
-/// Field-level property keys are deliberately not formalized here. The current proof-of-concept
-/// converters write explicit annotations and keep `ArcObject.Properties` keys as short convenience
-/// names; the Phase 2 target-neutral model will replace these shapes in one breaking change.
+/// The controlled vocabulary for the INSDC-to-ArcIR adapter. All type, relation,
+/// property, and annotation-property identifiers are absolute IRIs.
 [<RequireQualifiedAccess>]
 module Vocabulary =
 
@@ -18,6 +13,16 @@ module Vocabulary =
     let BaseIri = "http://purl.org/arc/insdc#"
 
     let private term (localName: string) = Iri.Create(BaseIri + localName)
+
+    /// Property-predicate terms used by normalized property assertions.
+    [<RequireQualifiedAccess>]
+    module Property =
+
+        /// Mints a stable adapter-local property term from its source field name.
+        let ofName (name: string) =
+            if String.IsNullOrWhiteSpace name then
+                invalidArg (nameof name) "Property name must not be empty."
+            Iri.Create(BaseIri + "property/" + Uri.EscapeDataString(name.Trim()))
 
     /// Relation predicates, read subject --predicate--> object.
     [<RequireQualifiedAccess>]
@@ -52,7 +57,7 @@ module Vocabulary =
         // Ingested supplementary sources (see plans/arcir-ingest.md).
         let hasColumn = term "hasColumn" // count matrix file -> a per-run column fragment
 
-    /// Object DTypes — the open, IRI-typed semantic tags carried on `ArcObject.DTypes`.
+    /// Object types referenced by normalized type assertions.
     [<RequireQualifiedAccess>]
     module DType =
 

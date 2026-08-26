@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 
 /// Maps a count-matrix file into ArcIR fragments: a Resource node for the file, and one fragment per
 /// data column. Each column node is addressed by the RFC 7111 CSV fragment selector `<fileId>#col=<n>`
@@ -19,7 +19,7 @@ module CountData =
         let fid = fileId file
 
         let fileNode =
-            ArcObject.create fid ArcObjectKind.Resource [ Vocabulary.DType.countMatrix; Vocabulary.DType.data ] (ResourceFile.properties file) []
+            GraphBuilder.object' fid ArcObjectKind.Resource [ Vocabulary.DType.countMatrix; Vocabulary.DType.data ] (ResourceFile.properties file) []
 
         let columnFragments =
             countFile.Columns
@@ -28,13 +28,13 @@ module CountData =
                 let colId = fid + selector
 
                 let props =
-                    [ Iri.Create "Column", ArcValue.Integer(int64 col.Index)
-                      Iri.Create "RunAccession", ArcValue.String col.RunAccession
-                      Iri.Create "FragmentSelector", ArcValue.String selector ]
+                    [ Vocabulary.Property.ofName "Column", ArcValue.Integer(int64 col.Index)
+                      Vocabulary.Property.ofName "RunAccession", ArcValue.String col.RunAccession
+                      Vocabulary.Property.ofName "FragmentSelector", ArcValue.String selector ]
 
-                let colNode = ArcObject.create colId ArcObjectKind.Resource [ Vocabulary.DType.countColumn ] props []
-                let fileToColumn = ArcRelation.create fid Vocabulary.Rel.hasColumn colId [] []
-                let runToColumn = ArcRelation.create col.RunAccession Vocabulary.Rel.producesData colId [] []
+                let colNode = GraphBuilder.object' colId ArcObjectKind.Resource [ Vocabulary.DType.countColumn ] props []
+                let fileToColumn = GraphBuilder.relation fid Vocabulary.Rel.hasColumn colId [] []
+                let runToColumn = GraphBuilder.relation col.RunAccession Vocabulary.Rel.producesData colId [] []
                 colNode, [ fileToColumn; runToColumn ])
 
         {

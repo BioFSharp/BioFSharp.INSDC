@@ -2,15 +2,16 @@
 
 `BioFSharp.INSDC` reads, writes, crawls, stores, and maps metadata from the
 [International Nucleotide Sequence Database Collaboration](https://www.insdc.org/).
-The repository ships five NuGet packages built around the ENA/SRA 1.5 XML schemas.
+The repository ships six NuGet packages built around the ENA/SRA 1.5 XML schemas.
 
 ## Package boundaries
 
 | Package | Target | Responsibility |
 | --- | --- | --- |
+| `BioFSharp.ArcIR` | `netstandard2.0` | Target-neutral normalized graph model, validated IRI identities, lossless graph operations, validation, and persistence contracts. It has no INSDC dependency. |
 | `BioFSharp.FileFormats.INSDC` | `netstandard2.0` | Generator-owned C# XML types and generated fragment selectors. Most applications consume these through the IO package. |
 | `BioFSharp.IO.INSDC` | `netstandard2.0` | Idiomatic F# XML read/write modules, instance-aware XPath/XPointer lookup, and structural inspection helpers. |
-| `BioFSharp.INSDC.ArcIR` | `netstandard2.0` | The current proof-of-concept INSDC-to-ArcIR property-graph mapping and derived text, GraphML, and HTML inspection views. |
+| `BioFSharp.INSDC.ArcIR` | `netstandard2.0` | INSDC-specific F1 adapter for `BioFSharp.ArcIR`, including supplementary paper/count ingestion and derived text, GraphML, and HTML inspection views. |
 | `BioFSharp.INSDC.SQLite` | `netstandard2.0` | A versioned normalized SQLite store for BioProject, Study, BioSample, Experiment, Run, and accession relations. |
 | `BioFSharp.INSDC.Crawler` | `net8.0` | A packaged ENA crawler and raw-artifact collector. It uses .NET 8 because its HTTP dependency requires .NET 6 or later. |
 
@@ -33,12 +34,14 @@ Submission, and Receipt. XPath/XPointer and structural-ontology helpers describe
 the source XML structure. They are useful for inspection and provenance work,
 but they are not the semantic model of the ArcIR mapping.
 
-## Current ArcIR terminology
+## ArcIR terminology
 
-The `BioFSharp.INSDC.ArcIR` package is a useful proof of concept: explicit
-per-entity converters create typed objects, relations, properties, and
-annotations. Its GraphML, HTML, and text renderers are derived inspection tools.
-The embedded HTML renderer is not the intended final workbench architecture.
+`BioFSharp.ArcIR` owns the target-neutral normalized graph. Every independently
+curatable element has a validated absolute IRI identity, and shared ontology-term
+definitions live at graph level. `BioFSharp.INSDC.ArcIR` is the source-specific
+adapter: explicit per-entity converters create stable assertions and relations.
+Its GraphML, HTML, and text renderers are derived inspection tools. The embedded
+HTML renderer is not the intended final workbench architecture.
 
 The authoritative [implementation plan](plans/implementation.md) uses these
 terms for the next architecture:
@@ -126,10 +129,12 @@ build/                                  FAKE build, audit, generator, and releas
 plans/implementation.md                 authoritative roadmap
 src/BioFSharp.FileFormats.INSDC/        generated C# type model and schemas
 src/BioFSharp.IO.INSDC/                 F# XML IO and structural inspection
-src/BioFSharp.INSDC.ArcIR/              current INSDC ArcIR proof of concept
+src/BioFSharp.ArcIR/                    target-neutral normalized ArcIR core
+src/BioFSharp.INSDC.ArcIR/              INSDC-specific ArcIR F1 adapter
 src/BioFSharp.INSDC.SQLite/             versioned SQLite store
 src/BioFSharp.INSDC.Crawler/            net8.0 crawler and raw-artifact formats
-tests/BioFSharp.INSDC.Tests/             offline tests and committed fixtures
+tests/BioFSharp.ArcIR.Tests/             core-only graph and validation tests
+tests/BioFSharp.INSDC.Tests/             offline adapter tests and committed fixtures
 docs/                                   placeholder; usage documentation lives upstream
 ```
 

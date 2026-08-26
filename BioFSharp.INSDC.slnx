@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/BioFSharp.ArcIR/BioFSharp.ArcIR.fsproj" />
     <Project Path="src/BioFSharp.FileFormats.INSDC/BioFSharp.FileFormats.INSDC.csproj" />
     <Project Path="src/BioFSharp.IO.INSDC/BioFSharp.IO.INSDC.fsproj" />
     <Project Path="src/BioFSharp.INSDC.ArcIR/BioFSharp.INSDC.ArcIR.fsproj" />
@@ -7,6 +8,7 @@
     <Project Path="src/BioFSharp.INSDC.Crawler/BioFSharp.INSDC.Crawler.fsproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/BioFSharp.ArcIR.Tests/BioFSharp.ArcIR.Tests.fsproj" />
     <Project Path="tests/BioFSharp.INSDC.Tests/BioFSharp.INSDC.Tests.fsproj" />
   </Folder>
   <Project Path="build/build.fsproj" />

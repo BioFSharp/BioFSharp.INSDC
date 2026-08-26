@@ -106,6 +106,6 @@ let buildSolution =
         solutionFile 
         |> DotNet.build (fun p ->
             { p with MSBuildParams = { p.MSBuildParams with DisableInternalBinLog = true }}
-            |> DotNet.Options.withCustomParams (Some "-tl")
+            |> DotNet.Options.withCustomParams (Some "-m:1")
         )
     }

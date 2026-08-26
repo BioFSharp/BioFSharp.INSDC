@@ -23,10 +23,12 @@ Both target `netstandard2.0` to match BioFSharp.
 │   │   ├── schemas/                          Committed ENA XSDs (sra_1_5/*.xsd)
 │   │   └── Generated/                        Tool output — DO NOT HAND-EDIT
 │   ├── BioFSharp.IO.INSDC/                 F# wrapper (.fsproj), one module per INSDC entity
-│   ├── BioFSharp.INSDC.ArcIR/              F# mapping to an ARC intermediate representation (netstandard2.0)
+│   ├── BioFSharp.ArcIR/                    Target-neutral normalized ArcIR core (netstandard2.0)
+│   ├── BioFSharp.INSDC.ArcIR/              INSDC-specific ArcIR F1 adapter (netstandard2.0)
 │   ├── BioFSharp.INSDC.SQLite/             F# normalized SQLite store (netstandard2.0)
 │   └── BioFSharp.INSDC.Crawler/            F# ENA crawler — net8.0 dev tool, NOT packaged (see below)
 ├── tests/
+│   ├── BioFSharp.ArcIR.Tests/              Core-only xunit graph and validation tests
 │   └── BioFSharp.INSDC.Tests/              xunit, one module per IO module
 │       └── fixtures/<entity>/<acc>.xml     Committed real ENA records used by tests
 ├── .config/dotnet-tools.json               Pins `dotnet-xscgen` locally — `dotnet tool restore` after clone

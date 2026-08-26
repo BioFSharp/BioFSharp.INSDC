@@ -1,6 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.FileFormats.INSDC
 
 /// Experiment -> an `Activity` (assay): instrument + library-protocol sub-objects, edges to study/sample.
@@ -26,7 +26,7 @@ module ExperimentConversion =
         let idAnns, idEdges = Annotations.identifierAnnotations nodeId experiment.Identifiers
 
         let node =
-            ArcObject.create
+            GraphBuilder.object'
                 nodeId
                 ArcObjectKind.Activity
                 [ Vocabulary.DType.experiment; Vocabulary.DType.assay ]
