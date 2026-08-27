@@ -1,123 +1,189 @@
-// Crawls a live project from ENA and writes interactive ArcIR graphs (self-contained HTML).
+// Crawls a live BioProject from ENA and writes its canonical ArcIR JSON state.
 //
-// Two views are written next to this script:
-//   crawl_<acc>.html         — the full connected graph
-//   crawl_<acc>_subset.html  — a minimal, readable subset: the project, its study, one
-//                              sample, and the experiment + run that used that sample (+ FASTQ)
+// The crawler follows ENA's read-run report and therefore retrieves every connected
+// BioProject, Study, BioSample, Experiment, and Run record. FASTQ resources reported
+// by the same discovery response are included as Run outputs even though they are not
+// present in the Run XML. The reviewed base SSSOM mapping is then applied additively.
 //
-// Beyond the record-derived graph this adds each run's FASTQ files as Resource nodes: they
-// are the runs' actual output but live only in the ENA filereport (fastq_ftp), NOT in the run
-// XML — so it uses Crawler.crawlAndDiscover to get the records AND the per-run connectivity/files.
+// Usage (arguments are optional):
+//   dotnet build -c Release
+//   dotnet fsi playground/crawl_arcir.fsx -- [accession] [output.arcir.json] [mapping.sssom.tsv]
 //
-// The libraries are referenced from their build output, so run `dotnet build` first (this one
-// hits the network, unlike the fixture-based scripts):
-//   dotnet build
-//   dotnet fsi playground/crawl_arcir.fsx
+// Defaults:
+//   accession: PRJDB5192
+//   output:    playground/crawl_<accession>.arcir.json
+//   mapping:   tests/fixtures/sssom/INSDCER-ARC.sssom.tsv
 
 #r "nuget: BioFSharp, 2.0.0-preview.3"
 #r "nuget: OBO.NET, 0.6.0"
+#r "nuget: PolyglotSSSOM, 0.1.0-alpha.1"
 #r "nuget: System.ComponentModel.Annotations, 5.0.0"
 #r "nuget: FsHttp, 15.0.3"
-#r "nuget: Microsoft.Data.Sqlite, 8.0.10"
+#r "nuget: Microsoft.Data.Sqlite, 8.0.30"
 
+#r "../src/BioFSharp.ArcIR/bin/Release/netstandard2.0/BioFSharp.ArcIR.dll"
 #r "../src/BioFSharp.FileFormats.INSDC/bin/Release/netstandard2.0/BioFSharp.FileFormats.INSDC.dll"
 #r "../src/BioFSharp.IO.INSDC/bin/Release/netstandard2.0/BioFSharp.IO.INSDC.dll"
 #r "../src/BioFSharp.INSDC.SQLite/bin/Release/netstandard2.0/BioFSharp.INSDC.SQLite.dll"
 #r "../src/BioFSharp.INSDC.ArcIR/bin/Release/netstandard2.0/BioFSharp.INSDC.ArcIR.dll"
 #r "../src/BioFSharp.INSDC.Crawler/bin/Release/net8.0/BioFSharp.INSDC.Crawler.dll"
 
+open System
+open System.Globalization
 open System.IO
-open Arc.Build
+open BioFSharp.ArcIR
 open BioFSharp.INSDC.ArcIR
 open BioFSharp.INSDC.Crawler
 
-let accession = "PRJDB5192"
+let arguments = fsi.CommandLineArgs |> Array.skip 1
+let accession = arguments |> Array.tryItem 0 |> Option.defaultValue "PRJDB5192"
 
-// Live crawl: the typed records + the discovery rows (per-run connectivity + FASTQ files).
-let records, discovered = Crawler.crawlAndDiscover accession
+let outputPath =
+    arguments
+    |> Array.tryItem 1
+    |> Option.defaultValue (Path.Combine(__SOURCE_DIRECTORY__, $"crawl_{accession}.arcir.json"))
+    |> Path.GetFullPath
 
-// Each FASTQ file (from the filereport) -> a Data resource node + a `producesData` edge from its
-// run. Mirrors SubObjects.runFile, which only fires when the run XML carries files — here it does
-// not, so the run's real output would otherwise be missing from the graph.
+let mappingPath =
+    arguments
+    |> Array.tryItem 2
+    |> Option.defaultValue (
+        Path.Combine(__SOURCE_DIRECTORY__, "..", "tests", "fixtures", "sssom", "INSDCER-ARC.sssom.tsv")
+    )
+    |> Path.GetFullPath
+
+let formatPersistenceErrors (errors: PersistenceError list) =
+    errors
+    |> List.map (fun error -> $"{error.Code}: {error.Message}")
+    |> String.concat Environment.NewLine
+
+let expectPersisted operation (result: Result<'value, PersistenceError list>) =
+    match result with
+    | Ok value -> value
+    | Error errors -> failwith $"{operation} failed:{Environment.NewLine}{formatPersistenceErrors errors}"
+
+let nonBlank value = not (String.IsNullOrWhiteSpace value)
+
+// The Run XML often omits files that ENA exposes through the discovery report.
+// Materialize those files as ordinary ArcIR Resource objects and producesData edges.
 let fastqFragments (rows: DiscoveryRow list) : (ArcObject * ArcRelation) list =
     rows
     |> List.collect (fun row ->
         row.FastqFiles
         |> List.map (fun file ->
             let name = file.Url.Split('/') |> Array.last
-            let id = row.RunAccession + "#fastq:" + name
+            let rawId = row.RunAccession + "#fastq:" + name
 
-            let props =
-                [ Iri.Create "Filename", ArcValue.String name
-                  Iri.Create "Url", ArcValue.String file.Url ]
-                @ (if file.Bytes = "" then [] else [ (Iri.Create "Bytes", ArcValue.String file.Bytes) ])
-                @ (if file.Md5 = "" then [] else [ (Iri.Create "Md5", ArcValue.String file.Md5) ])
+            let bytes =
+                match Int64.TryParse(file.Bytes, NumberStyles.None, CultureInfo.InvariantCulture) with
+                | true, value -> Some(Vocabulary.Property.ofName "Bytes", ArcValue.Integer value)
+                | _ -> None
 
-            let node = ArcObject.create id ArcObjectKind.Resource [ Vocabulary.DType.data ] props []
-            node, ArcRelation.create row.RunAccession Vocabulary.Rel.producesData id [] []))
+            let properties =
+                [ if nonBlank name then
+                      Vocabulary.Property.ofName "Filename", ArcValue.String name
+                  if nonBlank file.Url then
+                      Vocabulary.Property.ofName "Url", ArcValue.String file.Url
+                  if nonBlank file.Md5 then
+                      Vocabulary.Property.ofName "Md5", ArcValue.String file.Md5
+                  yield! bytes |> Option.toList ]
 
-// Add (node, parent-edge) fragments to an IR.
-let withFragments (fragments: (ArcObject * ArcRelation) list) (ir: ArcIR) : ArcIR =
-    ir
-    |> ArcIR.addObjects (fragments |> List.map fst)
-    |> ArcIR.addRelations (fragments |> List.map snd)
+            GraphBuilder.object' rawId ArcObjectKind.Resource [ Vocabulary.DType.data ] properties [],
+            GraphBuilder.relation row.RunAccession Vocabulary.Rel.producesData rawId [] []))
 
-// Drop edges whose target is not a real node, so subsets stay clean (no dangling "Missing" nodes).
-let pruneDangling (ir: ArcIR) : ArcIR =
-    { ir with Relations = ir.Relations |> Set.filter (fun r -> ir.Objects.ContainsKey r.Object) }
+let isRelatedProjectRelation predicate =
+    predicate = Vocabulary.Rel.hasParentProject
+    || predicate = Vocabulary.Rel.hasChildProject
+    || predicate = Vocabulary.Rel.hasPeerProject
 
-// Build an IR from a set of records (each mapped through its INSDC converter) + FASTQ fragments.
-let buildIr (bps, studies, samples, exps, runs) (rows: DiscoveryRow list) : ArcIR =
-    [ yield! bps |> Array.map INSDC.bioProject
-      yield! studies |> Array.map INSDC.study
-      yield! samples |> Array.map INSDC.bioSample
-      yield! exps |> Array.map INSDC.experiment
-      yield! runs |> Array.map INSDC.run ]
-    |> INSDC.build
-    |> withFragments (fastqFragments rows)
-    |> pruneDangling
+// A project record can designate a related project outside its own run-connected
+// crawl. Keep that designation as a typed, reference-only node; an empty annotation
+// set makes clear that the related record itself was not fetched.
+let materializeRelatedProjectTargets (graph: ArcIR) =
+    let referenceOnlyProjects =
+        graph.Relations.Values
+        |> Seq.filter (fun relation ->
+            isRelatedProjectRelation relation.Predicate
+            && not (graph.Objects.ContainsKey relation.Object))
+        |> Seq.map _.Object
+        |> Seq.distinct
+        |> Seq.map (fun id ->
+            GraphBuilder.object'
+                id.Value
+                ArcObjectKind.Collection
+                [ Vocabulary.DType.bioProject; Vocabulary.DType.investigation ]
+                []
+                [])
+        |> List.ofSeq
 
-let writeHtml suffix ir =
-    let path = Path.Combine(__SOURCE_DIRECTORY__, sprintf "crawl_%s%s.html" accession suffix)
-    Html.writeFile path ir
-    path
+    let completed =
+        GraphBuilder.assemble
+            (Seq.append graph.Objects.Values referenceOnlyProjects)
+            graph.Relations.Values
 
-// --- Full graph --------------------------------------------------------------
-let fullIr =
-    buildIr
-        (records.BioProjects, records.Studies, records.BioSamples, records.Experiments, records.Runs)
-        discovered.Rows
+    completed, referenceOnlyProjects.Length
 
-let fullPath = writeHtml "" fullIr
+let buildGraph (records: CrawlResult) (discovered: DiscoveredSet) =
+    let recordGraph =
+        [ yield! records.BioProjects |> Seq.map INSDC.bioProject
+          yield! records.Studies |> Seq.map INSDC.study
+          yield! records.BioSamples |> Seq.map INSDC.bioSample
+          yield! records.Experiments |> Seq.map INSDC.experiment
+          yield! records.Runs |> Seq.map INSDC.run ]
+        |> INSDC.build
 
-// --- Subset graph: project + study + one sample + the experiment/run that used it ------------
-// The study is kept as the connector (project links to the rest only via its study).
-let subsetPath =
-    discovered.Rows
-    |> List.tryFind (fun r -> r.SampleAccession <> "" && r.ExperimentAccession <> "" && r.RunAccession <> "")
-    |> Option.map (fun row ->
-        let subsetIr =
-            buildIr
-                (records.BioProjects |> Array.filter (fun x -> x.Accession = row.ProjectAccession),
-                 records.Studies |> Array.filter (fun x -> x.Accession = row.StudyAccession),
-                 records.BioSamples |> Array.filter (fun x -> x.Accession = row.SampleAccession),
-                 records.Experiments |> Array.filter (fun x -> x.Accession = row.ExperimentAccession),
-                 records.Runs |> Array.filter (fun x -> x.Accession = row.RunAccession))
-                [ row ]
+    let fastq = fastqFragments discovered.Rows
 
-        writeHtml "_subset" subsetIr, row)
+    GraphBuilder.assemble
+        (Seq.append recordGraph.Objects.Values (fastq |> Seq.map fst))
+        (Seq.append recordGraph.Relations.Values (fastq |> Seq.map snd))
+    |> materializeRelatedProjectTargets
 
-printfn "\nCrawled %s -> ArcIR graphs (open in a browser):" accession
-printfn "  full:   %s  (%d nodes, %d edges)" fullPath fullIr.Objects.Count fullIr.Relations.Count
+let applyBaseMapping graph =
+    let loaded = mappingPath |> File.ReadAllText |> SssomMapping.loadEmbedded
 
-match subsetPath with
-| Some(path, row) ->
-    printfn
-        "  subset: %s  (project %s / study %s / sample %s / experiment %s / run %s)"
-        path
-        row.ProjectAccession
-        row.StudyAccession
-        row.SampleAccession
-        row.ExperimentAccession
-        row.RunAccession
-| None -> printfn "  subset: skipped (no connected run found)"
+    let mappingErrors =
+        loaded.Diagnostics
+        |> List.filter (fun diagnostic -> diagnostic.Severity = DiagnosticSeverity.Error)
+
+    if not mappingErrors.IsEmpty then
+        let details = mappingErrors |> List.map _.Message |> String.concat Environment.NewLine
+        failwith $"The base SSSOM mapping is invalid:{Environment.NewLine}{details}"
+
+    match SemanticMapping.applyClaims (SssomMapping.exactMatches loaded) graph with
+    | Ok result -> result
+    | Error conflicts -> failwithf "The base mapping conflicts with the source graph: %A" conflicts
+
+printfn "Crawling %s from ENA ..." accession
+let records, discovered = Crawler.crawlAndDiscover accession
+let sourceGraph, referenceOnlyProjectCount = buildGraph records discovered
+let mapped = applyBaseMapping sourceGraph
+let graph = mapped.Graph
+
+let validationIssues = Validation.validate graph
+
+if not validationIssues.IsEmpty then
+    failwithf "The assembled ArcIR graph is invalid and was not written: %A" validationIssues
+
+let revision = ArcIRJson.writeNew outputPath graph |> expectPersisted "ArcIR JSON write"
+
+// Keep the low-effort viewer useful while the real frontend is developed.
+let htmlPath = Path.ChangeExtension(outputPath, ".html")
+Html.writeFile htmlPath graph
+
+let recordCount =
+    records.BioProjects.Length
+    + records.Studies.Length
+    + records.BioSamples.Length
+    + records.Experiments.Length
+    + records.Runs.Length
+
+printfn "Wrote a complete project ArcIR state:"
+printfn "  records:              %d" recordCount
+printfn "  related project refs: %d" referenceOnlyProjectCount
+printfn "  FASTQ resources:      %d" (discovered.Rows |> List.sumBy (fun row -> row.FastqFiles.Length))
+printfn "  objects / relations:  %d / %d" graph.Objects.Count graph.Relations.Count
+printfn "  mapping applications: %d" mapped.Applications.Length
+printfn "  JSON:                  %s" revision.Path
+printfn "  SHA-256:               %s" revision.Sha256
+printfn "  HTML:                  %s" htmlPath

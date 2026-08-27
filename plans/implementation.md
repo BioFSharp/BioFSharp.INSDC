@@ -465,6 +465,16 @@ F1 generates the initial immutable ArcIR state artifact and a diagnostic report.
 
 ## Phase 6 — Top-level ARC-native F1 and curation integration
 
+> **Status: READY FOR OVERARC (2026-08-27).** All prerequisites owned outside
+> the integrating application are complete. `ER_ontologies` owns the initial
+> versioned Curation Transformation Ontology (`CTRO`), and
+> `playground/crawl_arcir.fsx` demonstrates live project crawl, additive base
+> mapping, validation, and canonical immutable-state publication. The remaining
+> work in this phase—mapping policy, curation transactions, native ARC/ISA
+> process emission, validation artifacts, and Git coordination—is owned by
+> OverARC. This repository must not introduce a parallel provenance format or an
+> ARC representation dependency to complete that application work.
+
 Add the top-level integrating application layer that applies typed graph operations, configures F1 from mapping artifacts, and contributes to the ARC's native process model. The process graph, not an ArcIR file or BioFSharp-specific log, is the authority for lineage, agents, software versions, used/generated entities, and process relationships. Use the established representation library for each ARC realization; for an ISA-formatted ARC, emit ordinary ISA assay process rows rather than serializing a parallel provenance document.
 
 ### SSSOM ownership and initial F1 configuration
@@ -500,12 +510,19 @@ resolver, or duplicate SSSOM parser. The INSDC adapter uses only the pinned
 PolyglotSSSOM dependency and declared document prefix maps; it adds no remote
 resolver or fallback codec.
 
-### Versioned transformation ontology
+### Versioned Curation Transformation Ontology
 
-Define the small ontology used by the downstream ARC integration to identify the semantics of curation and conversion processes. It belongs to the provenance integration layer, not to the ArcIR graph model, canonical JSON schema, or fragment-addressing API. Begin with competency examples rather than a large hierarchy and cover at least lexical normalization, splitting, parsing, semantic mapping application, creation, replacement, and deletion.
+The initial Curation Transformation Ontology is maintained as
+`ontologies/CTRO/CTRO.obo` in `nfdi4plants/ER_ontologies`, with its competency
+examples beside it. It is the small ontology used by downstream integrations to
+identify the semantics of curation and conversion processes. It belongs to the
+provenance integration layer, not to the ArcIR graph model, canonical JSON
+schema, or fragment-addressing API. CTRO covers lexical normalization,
+splitting, parsing, additive semantic mapping application, creation,
+replacement, and deletion.
 
 - Give every transformation concept a stable absolute IRI, label, definition, and versioned ontology artifact.
-- Distinguish creating or curating a mapping claim from applying an existing mapping claim to an entity or literal occurrence.
+- Distinguish creating or curating a mapping claim from applying an existing mapping claim to an entity or literal occurrence. SEMAPV remains authoritative for mapping-claim creation and review; CTRO supplies mapping-application terms.
 - Treat a SSSOM mapping record as an input to a semantic-mapping process. The transformation term says that a mapping was applied; it does not duplicate the SSSOM subject, predicate, object, justification, or provenance.
 - Keep delimiters, parse formats, and similar execution details as process parameters rather than minting ontology terms for every parameter value.
 - Use the terms in the ARC's native process representation, such as ontology-typed ISA protocols or process parameters. Do not define a transformation-log serialization or make `BioFSharp.ArcIR` depend on this vocabulary.
@@ -514,7 +531,7 @@ Define the small ontology used by the downstream ARC integration to identify the
 
 - F1 native process topology consumes designated source artifacts/fragments and mapping artifacts/records and generates both the initial immutable ArcIR state artifact and its selected output fragments.
 - A completed curation transaction consumes one selected immutable ArcIR state artifact and generates a new complete state artifact at a different path. The native process topology records both whole-artifact lineage and the selected input/output fragments that explain fine-grained transformations. Earlier states are never overwritten or removed.
-- Each represented transformation uses a term from the Phase 6 transformation ontology together with native process inputs, outputs, protocols, and parameters. `FragmentRef` is only the library-side designation used to populate those native entities.
+- Each represented transformation uses a CTRO term together with native process inputs, outputs, protocols, and parameters. `FragmentRef` is only the library-side designation used to populate those native entities.
 - An updated assertion may retain its IRI while its input and output are distinguished by different state artifacts. Split, merge, replacement, creation, and deletion use the appropriate input/output cardinality and new IDs where semantic identity changes.
 - A scalar literal requires no ID: its artifact-qualified value selector designates the process input. A generated intermediate entity may receive identity from its position in the native process graph even when it is not persisted as an independently identified `ArcValue`; if it is persisted in ArcIR, its output fragment is also designated.
 - Validation runs before commit and generates its own report artifact when findings exist.
@@ -531,7 +548,7 @@ Do not prematurely require these to be one or two rows in every ARC representati
 
 ### Phase acceptance
 
-- Transformation ontology competency examples cover one-to-one, one-to-many, literal-to-term, creation, replacement, and deletion without defining a custom provenance document.
+- CTRO competency examples cover one-to-one, one-to-many, literal-to-term, creation, replacement, and deletion without defining a custom provenance document.
 - The Phase 4 base mapping is loaded through the Phase 5 INSDC adapter at its
   pinned `PolyglotSSSOM` revision and configures exact administrative mappings
   during initial F1 without entering the ArcIR core dependency graph.
@@ -543,6 +560,12 @@ Do not prematurely require these to be one or two rows in every ARC representati
 
 ## Phase 7 — Define the F2 compiler boundary
 
+> **Status: TRANSFERRED TO OVERARC (2026-08-27).** F2 orchestration selects an
+> immutable state, a target profile, native ARC process metadata, and generated
+> artifacts, so the concrete boundary belongs to the integrating application.
+> `BioFSharp.ArcIR` remains the target-neutral state and fragment API and gains no
+> ARC- or target-specific dependency for this phase.
+
 Define a target-neutral compiler contract, a target-profile contract, and test doubles; do not implement an ARC, RO-Crate, ISA, readiness-level, or other concrete F2 output profile in this roadmap. The compiler reuses the Phase 6 ARC integration only to record F2 provenance in the curation ARC's native process graph.
 
 An F2 compiler:
@@ -551,7 +574,7 @@ An F2 compiler:
 - validates profile preconditions without mutating the IR;
 - generates one or more target artifacts and the common diagnostic report;
 - contributes native ARC process entries whose designated inputs are the selected ArcIR fragments and whose designated outputs are the generated target fragments;
-- identifies transformation semantics with the shared Phase 6 ontology rather than a custom F2 record format;
+- identifies transformation semantics with CTRO rather than a custom F2 record format;
 - is deterministic for identical inputs unless the profile explicitly declares a nondeterministic dependency.
 
 F2 can run repeatedly for different profiles or after later curation commits. It never generates a new IR state merely because target validation found a problem; any resulting correction is a separate curation process.
@@ -565,7 +588,11 @@ F2 can run repeatedly for different profiles or after later curation commits. It
 
 ## Phase 8 — Replace the visualization layer
 
-Create a separate read-only React/TypeScript/Vite workbench under `tools/arcir-workbench/`, using pinned stable Sigma v3, Graphology, and React Sigma packages. It reads one or more immutable `.arcir.json` state artifacts plus optional diagnostic and SSSOM artifacts and the native ARC process graph through shared, schema-validating loaders.
+> **Status: TRANSFERRED TO OVERARC (2026-08-27).** The maintained frontend now
+> belongs to OverARC. The BioFSharp playground HTML writer remains only a
+> low-effort inspection aid and is not a second workbench implementation.
+
+Create the read-only React/TypeScript/Vite workbench in OverARC, using pinned stable Sigma v3, Graphology, and React Sigma packages. It reads one or more immutable `.arcir.json` state artifacts plus optional diagnostic and SSSOM artifacts and the native ARC process graph through shared, schema-validating loaders.
 
 ### Workbench behavior
 
