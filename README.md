@@ -8,7 +8,7 @@ The repository ships six NuGet packages built around the ENA/SRA 1.5 XML schemas
 
 | Package | Target | Responsibility |
 | --- | --- | --- |
-| `BioFSharp.ArcIR` | `netstandard2.0` | Target-neutral normalized graph model, validated IRI identities, lossless graph operations, validation, and persistence contracts. It has no INSDC dependency. |
+| `BioFSharp.ArcIR` | `netstandard2.0` | Target-neutral normalized graph model, validated IRI identities, lossless graph operations, validation, canonical JSON state persistence, and typed fragment designations. It has no INSDC dependency. |
 | `BioFSharp.FileFormats.INSDC` | `netstandard2.0` | Generator-owned C# XML types and generated fragment selectors. Most applications consume these through the IO package. |
 | `BioFSharp.IO.INSDC` | `netstandard2.0` | Idiomatic F# XML read/write modules, instance-aware XPath/XPointer lookup, and structural inspection helpers. |
 | `BioFSharp.INSDC.ArcIR` | `netstandard2.0` | INSDC-specific F1 adapter for `BioFSharp.ArcIR`, including supplementary paper/count ingestion and derived text, GraphML, and HTML inspection views. |
@@ -46,12 +46,17 @@ HTML renderer is not the intended final workbench architecture.
 The authoritative [implementation plan](plans/implementation.md) uses these
 terms for the next architecture:
 
-- **F1** ingests source artifacts and semantic mappings into one canonical,
-  target-neutral ArcIR state.
-- **Curation activities** create later, revisioned states without rewriting
-  historical reports.
-- **F2** compiles a selected state into target artifacts without mutating the
-  IR.
+- **F1** ingests source artifacts and semantic mappings into one initial,
+  immutable ArcIR state artifact.
+- **Curation processes** consume a selected state and create a new complete
+  state artifact without overwriting earlier states.
+- **F2** compiles one selected state artifact into target artifacts without
+  mutating the IR.
+
+Canonical `.arcir.json` version 1.0 is deterministic and schema-versioned.
+Artifact-qualified RFC 6901 selectors designate exact entities and scalar value
+occurrences across immutable states; they do not embed process history in the
+graph. Native ARC process integration is a downstream roadmap phase.
 
 R1 and R2 are raw-artifact readiness formats materialized by the crawler. They
 are not F2 implementations and do not require ArcIR.
@@ -133,7 +138,7 @@ src/BioFSharp.ArcIR/                    target-neutral normalized ArcIR core
 src/BioFSharp.INSDC.ArcIR/              INSDC-specific ArcIR F1 adapter
 src/BioFSharp.INSDC.SQLite/             versioned SQLite store
 src/BioFSharp.INSDC.Crawler/            net8.0 crawler and raw-artifact formats
-tests/BioFSharp.ArcIR.Tests/             core-only graph and validation tests
+tests/BioFSharp.ArcIR.Tests/             core graph, persistence, and addressing tests
 tests/BioFSharp.INSDC.Tests/             offline adapter tests and committed fixtures
 docs/                                   placeholder; usage documentation lives upstream
 ```

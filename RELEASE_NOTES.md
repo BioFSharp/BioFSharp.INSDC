@@ -1,8 +1,10 @@
 ### 0.3.0 (Unreleased)
 
-Phase 1 repository stabilization and Phase 2 target-neutral ArcIR extraction.
+Phase 1 repository stabilization, Phase 2 target-neutral ArcIR extraction, and Phase 3 immutable ArcIR state persistence.
 
 - Added the packable, target-neutral `BioFSharp.ArcIR` `netstandard2.0` package with validated absolute IRI identities, normalized identity-keyed graph collections, shared term definitions, explicit add/upsert/merge operations, validation, and persistence contracts.
+- Added canonical `.arcir.json` 1.0 persistence with a packaged JSON Schema, deterministic UTF-8/LF output, strict versioned decoding, invariant tagged values, authoritative identity keys, atomic create-new state publication, and SHA-256 artifact revisions.
+- Added typed RFC 6901 fragment locations for every addressable graph entity and atomic value occurrence, including relation-property annotations, plus digest-verified resolution that keeps scalar values ID-less and provenance outside the graph state.
 - Converted `BioFSharp.INSDC.ArcIR` into an INSDC-specific F1 adapter. All eight entity converters and supplementary paper/count ingestion now mint deterministic assertion/relation identities and consume the neutral core without retaining the proof-of-concept model shapes.
 - Added a core-only test project and adapter regression coverage for conflict reporting, reference validation, deterministic identities, complete term resolution, and deterministic eight-entity fixture conversion.
 - Limited the nested FAKE solution build to one MSBuild node, preventing runaway worker fan-out and silent process-limit failures in captured Windows builds.

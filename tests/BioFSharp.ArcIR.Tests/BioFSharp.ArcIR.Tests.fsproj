@@ -8,7 +8,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Phase3Fixtures.fs" />
     <Compile Include="CoreTests.fs" />
+    <Compile Include="JsonPersistenceTests.fs" />
+    <Compile Include="FragmentAddressingTests.fs" />
+    <Compile Include="StateArtifactTests.fs" />
+    <Compile Include="SchemaTests.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="fixtures\arcir\*.arcir.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\BioFSharp.ArcIR\schema\arcir-1.0.schema.json"
+          Link="schema\arcir-1.0.schema.json"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

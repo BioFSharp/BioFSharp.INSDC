@@ -9,11 +9,18 @@
 
   <ItemGroup>
     <Compile Include="Model.fs" />
+    <Compile Include="Designation.fs" />
     <Compile Include="Graph.fs" />
     <Compile Include="Validation.fs" />
     <Compile Include="Persistence.fs" />
+    <Compile Include="ArcIRJson.fs" />
+    <None Include="schema\arcir-1.0.schema.json" Pack="true" PackagePath="schema\arcir-1.0.schema.json" />
     <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />
     <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="10.0.3" />
   </ItemGroup>
 
   <PropertyGroup>

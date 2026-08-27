@@ -1,0 +1,514 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:biofsharp:arcir:schema:1.0",
+  "title": "BioFSharp ArcIR canonical state artifact 1.0",
+  "description": "One complete target-neutral ArcIR graph state. Process history, diagnostics, provenance, and transformations are external artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formatVersion",
+    "graph"
+  ],
+  "properties": {
+    "formatVersion": {
+      "const": "1.0"
+    },
+    "graph": {
+      "$ref": "#/$defs/graph"
+    }
+  },
+  "$defs": {
+    "iri": {
+      "type": "string",
+      "format": "iri"
+    },
+    "nullableString": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nullableIri": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/iri"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "term": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "source"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "source": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+    "termMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/iri"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/term"
+      }
+    },
+    "stringValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "integerValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "integer"
+        },
+        "value": {
+          "type": "integer",
+          "minimum": -9223372036854775808,
+          "maximum": 9223372036854775807
+        }
+      }
+    },
+    "floatValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "float"
+        },
+        "value": {
+          "type": "string",
+          "anyOf": [
+            {
+              "enum": [
+                "NaN",
+                "Infinity",
+                "-Infinity",
+                "-0"
+              ]
+            },
+            {
+              "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:E[+-]?[0-9]+)?$"
+            }
+          ]
+        }
+      }
+    },
+    "booleanValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "boolean"
+        },
+        "value": {
+          "type": "boolean"
+        }
+      }
+    },
+    "dateTimeValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "dateTime"
+        },
+        "value": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{7}[+-][0-9]{2}:[0-9]{2}$"
+        }
+      }
+    },
+    "iriValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "iri"
+        },
+        "value": {
+          "$ref": "#/$defs/iri"
+        }
+      }
+    },
+    "refValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "ref"
+        },
+        "value": {
+          "$ref": "#/$defs/iri"
+        }
+      }
+    },
+    "listValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "list"
+        },
+        "value": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/arcValue"
+          }
+        }
+      }
+    },
+    "arcValue": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/stringValue"
+        },
+        {
+          "$ref": "#/$defs/integerValue"
+        },
+        {
+          "$ref": "#/$defs/floatValue"
+        },
+        {
+          "$ref": "#/$defs/booleanValue"
+        },
+        {
+          "$ref": "#/$defs/dateTimeValue"
+        },
+        {
+          "$ref": "#/$defs/iriValue"
+        },
+        {
+          "$ref": "#/$defs/refValue"
+        },
+        {
+          "$ref": "#/$defs/listValue"
+        }
+      ]
+    },
+    "literalAnnotationValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "literal"
+        },
+        "value": {
+          "$ref": "#/$defs/arcValue"
+        }
+      }
+    },
+    "termAnnotationValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "term"
+        },
+        "value": {
+          "$ref": "#/$defs/iri"
+        }
+      }
+    },
+    "literalWithUnitAnnotationValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "type": {
+          "const": "literalWithUnit"
+        },
+        "value": {
+          "$ref": "#/$defs/arcValue"
+        },
+        "unit": {
+          "$ref": "#/$defs/iri"
+        }
+      }
+    },
+    "termWithUnitAnnotationValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "type": {
+          "const": "termWithUnit"
+        },
+        "value": {
+          "$ref": "#/$defs/iri"
+        },
+        "unit": {
+          "$ref": "#/$defs/iri"
+        }
+      }
+    },
+    "annotationValue": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/literalAnnotationValue"
+        },
+        {
+          "$ref": "#/$defs/termAnnotationValue"
+        },
+        {
+          "$ref": "#/$defs/literalWithUnitAnnotationValue"
+        },
+        {
+          "$ref": "#/$defs/termWithUnitAnnotationValue"
+        }
+      ]
+    },
+    "annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "property",
+        "value",
+        "evidence",
+        "source"
+      ],
+      "properties": {
+        "property": {
+          "$ref": "#/$defs/iri"
+        },
+        "value": {
+          "$ref": "#/$defs/annotationValue"
+        },
+        "evidence": {
+          "$ref": "#/$defs/nullableIri"
+        },
+        "source": {
+          "$ref": "#/$defs/nullableIri"
+        }
+      }
+    },
+    "annotationMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/iri"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/annotation"
+      }
+    },
+    "typeAssertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "term"
+      ],
+      "properties": {
+        "term": {
+          "$ref": "#/$defs/iri"
+        }
+      }
+    },
+    "typeAssertionMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/iri"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/typeAssertion"
+      }
+    },
+    "property": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "predicate",
+        "value",
+        "annotations"
+      ],
+      "properties": {
+        "predicate": {
+          "$ref": "#/$defs/iri"
+        },
+        "value": {
+          "$ref": "#/$defs/arcValue"
+        },
+        "annotations": {
+          "$ref": "#/$defs/annotationMap"
+        }
+      }
+    },
+    "propertyMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/iri"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/property"
+      }
+    },
+    "object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "types",
+        "properties",
+        "annotations"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "observable",
+            "instrument",
+            "resource",
+            "activity",
+            "agent",
+            "role",
+            "recipe",
+            "collection",
+            "selector"
+          ]
+        },
+        "types": {
+          "$ref": "#/$defs/typeAssertionMap"
+        },
+        "properties": {
+          "$ref": "#/$defs/propertyMap"
+        },
+        "annotations": {
+          "$ref": "#/$defs/annotationMap"
+        }
+      }
+    },
+    "objectMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/iri"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/object"
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject",
+        "predicate",
+        "object",
+        "properties",
+        "annotations"
+      ],
+      "properties": {
+        "subject": {
+          "$ref": "#/$defs/iri"
+        },
+        "predicate": {
+          "$ref": "#/$defs/iri"
+        },
+        "object": {
+          "$ref": "#/$defs/iri"
+        },
+        "properties": {
+          "$ref": "#/$defs/propertyMap"
+        },
+        "annotations": {
+          "$ref": "#/$defs/annotationMap"
+        }
+      }
+    },
+    "relationMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/iri"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/relation"
+      }
+    },
+    "graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "terms",
+        "objects",
+        "relations"
+      ],
+      "properties": {
+        "terms": {
+          "$ref": "#/$defs/termMap"
+        },
+        "objects": {
+          "$ref": "#/$defs/objectMap"
+        },
+        "relations": {
+          "$ref": "#/$defs/relationMap"
+        }
+      }
+    }
+  }
+}

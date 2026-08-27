@@ -1,0 +1,29 @@
+{
+  "formatVersion": "1.0",
+  "graph": {
+    "terms": {
+      "urn:example:predicate": {
+        "name": "Predicate",
+        "source": "fixture"
+      }
+    },
+    "objects": {
+      "urn:example:object": {
+        "kind": "collection",
+        "types": {},
+        "properties": {
+          "urn:example:assertion": {
+            "predicate": "urn:example:predicate",
+            "value": {
+              "type": "string",
+              "value": "after"
+            },
+            "annotations": {}
+          }
+        },
+        "annotations": {}
+      }
+    },
+    "relations": {}
+  }
+}
