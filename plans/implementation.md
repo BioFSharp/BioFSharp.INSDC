@@ -351,10 +351,9 @@ version rather than depending on a mutable sibling checkout.
 
 ## Phase 5 — Additive semantic enrichment, complete F1 accounting, and unified diagnostics
 
-> **Status: IN PROGRESS (2026-08-27).** Begin with the neutral additive mapper,
-> the PolyglotSSSOM claim adapter, and an end-to-end BioProject/Study fixture using
-> the reviewed Phase 4 base mapping. Extend the same accounting model across all
-> supported F1 inputs after that boundary is stable.
+> **Status: COMPLETE (2026-08-27).** The neutral additive mapper, PolyglotSSSOM
+> claim adapter, and occurrence-level accounting now cover every supported F1
+> input without adding a parallel provenance artifact.
 >
 > **Implemented slices:** the shared diagnostic and field-accounting core, neutral
 > additive mapper, PolyglotSSSOM adapter, and artifact-qualified accounting for all
@@ -362,8 +361,11 @@ version rather than depending on a mutable sibling checkout.
 > XML XPointers and emitted ArcIR JSON fragments, including the source-assertion
 > handoff to an additive base mapping, the connected BioSample-to-Experiment-to-Run
 > chain, analysis files and references, submission agents, and receipt
-> acknowledgements. Accounting for supplementary paper/count inputs is still
-> outstanding.
+> acknowledgements. Supplementary JATS front matter uses XPointer designations;
+> count-header cells use W3C Data Position Selectors over the exact immutable
+> bytes, so CSV, TSV, and materialized archive entries share one resolvable path.
+> Every emitted output is qualified against and resolved from a persisted ArcIR
+> state, and identical inputs produce deterministic reports and graph fragments.
 
 ### One result and diagnostic model
 

@@ -1,5 +1,6 @@
 namespace BioFSharp.INSDC.ArcIR
 
+open System.IO
 open BioFSharp.ArcIR
 
 /// The ingest facade: fold supplementary sources (a paper, a count-data archive) into ArcIR fragments and
@@ -17,9 +18,41 @@ module Ingest =
     /// Convert one already-read count file into fragments.
     let countData (countFile: CountFile) : ConversionResult = CountData.convert countFile
 
+    /// Convert and account for a JATS paper from its exact immutable artifact bytes.
+    let paperWithAccounting
+        (artifact: ArtifactRevision)
+        (fileName: string)
+        (bytes: byte array)
+        (relatedAccessions: string list)
+        : AccountedConversion =
+        IngestAccounting.paper artifact fileName bytes relatedAccessions
+
+    /// Convert and account for a delimited count table from its exact immutable artifact bytes.
+    let countDataWithAccounting
+        (artifact: ArtifactRevision)
+        (fileName: string)
+        (bytes: byte array)
+        : AccountedConversion =
+        IngestAccounting.countData artifact fileName bytes
+
     /// Read a paper from a JATS XML file and convert it, linking it to the given dataset accession(s).
     let paperFromJats (path: string) (relatedAccessions: string list) : ConversionResult =
         Paper.convert (IngestReaders.readJats path) (IngestReaders.describeFile path) relatedAccessions
+
+    /// Read a JATS paper, verify it against the declared artifact revision, convert it, and account for its front matter.
+    let paperFromJatsWithAccounting
+        (artifact: ArtifactRevision)
+        (path: string)
+        (relatedAccessions: string list)
+        : AccountedConversion =
+        paperWithAccounting artifact (Path.GetFileName path) (File.ReadAllBytes path) relatedAccessions
+
+    /// Read a count table, verify it against the declared artifact revision, convert it, and account for its header cells.
+    let countDataFromFileWithAccounting
+        (artifact: ArtifactRevision)
+        (path: string)
+        : AccountedConversion =
+        countDataWithAccounting artifact (Path.GetFileName path) (File.ReadAllBytes path)
 
     /// Read a count-data zip archive and convert each tabular entry into fragments.
     let countDataFromArchive (path: string) : ConversionResult list =

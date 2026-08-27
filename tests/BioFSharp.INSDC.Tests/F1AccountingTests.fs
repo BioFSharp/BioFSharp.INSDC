@@ -405,3 +405,116 @@ type F1AccountingTests() =
 
             find "/RECEIPT/ACTIONS[1]" accountedReceipt.Accounting
             |> expectUnsupported accountedReceipt.Accounting)
+
+    [<Fact>]
+    member _.``JATS front matter accounting resolves source and ArcIR output designations`` () =
+        let path = TestFiles.fixture "paper-PRJDB5192.jats.xml"
+        let bytes = File.ReadAllBytes path
+        let xml = Encoding.UTF8.GetString bytes
+        let revision = ArtifactRevision.ofBytes path None bytes
+        let accounted = Ingest.paperWithAccounting revision (Path.GetFileName path) bytes []
+        let repeated = Ingest.paperWithAccounting revision (Path.GetFileName path) bytes []
+        let graph = INSDC.build [ accounted.Conversion ]
+        let sourceDocument = XPointer.entityDoc xml
+        let outputLocations = ArcIRJson.locations graph |> Set.ofSeq
+
+        Assert.Equal(accounted, repeated)
+        Assert.NotEmpty accounted.Accounting.Entries
+        Assert.Empty accounted.Accounting.Diagnostics.Diagnostics
+
+        for entry in accounted.Accounting.Entries do
+            Assert.Equal(revision, entry.Input.Artifact)
+            Assert.Equal(F1Accounting.XPointerConformsTo, entry.Input.Selector.ConformsTo)
+            Assert.True(
+                XPointer.resolve sourceDocument entry.Input.Selector.Value |> Option.isSome,
+                $"JATS selector did not resolve: {entry.Input.Selector.Value}"
+            )
+
+            match entry.Outcome with
+            | FieldAccountingOutcome.Emitted outputs ->
+                Assert.NotEmpty outputs
+                for output in outputs do
+                    Assert.Contains(output, outputLocations)
+            | FieldAccountingOutcome.Ignored reason -> Assert.False(String.IsNullOrWhiteSpace reason)
+            | outcome -> failwithf "Expected emitted or reviewed-ignored JATS metadata, got %A" outcome
+
+        withTempDirectory (fun directory ->
+            assertQualifiedOutputsResolve directory "paper-state.arcir.json" graph accounted.Accounting
+            |> ignore)
+
+        let title =
+            accounted.Accounting.Entries
+            |> List.find (fun entry -> entry.Input.Selector.Value.Contains("article-title"))
+
+        match title.Outcome with
+        | FieldAccountingOutcome.Emitted outputs ->
+            Assert.True(outputs |> List.exists (function ArcJsonLocation.ObjectAnnotationValue _ -> true | _ -> false))
+        | outcome -> failwithf "Expected the JATS title to be emitted, got %A" outcome
+
+    [<Fact>]
+    member _.``count header accounting uses byte-position cells and resolves every ArcIR output`` () =
+        let path = TestFiles.fixture "counts-PRJDB5192.tsv"
+        let bytes = File.ReadAllBytes path
+        let revision = ArtifactRevision.ofBytes path None bytes
+        let accounted = Ingest.countDataWithAccounting revision (Path.GetFileName path) bytes
+        let repeated = Ingest.countDataWithAccounting revision (Path.GetFileName path) bytes
+        let graph = INSDC.build [ accounted.Conversion ]
+        let outputLocations = ArcIRJson.locations graph |> Set.ofSeq
+        let selectorPattern =
+            "^#selector\\(type=DataPositionSelector,start=(\\d+),end=(\\d+)\\)$"
+
+        let selectedValue (entry: FieldAccountingEntry) =
+            let matched =
+                Text.RegularExpressions.Regex.Match(entry.Input.Selector.Value, selectorPattern)
+
+            Assert.True(matched.Success, $"Invalid data-position selector: {entry.Input.Selector.Value}")
+            let startPosition = Int32.Parse matched.Groups.[1].Value
+            let endPosition = Int32.Parse matched.Groups.[2].Value
+            Assert.InRange(startPosition, 0, bytes.Length)
+            Assert.InRange(endPosition, startPosition, bytes.Length)
+            Encoding.UTF8.GetString(bytes, startPosition, endPosition - startPosition)
+
+        Assert.Equal(accounted, repeated)
+        Assert.Equal(3, accounted.Accounting.Entries.Length)
+        Assert.Empty accounted.Accounting.Diagnostics.Diagnostics
+
+        for entry in accounted.Accounting.Entries do
+            Assert.Equal(revision, entry.Input.Artifact)
+            Assert.Equal(IngestAccounting.DataPositionSelectorConformsTo, entry.Input.Selector.ConformsTo)
+            Assert.False(String.IsNullOrWhiteSpace(selectedValue entry))
+
+            match entry.Outcome with
+            | FieldAccountingOutcome.Emitted outputs ->
+                Assert.NotEmpty outputs
+                for output in outputs do
+                    Assert.Contains(output, outputLocations)
+            | FieldAccountingOutcome.Ignored reason -> Assert.False(String.IsNullOrWhiteSpace reason)
+            | outcome -> failwithf "Expected emitted or reviewed-ignored count header cell, got %A" outcome
+
+        let featureColumn =
+            accounted.Accounting.Entries
+            |> List.find (fun entry -> selectedValue entry = "gene_id")
+
+        match featureColumn.Outcome with
+        | FieldAccountingOutcome.Ignored _ -> ()
+        | outcome -> failwithf "Expected the feature identifier column to be intentionally ignored, got %A" outcome
+
+        let runColumn =
+            accounted.Accounting.Entries
+            |> List.find (fun entry -> selectedValue entry = "DRR072834")
+
+        match runColumn.Outcome with
+        | FieldAccountingOutcome.Emitted outputs ->
+            Assert.True(outputs |> List.exists (function ArcJsonLocation.Relation _ -> true | _ -> false))
+        | outcome -> failwithf "Expected the run header to emit the column and linkage, got %A" outcome
+
+        withTempDirectory (fun directory ->
+            assertQualifiedOutputsResolve directory "count-state.arcir.json" graph accounted.Accounting
+            |> ignore)
+
+        let mismatched = Array.copy bytes
+        mismatched.[0] <- mismatched.[0] ^^^ 1uy
+
+        Assert.Throws<ArgumentException>(fun () ->
+            Ingest.countDataWithAccounting revision (Path.GetFileName path) mismatched |> ignore)
+        |> ignore

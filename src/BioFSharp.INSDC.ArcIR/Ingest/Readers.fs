@@ -4,6 +4,7 @@ open System
 open System.IO
 open System.IO.Compression
 open System.Security.Cryptography
+open System.Text
 open System.Text.RegularExpressions
 open System.Xml.Linq
 
@@ -37,6 +38,19 @@ module IngestReaders =
     let private countResourceFile (name: string) (byteSize: int64) : ResourceFile =
         { Name = name; ByteSize = Some byteSize; Checksum = None; MediaType = mediaType name }
 
+    let private sha256 (bytes: byte array) =
+        use sha = SHA256.Create()
+        "sha256:" + (BitConverter.ToString(sha.ComputeHash bytes).Replace("-", "").ToLowerInvariant())
+
+    let internal describeBytes (name: string) (bytes: byte array) : ResourceFile =
+        if isNull bytes then
+            nullArg (nameof bytes)
+
+        { Name = name
+          ByteSize = Some(int64 bytes.LongLength)
+          Checksum = Some(sha256 bytes)
+          MediaType = mediaType name }
+
     // ---- files ----
 
     /// Describe a file as a `ResourceFile`: name, byte size, a `sha256:<hex>` checksum, and a media type
@@ -67,11 +81,8 @@ module IngestReaders =
         | s when String.IsNullOrWhiteSpace s -> None
         | s -> Some(s.Trim())
 
-    /// Read paper-level metadata from a JATS XML article: title, DOI, journal, and the authors
-    /// (name, email, affiliation, ORCID). Elements are matched by local name, so namespaced and
-    /// non-namespaced JATS both work.
-    let readJats (path: string) : PaperMetadata =
-        let root = XDocument.Load(path: string).Root
+    let private readJatsDocument (document: XDocument) : PaperMetadata =
+        let root = document.Root
         let descendants (name: string) = root.Descendants() |> Seq.filter (fun e -> e.Name.LocalName = name)
         let firstText name = descendants name |> Seq.tryHead |> Option.bind (fun e -> text e.Value)
 
@@ -116,6 +127,19 @@ module IngestReaders =
 
         { Title = firstText "article-title"; Doi = doi; Journal = firstText "journal-title"; Authors = authors }
 
+    let internal readJatsBytes (bytes: byte array) : PaperMetadata =
+        if isNull bytes then
+            nullArg (nameof bytes)
+
+        use stream = new MemoryStream(bytes, false)
+        XDocument.Load stream |> readJatsDocument
+
+    /// Read paper-level metadata from a JATS XML article: title, DOI, journal, and the authors
+    /// (name, email, affiliation, ORCID). Elements are matched by local name, so namespaced and
+    /// non-namespaced JATS both work.
+    let readJats (path: string) : PaperMetadata =
+        XDocument.Load(path: string) |> readJatsDocument
+
     // ---- count data ----
 
     /// Parse a count-matrix header line into its run-accession columns, each with its 1-based position
@@ -130,6 +154,20 @@ module IngestReaders =
             |> Array.mapi (fun i cell -> i + 1, cell.Trim())
             |> Array.choose (fun (index, cell) -> if runAccession.IsMatch cell then Some { Index = index; RunAccession = cell } else None)
             |> List.ofArray
+
+    let internal readCountBytes (name: string) (bytes: byte array) : CountFile =
+        if isNull bytes then
+            nullArg (nameof bytes)
+
+        use stream = new MemoryStream(bytes, false)
+        use reader = new StreamReader(stream, Encoding.UTF8, true)
+
+        let header =
+            match reader.ReadLine() with
+            | null -> ""
+            | line -> line
+
+        { File = countResourceFile name (int64 bytes.LongLength); Columns = parseHeader header }
 
     /// Read one loose count file: its metadata plus the run-accession columns parsed from its header.
     let readCountFile (path: string) : CountFile =

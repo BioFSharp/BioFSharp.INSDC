@@ -20,18 +20,18 @@ module Paper =
 
     /// The paper Resource node id: `doi:<doi>` when a DOI is present (stable across file copies), else
     /// `paper:<name>`.
-    let private paperId (meta: PaperMetadata) (file: ResourceFile) : string =
+    let internal paperId (meta: PaperMetadata) (file: ResourceFile) : string =
         match present meta.Doi with
         | Some doi -> "doi:" + doi.Trim().ToLowerInvariant()
         | None -> "paper:" + file.Name
 
     /// An author's dedup id: `agent:<email>`, else `agent:<orcid>`, else `agent:<name>`; `None` if all blank.
-    let private authorId (a: PaperAuthor) : string option =
+    let internal authorId (a: PaperAuthor) : string option =
         [ a.Email; a.Orcid; a.Name ]
         |> List.tryPick present
         |> Option.map (fun key -> "agent:" + key.Trim().ToLowerInvariant())
 
-    let private authorFragment (paperId: string) (a: PaperAuthor) : (ArcObject * ArcRelation) option =
+    let internal authorFragment (paperId: string) (a: PaperAuthor) : (ArcObject * ArcRelation) option =
         authorId a
         |> Option.map (fun authorNodeId ->
             let props =

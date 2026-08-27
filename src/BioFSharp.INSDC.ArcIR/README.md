@@ -19,8 +19,11 @@ Run, Analysis, Submission, and Receipt, plus supplementary papers and count data
 
 The graph can be rendered as text, GraphML, or a self-contained HTML page. These
 are derived inspection tools; the embedded HTML page is not the intended final
-workbench architecture. Deterministic canonical persistence and revision-bound
-fragment addressing are planned separately.
+workbench architecture. `*WithAccounting` F1 functions bind exact source
+occurrences to typed locations in the resulting graph: INSDC and JATS XML use
+XPointer, while count-header cells use W3C byte-position selectors. The source
+artifact bytes are digest-checked, and emitted locations can be qualified against
+the canonical persisted ArcIR state with `FieldAccounting.qualifyEmitted`.
 
 Built on
 [`BioFSharp.IO.INSDC`](https://www.nuget.org/packages/BioFSharp.IO.INSDC).

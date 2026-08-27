@@ -10,7 +10,7 @@ open BioFSharp.ArcIR
 [<RequireQualifiedAccess>]
 module CountData =
 
-    let private fileId (file: ResourceFile) = "count:" + file.Name
+    let internal fileId (file: ResourceFile) = "count:" + file.Name
 
     /// Convert one count file into a `ConversionResult`: a `countMatrix` Resource node plus a `countColumn`
     /// fragment (with `hasColumn` and `producesData` edges) for each run-accession column in its header.
