@@ -17,6 +17,9 @@ module INSDC =
         F1Accounting.bioProject sourceArtifact project
     /// Converts one BioSample record to a graph fragment.
     let bioSample (sample: BioSample) : ConversionResult = BioSampleConversion.convert sample
+    /// Converts one BioSample and accounts for every present source XML leaf.
+    let bioSampleWithAccounting sourceArtifact (sample: BioSample) : AccountedConversion =
+        F1Accounting.bioSample sourceArtifact sample
     /// Converts one Study record to a graph fragment.
     let study (study: Study) : ConversionResult = StudyConversion.convert study
     /// Converts one Study and accounts for every present source XML leaf.
@@ -24,8 +27,14 @@ module INSDC =
         F1Accounting.study sourceArtifact study
     /// Converts one Experiment record to a graph fragment.
     let experiment (experiment: Experiment) : ConversionResult = ExperimentConversion.convert experiment
+    /// Converts one Experiment and accounts for every present source XML leaf.
+    let experimentWithAccounting sourceArtifact (experiment: Experiment) : AccountedConversion =
+        F1Accounting.experiment sourceArtifact experiment
     /// Converts one Run record to a graph fragment.
     let run (run: Run) : ConversionResult = RunConversion.convert run
+    /// Converts one Run and accounts for every present source XML leaf.
+    let runWithAccounting sourceArtifact (run: Run) : AccountedConversion =
+        F1Accounting.run sourceArtifact run
     /// Converts one Analysis record to a graph fragment.
     let analysis (analysis: Analysis) : ConversionResult = AnalysisConversion.convert analysis
     /// Converts one Submission record to a graph fragment.

@@ -356,12 +356,13 @@ version rather than depending on a mutable sibling checkout.
 > the reviewed Phase 4 base mapping. Extend the same accounting model across all
 > supported F1 inputs after that boundary is stable.
 >
-> **Implemented slice:** the shared diagnostic and field-accounting core, neutral
-> additive mapper, PolyglotSSSOM adapter, and artifact-qualified BioProject/Study
-> accounting are implemented. Their tests resolve source XML XPointers and emitted
-> ArcIR JSON fragments, including the source-assertion handoff to an additive base
-> mapping. Accounting for the remaining six INSDC entities and supplementary
-> paper/count inputs is still outstanding.
+> **Implemented slices:** the shared diagnostic and field-accounting core, neutral
+> additive mapper, PolyglotSSSOM adapter, and artifact-qualified accounting for
+> BioProject, Study, BioSample, Experiment, and Run are implemented. Their tests
+> resolve source XML XPointers and emitted ArcIR JSON fragments, including the
+> source-assertion handoff to an additive base mapping and the connected
+> BioSample-to-Experiment-to-Run chain. Accounting for Analysis, Submission,
+> Receipt, and supplementary paper/count inputs is still outstanding.
 
 ### One result and diagnostic model
 

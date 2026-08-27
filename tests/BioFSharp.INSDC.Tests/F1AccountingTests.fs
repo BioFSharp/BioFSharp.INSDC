@@ -64,8 +64,8 @@ type F1AccountingTests() =
                 Assert.Contains(entry.Input, diagnostic.Targets)
             | FieldAccountingOutcome.Ignored reason -> Assert.False(String.IsNullOrWhiteSpace reason)
 
-    let assertQualifiedOutputsResolve directory graph report =
-        let statePath = Path.Combine(directory, "state.arcir.json")
+    let assertQualifiedOutputsResolve directory stateName graph report =
+        let statePath = Path.Combine(directory, stateName)
         let stateRevision = ArcIRJson.writeNew statePath graph |> expectOk
         let bindings = FieldAccounting.qualifyEmitted stateRevision report
 
@@ -89,7 +89,7 @@ type F1AccountingTests() =
 
             Assert.Equal(accounted, repeated)
             assertCompleteAccounting xml bytes sourceRevision expectedCount graph accounted.Accounting
-            assertQualifiedOutputsResolve directory graph accounted.Accounting |> ignore
+            assertQualifiedOutputsResolve directory "project-state.arcir.json" graph accounted.Accounting |> ignore
 
             let title =
                 accounted.Accounting.Entries
@@ -121,7 +121,7 @@ type F1AccountingTests() =
             let expectedCount = Study.xpathEntries study |> Array.length
 
             assertCompleteAccounting xml bytes sourceRevision expectedCount graph accounted.Accounting
-            assertQualifiedOutputsResolve directory graph accounted.Accounting |> ignore
+            assertQualifiedOutputsResolve directory "study-state.arcir.json" graph accounted.Accounting |> ignore
 
             let title =
                 accounted.Accounting.Entries
@@ -171,3 +171,113 @@ type F1AccountingTests() =
             ArcIRJson.resolveFragment sourceOutput |> expectOk |> ignore
             ArcIRJson.resolveFragment mappedOutput |> expectOk |> ignore
             Assert.NotEqual(application.Input, application.Output))
+
+    [<Fact>]
+    member _.``BioSample Experiment and Run account their complete connected fixture chain`` () =
+        let sample = BioSample.read (TestFiles.fixture "SAMD00064197.xml") |> Seq.exactlyOne
+        let experiment = Experiment.read (TestFiles.fixture "DRX066772.xml") |> Seq.exactlyOne
+        let run = Run.read (TestFiles.fixture "DRR072834.xml") |> Seq.exactlyOne
+        let sampleXml = BioSample.writeString sample
+        let experimentXml = Experiment.writeString experiment
+        let runXml = Run.writeString run
+
+        let find (selectorPart: string) (report: FieldAccountingReport) =
+            report.Entries
+            |> List.find (fun entry -> entry.Input.Selector.Value.Contains(selectorPart))
+
+        let expectEmitted (entry: FieldAccountingEntry) =
+            match entry.Outcome with
+            | FieldAccountingOutcome.Emitted outputs -> outputs
+            | outcome -> failwithf "Expected emitted field, got %A" outcome
+
+        let expectIgnored (entry: FieldAccountingEntry) =
+            match entry.Outcome with
+            | FieldAccountingOutcome.Ignored reason -> Assert.False(String.IsNullOrWhiteSpace reason)
+            | outcome -> failwithf "Expected intentionally ignored field, got %A" outcome
+
+        let expectUnsupported (report: FieldAccountingReport) (entry: FieldAccountingEntry) =
+            match entry.Outcome with
+            | FieldAccountingOutcome.Unsupported diagnosticId ->
+                Assert.Contains(entry.Input, report.Diagnostics.Diagnostics.[diagnosticId].Targets)
+            | outcome -> failwithf "Expected unsupported field, got %A" outcome
+
+        withTempDirectory (fun directory ->
+            let _, sampleBytes, sampleRevision = writeSource directory "sample.xml" sampleXml
+            let _, experimentBytes, experimentRevision = writeSource directory "experiment.xml" experimentXml
+            let _, runBytes, runRevision = writeSource directory "run.xml" runXml
+            let accountedSample = INSDC.bioSampleWithAccounting sampleRevision sample
+            let accountedExperiment = INSDC.experimentWithAccounting experimentRevision experiment
+            let accountedRun = INSDC.runWithAccounting runRevision run
+
+            Assert.Equal(accountedSample, INSDC.bioSampleWithAccounting sampleRevision sample)
+            Assert.Equal(accountedExperiment, INSDC.experimentWithAccounting experimentRevision experiment)
+            Assert.Equal(accountedRun, INSDC.runWithAccounting runRevision run)
+
+            let graph =
+                [ accountedSample.Conversion
+                  accountedExperiment.Conversion
+                  accountedRun.Conversion ]
+                |> INSDC.build
+
+            assertCompleteAccounting
+                sampleXml
+                sampleBytes
+                sampleRevision
+                (BioSample.xpathEntries sample |> Array.length)
+                graph
+                accountedSample.Accounting
+
+            assertCompleteAccounting
+                experimentXml
+                experimentBytes
+                experimentRevision
+                (Experiment.xpathEntries experiment |> Array.length)
+                graph
+                accountedExperiment.Accounting
+
+            assertCompleteAccounting
+                runXml
+                runBytes
+                runRevision
+                (Run.xpathEntries run |> Array.length)
+                graph
+                accountedRun.Accounting
+
+            let statePath = Path.Combine(directory, "connected-state.arcir.json")
+            let stateRevision = ArcIRJson.writeNew statePath graph |> expectOk
+
+            for report in
+                [ accountedSample.Accounting
+                  accountedExperiment.Accounting
+                  accountedRun.Accounting ] do
+                for binding in FieldAccounting.qualifyEmitted stateRevision report do
+                    for output in binding.Outputs do
+                        ArcIRJson.resolveFragment output |> expectOk |> ignore
+
+            let taxonOutputs =
+                find "/SAMPLE_NAME/TAXON_ID" accountedSample.Accounting |> expectEmitted
+
+            Assert.True(taxonOutputs |> List.exists (function ArcJsonLocation.PropertyValue _ -> true | _ -> false))
+            Assert.True(taxonOutputs |> List.exists (function ArcJsonLocation.Relation _ -> true | _ -> false))
+
+            find "/DESIGN/DESIGN_DESCRIPTION" accountedExperiment.Accounting |> expectIgnored
+            find "/STUDY_REF/@accession" accountedExperiment.Accounting |> expectEmitted |> ignore
+            find "/STUDY_REF/@refname" accountedExperiment.Accounting |> expectIgnored
+
+            find "/SAMPLE_DESCRIPTOR/IDENTIFIERS/EXTERNAL_ID[1]/text()" accountedExperiment.Accounting
+            |> expectEmitted
+            |> ignore
+
+            find "/SAMPLE_DESCRIPTOR/@accession" accountedExperiment.Accounting |> expectIgnored
+            find "/PLATFORM/ILLUMINA/INSTRUMENT_MODEL" accountedExperiment.Accounting
+            |> expectEmitted
+            |> ignore
+
+            find "/SPOT_DESCRIPTOR/SPOT_DECODE_SPEC/READ_SPEC[1]/READ_CLASS" accountedExperiment.Accounting
+            |> expectUnsupported accountedExperiment.Accounting
+
+            find "/EXPERIMENT_REF/@accession" accountedRun.Accounting |> expectEmitted |> ignore
+            find "/EXPERIMENT_REF/@refcenter" accountedRun.Accounting |> expectIgnored
+
+            find "/RUN_LINKS/RUN_LINK[1]/XREF_LINK/DB" accountedRun.Accounting
+            |> expectUnsupported accountedRun.Accounting)

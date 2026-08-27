@@ -34,6 +34,19 @@ module F1Accounting =
     [<Literal>]
     let private studySource = "INSDC Study"
 
+    [<Literal>]
+    let private bioSampleSource = "INSDC BioSample"
+
+    [<Literal>]
+    let private experimentSource = "INSDC Experiment"
+
+    [<Literal>]
+    let private runSource = "INSDC Run"
+
+    type private FieldClassification =
+        | Emission of ArcJsonLocation list
+        | IntentionalOmission of string
+
     let private modelledNamespaces =
         set [ "bioproject"; "study"; "biosample"; "sample"; "experiment"; "run"; "analysis"; "submission" ]
 
@@ -124,6 +137,10 @@ module F1Accounting =
 
     let private relationLocation (subject: Iri) (predicate: Iri) (target: Iri) =
         ArcJsonLocation.Relation(Identity.relation subject predicate target)
+
+    let private emitted outputs = Some(Emission outputs)
+
+    let private ignored reason = Some(IntentionalOmission reason)
 
     let private qualifiedIdentifierLocations
         (owner: Iri)
@@ -216,6 +233,66 @@ module F1Accounting =
               ArcJsonLocation.PropertyValue(node.Id, nameProperty.Id)
               ArcJsonLocation.Relation relation.Id ])
 
+    let private subObjectPropertyLocations
+        (node: ArcObject)
+        (relation: ArcRelation)
+        (propertyName: string)
+        =
+        let predicate = Vocabulary.Property.ofName propertyName
+
+        node.Properties.Values
+        |> Seq.tryFind (fun property -> property.Predicate = predicate)
+        |> Option.map (fun property ->
+            [ ArcJsonLocation.Object node.Id
+              ArcJsonLocation.PropertyValue(node.Id, property.Id)
+              ArcJsonLocation.Relation relation.Id ])
+
+    let private allSubObjectPropertyLocations (node: ArcObject) (relation: ArcRelation) =
+        [ ArcJsonLocation.Object node.Id
+          yield!
+              node.Properties.Values
+              |> Seq.map (fun property -> ArcJsonLocation.PropertyValue(node.Id, property.Id))
+          ArcJsonLocation.Relation relation.Id ]
+
+    let private identityLocations (owner: Iri) (accession: string) (path: string) =
+        match path with
+        | "Accession" -> emitted [ ArcJsonLocation.Object owner ]
+        | "Alias" when String.IsNullOrWhiteSpace accession -> emitted [ ArcJsonLocation.Object owner ]
+        | "Alias" -> ignored "The archive accession, rather than the duplicate alias, supplied the ArcIR object identity."
+        | _ -> None
+
+    let private referenceLocations
+        (owner: Iri)
+        (predicate: Iri)
+        (reference: RefObject)
+        (prefix: string)
+        (path: string)
+        =
+        if isNull reference || not (path.StartsWith(prefix + ".", StringComparison.Ordinal)) then
+            None
+        else
+            let memberPath = path.Substring(prefix.Length + 1)
+
+            let target =
+                if not (String.IsNullOrWhiteSpace reference.Accession) then
+                    Some(Identity.objectId reference.Accession)
+                elif not (String.IsNullOrWhiteSpace reference.Refname) then
+                    Some(Identity.objectId reference.Refname)
+                else
+                    None
+
+            match memberPath, target with
+            | "Accession", Some target -> emitted [ relationLocation owner predicate target ]
+            | "Refname", Some _ when not (String.IsNullOrWhiteSpace reference.Accession) ->
+                ignored "The archive accession was authoritative; refname was retained only as duplicate reference metadata."
+            | "Refcenter", Some _ when not (String.IsNullOrWhiteSpace reference.Accession) ->
+                ignored "The archive accession was authoritative; refcenter was retained only as duplicate reference metadata."
+            | "Refname", Some target
+            | "Refcenter", Some target -> emitted [ relationLocation owner predicate target ]
+            | memberName, _ when memberName.StartsWith("Identifiers.", StringComparison.Ordinal) ->
+                ignored "The nested identifier block duplicates the reference resolved from accession/refname."
+            | _ -> None
+
     let private attributeLocations
         (owner: Iri)
         (attributes: Collection<BioFSharp.FileFormats.INSDC.Attribute>)
@@ -237,6 +314,140 @@ module F1Accounting =
                 None
         else
             None
+
+    let private organismLocations
+        (rawOwner: string)
+        (name: BioSampleName)
+        (path: string)
+        =
+        if isNull name || not (path.StartsWith("SampleName.", StringComparison.Ordinal)) then
+            None
+        else
+            let propertyName = path.Substring("SampleName.".Length)
+            let node, relation = SubObjects.organism rawOwner name
+            subObjectPropertyLocations node relation propertyName
+            |> Option.map Emission
+
+    let private instrumentLocations (rawOwner: string) (platform: Platform) (path: string) =
+        if
+            isNull platform
+            || not (path.StartsWith("Platform.", StringComparison.Ordinal))
+            || not (path.EndsWith(".InstrumentModel", StringComparison.Ordinal))
+        then
+            None
+        else
+            SubObjects.instrument rawOwner platform
+            |> Option.map (fun (node, relation) -> Emission(allSubObjectPropertyLocations node relation))
+
+    let private protocolLocations
+        (rawOwner: string)
+        (library: LibraryDescriptor)
+        (entry: XPathEntry)
+        =
+        let prefix = "Design.LibraryDescriptor."
+
+        if isNull library || not (entry.Path.StartsWith(prefix, StringComparison.Ordinal)) then
+            None
+        else
+            let propertyName = entry.Path.Substring(prefix.Length)
+
+            match propertyName with
+            | "LibraryName"
+            | "PoolingStrategy"
+            | "LibraryConstructionProtocol" when String.IsNullOrWhiteSpace entry.Value ->
+                ignored "The present XML field was blank, and the converter intentionally omits blank string assertions."
+            | "LibraryName"
+            | "LibraryStrategy"
+            | "LibrarySource"
+            | "LibrarySelection"
+            | "PoolingStrategy"
+            | "LibraryConstructionProtocol" ->
+                let node, relation = SubObjects.protocol rawOwner library
+
+                subObjectPropertyLocations node relation propertyName
+                |> Option.map Emission
+            | _ -> None
+
+    let private bioSampleReferenceLocations
+        (owner: Iri)
+        (reference: BioSampleDescriptor)
+        (prefix: string)
+        (path: string)
+        =
+        if isNull reference || not (path.StartsWith(prefix + ".", StringComparison.Ordinal)) then
+            None
+        else
+            let bioSampleExternal =
+                if isNull reference.Identifiers then
+                    None
+                else
+                    reference.Identifiers.ExternalId
+                    |> Seq.mapi (fun index identifier -> index, identifier)
+                    |> Seq.tryFind (fun (_, identifier) ->
+                        not (isNull identifier)
+                        && String.Equals(identifier.Namespace, "BioSample", StringComparison.OrdinalIgnoreCase)
+                        && not (String.IsNullOrWhiteSpace identifier.Value))
+
+            match bioSampleExternal with
+            | None -> referenceLocations owner Vocabulary.Rel.hasSample reference prefix path
+            | Some(index, externalIdentifier) ->
+                let relative = path.Substring(prefix.Length + 1)
+                let selectedPrefix = sprintf "Identifiers.ExternalId[%d]." index
+
+                if relative.StartsWith(selectedPrefix, StringComparison.Ordinal) then
+                    match relative.Substring(selectedPrefix.Length) with
+                    | "Namespace"
+                    | "Value" ->
+                        emitted
+                            [ relationLocation
+                                  owner
+                                  Vocabulary.Rel.hasSample
+                                  (Identity.objectId externalIdentifier.Value) ]
+                    | "Label" -> ignored "The external-identifier label is descriptive and does not affect sample resolution."
+                    | _ -> None
+                elif relative.StartsWith("Identifiers.", StringComparison.Ordinal) then
+                    ignored "The selected BioSample external identifier was authoritative over duplicate sample identifiers."
+                else
+                    match relative with
+                    | "Accession"
+                    | "Refname"
+                    | "Refcenter" ->
+                        ignored "The BioSample external identifier was authoritative over the SRA sample reference fields."
+                    | _ -> None
+
+    let private runFileLocations
+        (rawOwner: string)
+        (dataBlock: RunDataBlock)
+        (path: string)
+        =
+        if isNull dataBlock then
+            None
+        else
+            let matched = Regex.Match(path, @"^DataBlock\.Files\[(\d+)\]\.(Filename|Filetype|Checksum)$")
+
+            if not matched.Success then
+                None
+            else
+                let index = Int32.Parse matched.Groups.[1].Value
+
+                if index >= dataBlock.Files.Count then
+                    None
+                else
+                    let node, relation = SubObjects.runFile rawOwner dataBlock.Files.[index]
+
+                    subObjectPropertyLocations node relation matched.Groups.[2].Value
+                    |> Option.map Emission
+
+    let private genericStringClassification
+        (owner: Iri)
+        (source: string)
+        (key: string)
+        (value: string)
+        =
+        if String.IsNullOrWhiteSpace value then
+            ignored "The present XML field was blank, and the converter intentionally omits blank string assertions."
+        else
+            emitted (genericLocations owner source key)
 
     let private classifyBioProject (project: BioProject) (owner: Iri) (entry: XPathEntry) =
         let scalar =
@@ -308,10 +519,106 @@ module F1Accounting =
         |> Option.orElseWith (fun () ->
             attributeLocations owner study.StudyAttributes entry.Path "StudyAttributes")
 
+    let private classifyBioSample (sample: BioSample) (owner: Iri) (entry: XPathEntry) =
+        let rawOwner = Convert.entityId sample
+
+        let scalar =
+            match entry.Path with
+            | "Title" -> genericStringClassification owner bioSampleSource "Title" entry.Value
+            | "Description" -> genericStringClassification owner bioSampleSource "Description" entry.Value
+            | "CenterName" -> institutionLocations rawOwner sample.CenterName |> Option.map Emission
+            | "BrokerName" -> institutionLocations rawOwner sample.BrokerName |> Option.map Emission
+            | _ -> None
+
+        scalar
+        |> Option.orElseWith (fun () -> identityLocations owner sample.Accession entry.Path)
+        |> Option.orElseWith (fun () ->
+            identifierLocations owner sample.Identifiers entry.Path |> Option.map Emission)
+        |> Option.orElseWith (fun () ->
+            attributeLocations owner sample.SampleAttributes entry.Path "SampleAttributes"
+            |> Option.map Emission)
+        |> Option.orElseWith (fun () -> organismLocations rawOwner sample.SampleName entry.Path)
+
+    let private classifyExperiment (experiment: Experiment) (owner: Iri) (entry: XPathEntry) =
+        let rawOwner = Convert.entityId experiment
+
+        let scalar =
+            match entry.Path with
+            | "Title" -> genericStringClassification owner experimentSource "Title" entry.Value
+            | "Design.DesignDescription" ->
+                genericStringClassification owner experimentSource "DesignDescription" entry.Value
+            | "CenterName" -> institutionLocations rawOwner experiment.CenterName |> Option.map Emission
+            | "BrokerName" -> institutionLocations rawOwner experiment.BrokerName |> Option.map Emission
+            | _ -> None
+
+        scalar
+        |> Option.orElseWith (fun () -> identityLocations owner experiment.Accession entry.Path)
+        |> Option.orElseWith (fun () ->
+            identifierLocations owner experiment.Identifiers entry.Path |> Option.map Emission)
+        |> Option.orElseWith (fun () ->
+            attributeLocations owner experiment.ExperimentAttributes entry.Path "ExperimentAttributes"
+            |> Option.map Emission)
+        |> Option.orElseWith (fun () ->
+            if isNull experiment.StudyRef then
+                None
+            else
+                referenceLocations
+                    owner
+                    Vocabulary.Rel.hasStudy
+                    experiment.StudyRef
+                    "StudyRef"
+                    entry.Path)
+        |> Option.orElseWith (fun () ->
+            match experiment.Design with
+            | null -> None
+            | design ->
+                bioSampleReferenceLocations
+                    owner
+                    design.SampleDescriptor
+                    "Design.SampleDescriptor"
+                    entry.Path)
+        |> Option.orElseWith (fun () ->
+            match experiment.Design with
+            | null -> None
+            | design -> protocolLocations rawOwner design.LibraryDescriptor entry)
+        |> Option.orElseWith (fun () -> instrumentLocations rawOwner experiment.Platform entry.Path)
+
+    let private classifyRun (run: Run) (owner: Iri) (entry: XPathEntry) =
+        let rawOwner = Convert.entityId run
+
+        let scalar =
+            match entry.Path with
+            | "Title" -> genericStringClassification owner runSource "Title" entry.Value
+            | "RunCenter" -> genericStringClassification owner runSource "RunCenter" entry.Value
+            | "RunDateValue" -> emitted (genericLocations owner runSource "RunDate")
+            | "CenterName" -> institutionLocations rawOwner run.CenterName |> Option.map Emission
+            | "BrokerName" -> institutionLocations rawOwner run.BrokerName |> Option.map Emission
+            | _ -> None
+
+        scalar
+        |> Option.orElseWith (fun () -> identityLocations owner run.Accession entry.Path)
+        |> Option.orElseWith (fun () ->
+            identifierLocations owner run.Identifiers entry.Path |> Option.map Emission)
+        |> Option.orElseWith (fun () ->
+            attributeLocations owner run.RunAttributes entry.Path "RunAttributes"
+            |> Option.map Emission)
+        |> Option.orElseWith (fun () ->
+            if isNull run.ExperimentRef then
+                None
+            else
+                referenceLocations
+                    owner
+                    Vocabulary.Rel.hasExperiment
+                    run.ExperimentRef
+                    "ExperimentRef"
+                    entry.Path)
+        |> Option.orElseWith (fun () -> instrumentLocations rawOwner run.Platform entry.Path)
+        |> Option.orElseWith (fun () -> runFileLocations rawOwner run.DataBlock entry.Path)
+
     let private account
         (entity: string)
         (artifact: ArtifactRevision)
-        (classify: XPathEntry -> ArcJsonLocation list option)
+        (classify: XPathEntry -> FieldClassification option)
         (entries: seq<XPathEntry>)
         =
         let diagnostics = ResizeArray<Diagnostic>()
@@ -322,10 +629,14 @@ module F1Accounting =
                 let input = sourceRef artifact entry
 
                 match classify entry with
-                | Some outputs ->
+                | Some(Emission outputs) ->
                     { RuleId = ruleId entity "emit" entry.Path
                       Input = input
                       Outcome = FieldAccountingOutcome.Emitted outputs }
+                | Some(IntentionalOmission reason) ->
+                    { RuleId = ruleId entity "ignore" entry.Path
+                      Input = input
+                      Outcome = FieldAccountingOutcome.Ignored reason }
                 | None ->
                     let diagnostic = unsupportedDiagnostic entity entry.Path input
                     diagnostics.Add diagnostic
@@ -348,7 +659,10 @@ module F1Accounting =
         { Conversion = conversion
           Accounting =
             BioFSharp.IO.INSDC.BioProject.xpathEntries project
-            |> account "bioproject" artifact (classifyBioProject project owner) }
+            |> account
+                "bioproject"
+                artifact
+                (fun entry -> classifyBioProject project owner entry |> Option.map Emission) }
 
     /// Converts and accounts for every present leaf in one Study source artifact.
     let study (artifact: ArtifactRevision) (study: Study) =
@@ -358,4 +672,37 @@ module F1Accounting =
         { Conversion = conversion
           Accounting =
             BioFSharp.IO.INSDC.Study.xpathEntries study
-            |> account "study" artifact (classifyStudy study owner) }
+            |> account
+                "study"
+                artifact
+                (fun entry -> classifyStudy study owner entry |> Option.map Emission) }
+
+    /// Converts and accounts for every present leaf in one BioSample source artifact.
+    let bioSample (artifact: ArtifactRevision) (sample: BioSample) =
+        let conversion = BioSampleConversion.convert sample
+        let owner = Identity.objectId (Convert.entityId sample)
+
+        { Conversion = conversion
+          Accounting =
+            BioFSharp.IO.INSDC.BioSample.xpathEntries sample
+            |> account "biosample" artifact (classifyBioSample sample owner) }
+
+    /// Converts and accounts for every present leaf in one Experiment source artifact.
+    let experiment (artifact: ArtifactRevision) (experiment: Experiment) =
+        let conversion = ExperimentConversion.convert experiment
+        let owner = Identity.objectId (Convert.entityId experiment)
+
+        { Conversion = conversion
+          Accounting =
+            BioFSharp.IO.INSDC.Experiment.xpathEntries experiment
+            |> account "experiment" artifact (classifyExperiment experiment owner) }
+
+    /// Converts and accounts for every present leaf in one Run source artifact.
+    let run (artifact: ArtifactRevision) (run: Run) =
+        let conversion = RunConversion.convert run
+        let owner = Identity.objectId (Convert.entityId run)
+
+        { Conversion = conversion
+          Accounting =
+            BioFSharp.IO.INSDC.Run.xpathEntries run
+            |> account "run" artifact (classifyRun run owner) }
