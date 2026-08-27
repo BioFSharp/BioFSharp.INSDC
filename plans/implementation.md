@@ -357,12 +357,13 @@ version rather than depending on a mutable sibling checkout.
 > supported F1 inputs after that boundary is stable.
 >
 > **Implemented slices:** the shared diagnostic and field-accounting core, neutral
-> additive mapper, PolyglotSSSOM adapter, and artifact-qualified accounting for
-> BioProject, Study, BioSample, Experiment, and Run are implemented. Their tests
-> resolve source XML XPointers and emitted ArcIR JSON fragments, including the
-> source-assertion handoff to an additive base mapping and the connected
-> BioSample-to-Experiment-to-Run chain. Accounting for Analysis, Submission,
-> Receipt, and supplementary paper/count inputs is still outstanding.
+> additive mapper, PolyglotSSSOM adapter, and artifact-qualified accounting for all
+> eight supported INSDC XML entities are implemented. Their tests resolve source
+> XML XPointers and emitted ArcIR JSON fragments, including the source-assertion
+> handoff to an additive base mapping, the connected BioSample-to-Experiment-to-Run
+> chain, analysis files and references, submission agents, and receipt
+> acknowledgements. Accounting for supplementary paper/count inputs is still
+> outstanding.
 
 ### One result and diagnostic model
 

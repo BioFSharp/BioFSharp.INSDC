@@ -37,10 +37,19 @@ module INSDC =
         F1Accounting.run sourceArtifact run
     /// Converts one Analysis record to a graph fragment.
     let analysis (analysis: Analysis) : ConversionResult = AnalysisConversion.convert analysis
+    /// Converts one Analysis and accounts for every present source XML leaf.
+    let analysisWithAccounting sourceArtifact (analysis: Analysis) : AccountedConversion =
+        F1Accounting.analysis sourceArtifact analysis
     /// Converts one Submission record to a graph fragment.
     let submission (submission: Submission) : ConversionResult = SubmissionConversion.convert submission
+    /// Converts one Submission and accounts for every present source XML leaf.
+    let submissionWithAccounting sourceArtifact (submission: Submission) : AccountedConversion =
+        F1Accounting.submission sourceArtifact submission
     /// Converts one Receipt record to a graph fragment.
     let receipt (receipt: Receipt) : ConversionResult = ReceiptConversion.convert receipt
+    /// Converts one Receipt and accounts for every present source XML leaf.
+    let receiptWithAccounting sourceArtifact (receipt: Receipt) : AccountedConversion =
+        F1Accounting.receipt sourceArtifact receipt
 
     /// Assemble converter fragments into one graph, wiring cross-entity references afterwards.
     let build (results: ConversionResult seq) : ArcIR = Mapping.build results

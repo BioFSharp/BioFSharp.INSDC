@@ -281,3 +281,127 @@ type F1AccountingTests() =
 
             find "/RUN_LINKS/RUN_LINK[1]/XREF_LINK/DB" accountedRun.Accounting
             |> expectUnsupported accountedRun.Accounting)
+
+    [<Fact>]
+    member _.``Analysis Submission and Receipt account every fixture leaf`` () =
+        let analysis = Analysis.read (TestFiles.fixture "ERZ496533.xml") |> Seq.exactlyOne
+        let submission = Submission.read (TestFiles.fixture "DRA005154.xml") |> Seq.exactlyOne
+        let receipt = Receipt.read (TestFiles.fixture "receipt-sample.xml")
+        let analysisXml = Analysis.writeString analysis
+        let submissionXml = Submission.writeString submission
+        let receiptXml = Receipt.writeString receipt
+
+        let find (selectorPart: string) (report: FieldAccountingReport) =
+            report.Entries
+            |> List.find (fun entry -> entry.Input.Selector.Value.Contains(selectorPart))
+
+        let expectEmitted (entry: FieldAccountingEntry) =
+            match entry.Outcome with
+            | FieldAccountingOutcome.Emitted outputs -> outputs
+            | outcome -> failwithf "Expected emitted field, got %A" outcome
+
+        let expectIgnored (entry: FieldAccountingEntry) =
+            match entry.Outcome with
+            | FieldAccountingOutcome.Ignored reason -> Assert.False(String.IsNullOrWhiteSpace reason)
+            | outcome -> failwithf "Expected intentionally ignored field, got %A" outcome
+
+        let expectUnsupported (report: FieldAccountingReport) (entry: FieldAccountingEntry) =
+            match entry.Outcome with
+            | FieldAccountingOutcome.Unsupported diagnosticId ->
+                Assert.Contains(entry.Input, report.Diagnostics.Diagnostics.[diagnosticId].Targets)
+            | outcome -> failwithf "Expected unsupported field, got %A" outcome
+
+        withTempDirectory (fun directory ->
+            let _, analysisBytes, analysisRevision = writeSource directory "analysis.xml" analysisXml
+            let _, submissionBytes, submissionRevision = writeSource directory "submission.xml" submissionXml
+            let _, receiptBytes, receiptRevision = writeSource directory "receipt.xml" receiptXml
+            let accountedAnalysis = INSDC.analysisWithAccounting analysisRevision analysis
+            let accountedSubmission = INSDC.submissionWithAccounting submissionRevision submission
+            let accountedReceipt = INSDC.receiptWithAccounting receiptRevision receipt
+
+            Assert.Equal(accountedAnalysis, INSDC.analysisWithAccounting analysisRevision analysis)
+            Assert.Equal(accountedSubmission, INSDC.submissionWithAccounting submissionRevision submission)
+            Assert.Equal(accountedReceipt, INSDC.receiptWithAccounting receiptRevision receipt)
+
+            let graph =
+                [ accountedAnalysis.Conversion
+                  accountedSubmission.Conversion
+                  accountedReceipt.Conversion ]
+                |> INSDC.build
+
+            assertCompleteAccounting
+                analysisXml
+                analysisBytes
+                analysisRevision
+                (Analysis.xpathEntries analysis |> Array.length)
+                graph
+                accountedAnalysis.Accounting
+
+            assertCompleteAccounting
+                submissionXml
+                submissionBytes
+                submissionRevision
+                (Submission.xpathEntries submission |> Array.length)
+                graph
+                accountedSubmission.Accounting
+
+            assertCompleteAccounting
+                receiptXml
+                receiptBytes
+                receiptRevision
+                (Receipt.xpathEntries receipt |> Array.length)
+                graph
+                accountedReceipt.Accounting
+
+            let statePath = Path.Combine(directory, "administrative-state.arcir.json")
+            let stateRevision = ArcIRJson.writeNew statePath graph |> expectOk
+
+            for report in
+                [ accountedAnalysis.Accounting
+                  accountedSubmission.Accounting
+                  accountedReceipt.Accounting ] do
+                for binding in FieldAccounting.qualifyEmitted stateRevision report do
+                    for output in binding.Outputs do
+                        ArcIRJson.resolveFragment output |> expectOk |> ignore
+
+            find "/ANALYSIS/FILES/FILE[1]/@filename" accountedAnalysis.Accounting
+            |> expectEmitted
+            |> ignore
+
+            find "/ANALYSIS/STUDY_REF/@accession" accountedAnalysis.Accounting
+            |> expectEmitted
+            |> ignore
+
+            find "/ANALYSIS/STUDY_REF/IDENTIFIERS/PRIMARY_ID" accountedAnalysis.Accounting
+            |> expectIgnored
+
+            find "/ANALYSIS_TYPE/SEQUENCE_VARIATION/PROGRAM" accountedAnalysis.Accounting
+            |> expectUnsupported accountedAnalysis.Accounting
+
+            find "/ANALYSIS_LINKS/ANALYSIS_LINK[1]/XREF_LINK/DB" accountedAnalysis.Accounting
+            |> expectUnsupported accountedAnalysis.Accounting
+
+            find "/SUBMISSION/@lab_name" accountedSubmission.Accounting
+            |> expectEmitted
+            |> fun outputs ->
+                Assert.True(outputs |> List.exists (function ArcJsonLocation.Relation _ -> true | _ -> false))
+
+            find "/SUBMISSION/SUBMISSION_LINKS/SUBMISSION_LINK[1]/XREF_LINK/DB" accountedSubmission.Accounting
+            |> expectUnsupported accountedSubmission.Accounting
+
+            find "/RECEIPT/SAMPLE[1]/@accession" accountedReceipt.Accounting
+            |> expectEmitted
+            |> ignore
+
+            find "/RECEIPT/SAMPLE[1]/EXT_ID[1]/@accession" accountedReceipt.Accounting
+            |> expectIgnored
+
+            find "/RECEIPT/@submissionFile" accountedReceipt.Accounting
+            |> expectEmitted
+            |> fun outputs -> Assert.True(outputs |> List.exists (function ArcJsonLocation.Object _ -> true | _ -> false))
+
+            find "/RECEIPT/MESSAGES/INFO[1]" accountedReceipt.Accounting
+            |> expectUnsupported accountedReceipt.Accounting
+
+            find "/RECEIPT/ACTIONS[1]" accountedReceipt.Accounting
+            |> expectUnsupported accountedReceipt.Accounting)

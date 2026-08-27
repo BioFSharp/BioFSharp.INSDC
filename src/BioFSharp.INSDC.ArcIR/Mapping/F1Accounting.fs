@@ -43,6 +43,15 @@ module F1Accounting =
     [<Literal>]
     let private runSource = "INSDC Run"
 
+    [<Literal>]
+    let private analysisSource = "INSDC Analysis"
+
+    [<Literal>]
+    let private submissionSource = "INSDC Submission"
+
+    [<Literal>]
+    let private receiptSource = "INSDC Receipt"
+
     type private FieldClassification =
         | Emission of ArcJsonLocation list
         | IntentionalOmission of string
@@ -370,7 +379,7 @@ module F1Accounting =
 
     let private bioSampleReferenceLocations
         (owner: Iri)
-        (reference: BioSampleDescriptor)
+        (reference: RefObject)
         (prefix: string)
         (path: string)
         =
@@ -438,6 +447,178 @@ module F1Accounting =
                     subObjectPropertyLocations node relation matched.Groups.[2].Value
                     |> Option.map Emission
 
+    let private analysisFileLocations
+        (rawOwner: string)
+        (files: Collection<AnalysisFile>)
+        (path: string)
+        =
+        let matched = Regex.Match(path, @"^Files\[(\d+)\]\.(Filename|Filetype|Checksum|ChecksumMethod)$")
+
+        if not matched.Success then
+            None
+        else
+            let index = Int32.Parse matched.Groups.[1].Value
+
+            if index >= files.Count then
+                None
+            else
+                let node, relation = SubObjects.analysisFile rawOwner files.[index]
+
+                subObjectPropertyLocations node relation matched.Groups.[2].Value
+                |> Option.map Emission
+
+    let private indexedReferenceLocations
+        (owner: Iri)
+        (predicate: Iri)
+        (count: int)
+        (getReference: int -> RefObject)
+        (prefix: string)
+        (path: string)
+        =
+        let matched = Regex.Match(path, sprintf @"^%s\[(\d+)\]\." prefix)
+
+        if not matched.Success then
+            None
+        else
+            let index = Int32.Parse matched.Groups.[1].Value
+
+            if index >= count then
+                None
+            else
+                referenceLocations
+                    owner
+                    predicate
+                    (getReference index)
+                    (sprintf "%s[%d]" prefix index)
+                    path
+
+    let private indexedBioSampleReferenceLocations
+        (owner: Iri)
+        (count: int)
+        (getReference: int -> RefObject)
+        (prefix: string)
+        (path: string)
+        =
+        let matched = Regex.Match(path, sprintf @"^%s\[(\d+)\]\." prefix)
+
+        if not matched.Success then
+            None
+        else
+            let index = Int32.Parse matched.Groups.[1].Value
+
+            if index >= count then
+                None
+            else
+                bioSampleReferenceLocations
+                    owner
+                    (getReference index)
+                    (sprintf "%s[%d]" prefix index)
+                    path
+
+    let private submissionContactLocations
+        (rawOwner: string)
+        (contacts: Collection<SubmissionContactsContact>)
+        (entry: XPathEntry)
+        =
+        let matched = Regex.Match(entry.Path, @"^Contacts\[(\d+)\]\.(Name|InformOnStatus|InformOnError)$")
+
+        if not matched.Success then
+            None
+        else
+            let index = Int32.Parse matched.Groups.[1].Value
+
+            if index >= contacts.Count then
+                None
+            elif String.IsNullOrWhiteSpace contacts.[index].Name then
+                ignored "A submission contact without a name cannot receive a stable ArcIR agent identity."
+            else
+                SubObjects.submissionContact rawOwner contacts.[index]
+                |> Option.bind (fun (node, relation) ->
+                    let propertyName = matched.Groups.[2].Value
+
+                    if String.IsNullOrWhiteSpace entry.Value then
+                        ignored "The present XML field was blank, and the converter intentionally omits blank string properties."
+                    else
+                        subObjectPropertyLocations node relation propertyName
+                        |> Option.map Emission)
+
+    let private receiptRawId (receipt: Receipt) =
+        let bySubmission = if isNull receipt.Submission then null else receipt.Submission.Accession
+
+        [ receipt.SubmissionFile; bySubmission ]
+        |> List.tryFind (String.IsNullOrWhiteSpace >> not)
+        |> Option.defaultValue "receipt"
+
+    let private receiptBucketLocations
+        (owner: Iri)
+        (receipt: Receipt)
+        (path: string)
+        =
+        let buckets =
+            [ "Analysis", receipt.Analysis
+              "Experiment", receipt.Experiment
+              "Run", receipt.Run
+              "Sample", receipt.Sample
+              "Study", receipt.Study
+              "Project", receipt.Project
+              "Dataset", receipt.Dataset
+              "Policy", receipt.Policy
+              "Dac", receipt.Dac
+              "Checklist", receipt.Checklist
+              "Samplegroup", receipt.Samplegroup ]
+
+        let matched =
+            Regex.Match(
+                path,
+                @"^(Analysis|Experiment|Run|Sample|Study|Project|Dataset|Policy|Dac|Checklist|Samplegroup)\[(\d+)\]\.(.+)$"
+            )
+
+        if not matched.Success then
+            None
+        else
+            let bucket = buckets |> List.find (fun (name, _) -> name = matched.Groups.[1].Value) |> snd
+            let index = Int32.Parse matched.Groups.[2].Value
+
+            if index >= bucket.Count then
+                None
+            else
+                let id = bucket.[index]
+
+                match matched.Groups.[3].Value with
+                | "Accession" when not (String.IsNullOrWhiteSpace id.Accession) ->
+                    emitted
+                        [ relationLocation owner Vocabulary.Rel.acknowledges (Identity.objectId id.Accession) ]
+                | "Alias"
+                | "StatusValue"
+                | "HoldUntilDateValue" ->
+                    ignored "Receipt acknowledgement targets are resolved from archive accessions; auxiliary receipt identity metadata is not emitted."
+                | value when value.StartsWith("ExtId[", StringComparison.Ordinal) ->
+                    ignored "Receipt acknowledgement targets are resolved from archive accessions; auxiliary receipt identity metadata is not emitted."
+                | _ -> None
+
+    let private receiptSubmissionLocations (owner: Iri) (receipt: Receipt) (path: string) =
+        if isNull receipt.Submission || not (path.StartsWith("Submission.", StringComparison.Ordinal)) then
+            None
+        else
+            match path.Substring("Submission.".Length) with
+            | "Accession" when not (String.IsNullOrWhiteSpace receipt.Submission.Accession) ->
+                let outputs =
+                    [ relationLocation
+                          owner
+                          Vocabulary.Rel.acknowledges
+                          (Identity.objectId receipt.Submission.Accession)
+                      if String.IsNullOrWhiteSpace receipt.SubmissionFile then
+                          ArcJsonLocation.Object owner ]
+
+                emitted outputs
+            | "Alias"
+            | "StatusValue"
+            | "HoldUntilDateValue" ->
+                ignored "Receipt acknowledgement targets are resolved from archive accessions; auxiliary submission metadata is not emitted."
+            | value when value.StartsWith("ExtId[", StringComparison.Ordinal) ->
+                ignored "Receipt acknowledgement targets are resolved from archive accessions; external submission identifiers are not emitted."
+            | _ -> None
+
     let private genericStringClassification
         (owner: Iri)
         (source: string)
@@ -448,6 +629,19 @@ module F1Accounting =
             ignored "The present XML field was blank, and the converter intentionally omits blank string assertions."
         else
             emitted (genericLocations owner source key)
+
+    let private genericInstitutionClassification
+        (rawOwner: string)
+        (owner: Iri)
+        (source: string)
+        (key: string)
+        (value: string)
+        =
+        match genericStringClassification owner source key value with
+        | Some(Emission outputs) ->
+            let institutionOutputs = institutionLocations rawOwner value |> Option.defaultValue []
+            emitted (outputs @ institutionOutputs)
+        | outcome -> outcome
 
     let private classifyBioProject (project: BioProject) (owner: Iri) (entry: XPathEntry) =
         let scalar =
@@ -615,6 +809,105 @@ module F1Accounting =
         |> Option.orElseWith (fun () -> instrumentLocations rawOwner run.Platform entry.Path)
         |> Option.orElseWith (fun () -> runFileLocations rawOwner run.DataBlock entry.Path)
 
+    let private classifyAnalysis (analysis: Analysis) (owner: Iri) (entry: XPathEntry) =
+        let rawOwner = Convert.entityId analysis
+
+        let scalar =
+            match entry.Path with
+            | "Title" -> genericStringClassification owner analysisSource "Title" entry.Value
+            | "Description" -> genericStringClassification owner analysisSource "Description" entry.Value
+            | "AnalysisCenter" ->
+                genericInstitutionClassification rawOwner owner analysisSource "AnalysisCenter" entry.Value
+            | "AnalysisDateValue" -> emitted (genericLocations owner analysisSource "AnalysisDate")
+            | "CenterName" -> institutionLocations rawOwner analysis.CenterName |> Option.map Emission
+            | "BrokerName" -> institutionLocations rawOwner analysis.BrokerName |> Option.map Emission
+            | _ -> None
+
+        scalar
+        |> Option.orElseWith (fun () -> identityLocations owner analysis.Accession entry.Path)
+        |> Option.orElseWith (fun () ->
+            identifierLocations owner analysis.Identifiers entry.Path |> Option.map Emission)
+        |> Option.orElseWith (fun () ->
+            attributeLocations owner analysis.AnalysisAttributes entry.Path "AnalysisAttributes"
+            |> Option.map Emission)
+        |> Option.orElseWith (fun () ->
+            if isNull analysis.StudyRef then
+                None
+            else
+                referenceLocations owner Vocabulary.Rel.hasStudy analysis.StudyRef "StudyRef" entry.Path)
+        |> Option.orElseWith (fun () ->
+            indexedBioSampleReferenceLocations
+                owner
+                analysis.SampleRef.Count
+                (fun index -> analysis.SampleRef.[index])
+                "SampleRef"
+                entry.Path)
+        |> Option.orElseWith (fun () ->
+            indexedReferenceLocations
+                owner
+                Vocabulary.Rel.hasExperiment
+                analysis.ExperimentRef.Count
+                (fun index -> analysis.ExperimentRef.[index])
+                "ExperimentRef"
+                entry.Path)
+        |> Option.orElseWith (fun () ->
+            indexedReferenceLocations
+                owner
+                Vocabulary.Rel.hasRun
+                analysis.RunRef.Count
+                (fun index -> analysis.RunRef.[index])
+                "RunRef"
+                entry.Path)
+        |> Option.orElseWith (fun () ->
+            indexedReferenceLocations
+                owner
+                Vocabulary.Rel.hasAnalysis
+                analysis.AnalysisRef.Count
+                (fun index -> analysis.AnalysisRef.[index])
+                "AnalysisRef"
+                entry.Path)
+        |> Option.orElseWith (fun () -> analysisFileLocations rawOwner analysis.Files entry.Path)
+
+    let private classifySubmission (submission: Submission) (owner: Iri) (entry: XPathEntry) =
+        let rawOwner = Convert.entityId submission
+
+        let scalar =
+            match entry.Path with
+            | "Title" -> genericStringClassification owner submissionSource "Title" entry.Value
+            | "SubmissionComment" ->
+                genericStringClassification owner submissionSource "SubmissionComment" entry.Value
+            | "LabName" ->
+                genericInstitutionClassification rawOwner owner submissionSource "LabName" entry.Value
+            | "SubmissionDateValue" -> emitted (genericLocations owner submissionSource "SubmissionDate")
+            | "CenterName" -> institutionLocations rawOwner submission.CenterName |> Option.map Emission
+            | "BrokerName" -> institutionLocations rawOwner submission.BrokerName |> Option.map Emission
+            | _ -> None
+
+        scalar
+        |> Option.orElseWith (fun () -> identityLocations owner submission.Accession entry.Path)
+        |> Option.orElseWith (fun () ->
+            identifierLocations owner submission.Identifiers entry.Path |> Option.map Emission)
+        |> Option.orElseWith (fun () ->
+            attributeLocations owner submission.SubmissionAttributes entry.Path "SubmissionAttributes"
+            |> Option.map Emission)
+        |> Option.orElseWith (fun () ->
+            submissionContactLocations rawOwner submission.Contacts entry)
+
+    let private classifyReceipt (receipt: Receipt) (owner: Iri) (entry: XPathEntry) =
+        let scalar =
+            match entry.Path with
+            | "Success" -> emitted (genericLocations owner receiptSource "Success")
+            | "ReceiptDate" -> emitted (genericLocations owner receiptSource "ReceiptDate")
+            | "SubmissionFile" when String.IsNullOrWhiteSpace entry.Value ->
+                ignored "A blank submission-file attribute neither identifies nor annotates the receipt."
+            | "SubmissionFile" ->
+                emitted (ArcJsonLocation.Object owner :: genericLocations owner receiptSource "SubmissionFile")
+            | _ -> None
+
+        scalar
+        |> Option.orElseWith (fun () -> receiptSubmissionLocations owner receipt entry.Path)
+        |> Option.orElseWith (fun () -> receiptBucketLocations owner receipt entry.Path)
+
     let private account
         (entity: string)
         (artifact: ArtifactRevision)
@@ -706,3 +999,33 @@ module F1Accounting =
           Accounting =
             BioFSharp.IO.INSDC.Run.xpathEntries run
             |> account "run" artifact (classifyRun run owner) }
+
+    /// Converts and accounts for every present leaf in one Analysis source artifact.
+    let analysis (artifact: ArtifactRevision) (analysis: Analysis) =
+        let conversion = AnalysisConversion.convert analysis
+        let owner = Identity.objectId (Convert.entityId analysis)
+
+        { Conversion = conversion
+          Accounting =
+            BioFSharp.IO.INSDC.Analysis.xpathEntries analysis
+            |> account "analysis" artifact (classifyAnalysis analysis owner) }
+
+    /// Converts and accounts for every present leaf in one Submission source artifact.
+    let submission (artifact: ArtifactRevision) (submission: Submission) =
+        let conversion = SubmissionConversion.convert submission
+        let owner = Identity.objectId (Convert.entityId submission)
+
+        { Conversion = conversion
+          Accounting =
+            BioFSharp.IO.INSDC.Submission.xpathEntries submission
+            |> account "submission" artifact (classifySubmission submission owner) }
+
+    /// Converts and accounts for every present leaf in one Receipt source artifact.
+    let receipt (artifact: ArtifactRevision) (receipt: Receipt) =
+        let conversion = ReceiptConversion.convert receipt
+        let owner = Identity.objectId (receiptRawId receipt)
+
+        { Conversion = conversion
+          Accounting =
+            BioFSharp.IO.INSDC.Receipt.xpathEntries receipt
+            |> account "receipt" artifact (classifyReceipt receipt owner) }
