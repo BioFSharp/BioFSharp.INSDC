@@ -114,7 +114,7 @@ module GraphMl =
         for o in ir.Objects.Values do
             xml.WriteStartElement("node", ns)
             xml.WriteAttributeString("id", o.Id.Value)
-            writeData "label" (nodeLabel o)
+            writeData "label" (nodeLabel ir o)
             writeData "kind" (kindName o.Kind)
             let dtypes = o.Types.Values |> Seq.map (fun assertion -> localName assertion.Term.Value) |> Seq.sort |> String.concat " "
             if dtypes <> "" then

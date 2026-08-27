@@ -469,7 +469,7 @@ type GraphMlExportTests() =
     [<Fact>]
     member _.``the node label prefers the accession over the title`` () =
         // The experiment has a Title, but its label is the accession (the stable identity).
-        Assert.Equal(Some((ArcTest.id experiment.Accession).Value), dataVal "label" (nodeByRawId experiment.Accession))
+        Assert.Equal(Some experiment.Accession, dataVal "label" (nodeByRawId experiment.Accession))
 
     [<Fact>]
     member _.``node and edge counts match the graph (dangling endpoints become placeholder nodes)`` () =

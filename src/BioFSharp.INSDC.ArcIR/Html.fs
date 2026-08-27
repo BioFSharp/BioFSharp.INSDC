@@ -63,7 +63,7 @@ module Html =
             let dtypes = o.Types.Values |> Seq.map (fun assertion -> localName assertion.Term.Value) |> Seq.sort |> String.concat " "
             let props = o.Properties.Values |> Seq.map (fun property -> localName property.Predicate.Value, renderValue property.Value)
             let anns = o.Annotations.Values |> Seq.map (fun a -> annotationName ir a, renderAnnotationValue ir a.Value)
-            nodeJson o.Id.Value (nodeLabel o) (kindName o.Kind) dtypes props anns
+            nodeJson o.Id.Value (nodeLabel ir o) (kindName o.Kind) dtypes props anns
 
         let missing =
             ir.Relations.Values

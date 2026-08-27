@@ -160,6 +160,21 @@ module XPathTracking =
         | :? IFormattable as f -> f.ToString(null, System.Globalization.CultureInfo.InvariantCulture)
         | other -> other.ToString()
 
+    /// Generated XmlSerializer models use a Boolean `<Property>Specified` companion to distinguish
+    /// an absent optional scalar from its CLR default value. Mirror that convention so the backing
+    /// scalar is not reported as a source occurrence when no XML node was read.
+    let private isSpecified (node: obj) (property: PropertyInfo) =
+        let companion =
+            node.GetType().GetProperty(
+                property.Name + "Specified",
+                BindingFlags.Public ||| BindingFlags.Instance
+            )
+
+        isNull companion
+        || companion.PropertyType <> typeof<bool>
+        || not companion.CanRead
+        || unbox<bool> (companion.GetValue node)
+
     /// Walk a parsed `root` value and return one `XPathEntry` per present leaf, with array positions
     /// (`COLLABORATOR[2]`) taken from the data — a serializable, position-qualified view of the whole
     /// record for use in DTOs. Containers are not emitted; only addressable leaf values.
@@ -176,9 +191,10 @@ module XPathTracking =
                 node.GetType().GetProperties(BindingFlags.Public ||| BindingFlags.Instance)
                 |> Array.filter (fun p -> p.CanRead && p.GetIndexParameters().Length = 0)
                 |> Array.iter (fun p ->
-                    match relativeStep p with
-                    | None -> ()
-                    | Some(piece, repeatable) ->
+                    match relativeStep p, isSpecified node p with
+                    | _, false -> ()
+                    | None, _ -> ()
+                    | Some(piece, repeatable), _ ->
                         let value = p.GetValue node
                         if not (isNull value) then
                             if repeatable then

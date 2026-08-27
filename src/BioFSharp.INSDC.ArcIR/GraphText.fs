@@ -59,17 +59,29 @@ module internal GraphText =
         |> Option.bind (fun term -> term.Name)
         |> Option.defaultValue (localName a.Property.Value)
 
-    /// A friendly node label. Accession is the stable identity, so it always wins over the (descriptive)
-    /// title/name; falls back to the node's id (which is itself the accession/alias for entity nodes).
-    let nodeLabel (o: ArcObject) =
-        let pick (name: string) =
-            o.Properties.Values
-            |> Seq.tryPick (fun property ->
-                if String.Equals(name, localName property.Predicate.Value, StringComparison.OrdinalIgnoreCase) then
-                    Some(renderValue property.Value)
-                else
-                    None)
-        pick "Accession"
-        |> Option.orElseWith (fun () -> pick "Title")
-        |> Option.orElseWith (fun () -> pick "Name")
+    /// A friendly node label. Stable accession/identifier assertions win over descriptive titles and
+    /// names whether the converter represented them as properties or annotations.
+    let nodeLabel (ir: ArcIR) (o: ArcObject) =
+        let labelledValues =
+            seq {
+                for property in o.Properties.Values do
+                    localName property.Predicate.Value, renderValue property.Value
+
+                for annotation in o.Annotations.Values do
+                    annotationName ir annotation, renderAnnotationValue ir annotation.Value
+            }
+
+        let pick predicate =
+            labelledValues
+            |> Seq.tryPick (fun (name, value) -> if predicate name then Some value else None)
+
+        let named expected name =
+            String.Equals(expected, name, StringComparison.OrdinalIgnoreCase)
+
+        pick (named "Accession")
+        |> Option.orElseWith (fun () ->
+            pick (fun name -> name.EndsWith(" archive accession", StringComparison.OrdinalIgnoreCase)))
+        |> Option.orElseWith (fun () -> pick (named "primaryId"))
+        |> Option.orElseWith (fun () -> pick (named "Title"))
+        |> Option.orElseWith (fun () -> pick (named "Name"))
         |> Option.defaultValue o.Id.Value

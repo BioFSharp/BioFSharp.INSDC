@@ -26,7 +26,7 @@ module internal Phase3Fixtures =
         | Ok value -> value
         | Error errors -> failwithf "Expected success, got %A" errors
 
-    let expectErrorCode expected result =
+    let expectErrorCode expected (result: Result<'T, PersistenceError list>) =
         match result with
         | Ok value -> failwithf "Expected error '%s', got success %A" expected value
         | Error errors ->
@@ -241,4 +241,3 @@ module internal Phase3Fixtures =
           RelationProperty = relationPropertyId
           RelationPropertyAnnotation = relationPropertyAnnotationId
           RelationAnnotation = relationAnnotationId }
-

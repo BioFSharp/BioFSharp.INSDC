@@ -12,6 +12,8 @@
     <Compile Include="TestHelpers.fs" />
     <Compile Include="IOTests.fs" />
     <Compile Include="ArcIRTests.fs" />
+    <Compile Include="F1AccountingTests.fs" />
+    <Compile Include="SssomMappingTests.fs" />
     <Compile Include="SQLiteTests.fs" />
     <Compile Include="CrawlerTests.fs" />
     <Compile Include="CrawlerHardeningTests.fs" />

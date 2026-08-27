@@ -156,21 +156,24 @@ module GraphBuilder =
         if parts.Length = 0 then value else Uri.UnescapeDataString parts.[parts.Length - 1]
 
     let private definition (iri: Iri) =
-        let value: string = iri.Value
-        let source =
-            let fieldPrefix = "http://purl.org/arc/insdc/field/"
-            if value.StartsWith(fieldPrefix, StringComparison.Ordinal) then
-                value.Substring(fieldPrefix.Length).Split('/').[0]
-                |> Uri.UnescapeDataString
-                |> Some
-            elif value.StartsWith("http://purl.org/arc/insdc/attribute/", StringComparison.Ordinal) then
-                Some "INSDC attribute"
-            elif value.StartsWith("http://purl.org/arc/insdc/identifier/", StringComparison.Ordinal) then
-                Some "INSDC identifier"
-            else
-                Some "BioFSharp.INSDC.ArcIR"
+        match StructuralTerms.tryDefinition iri with
+        | Some definition -> definition
+        | None ->
+            let value: string = iri.Value
+            let source =
+                let fieldPrefix = "http://purl.org/arc/insdc/field/"
+                if value.StartsWith(fieldPrefix, StringComparison.Ordinal) then
+                    value.Substring(fieldPrefix.Length).Split('/').[0]
+                    |> Uri.UnescapeDataString
+                    |> Some
+                elif value.StartsWith("http://purl.org/arc/insdc/attribute/", StringComparison.Ordinal) then
+                    Some "INSDC attribute"
+                elif value.StartsWith("http://purl.org/arc/insdc/identifier/", StringComparison.Ordinal) then
+                    Some "INSDC identifier"
+                else
+                    Some "BioFSharp.INSDC.ArcIR"
 
-        OntologyTerm.create (Some(localName iri)) source
+            OntologyTerm.create (Some(localName iri)) source
 
     /// Builds the shared term registry required by a set of normalized objects and relations.
     let terms (objects: ArcObject seq) (relations: ArcRelation seq) =

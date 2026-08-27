@@ -348,6 +348,17 @@ type XPathEntriesTests() =
         Assert.Equal((project.Identifiers.SecondaryId |> Seq.head).Value, secondaryId.Value)
 
     [<Fact>]
+    member _.``xpathEntries excludes absent optional serializer backing values`` () =
+        Assert.DoesNotContain(entries, fun entry -> entry.Path = "FirstPublicValue")
+
+        let study = Study.read (TestFiles.fixture "DRP003416.xml") |> Seq.exactlyOne
+
+        Assert.DoesNotContain(
+            Study.xpathEntries study,
+            fun entry -> entry.Path = "Descriptor.ProjectIdValue"
+        )
+
+    [<Fact>]
     member _.``xpathEntries values resolve to the emitted xpath in the document`` () =
         let doc = XPointer.entityDoc (TestFiles.fixtureText "PRJDB5192.xml")
 

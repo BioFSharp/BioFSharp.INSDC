@@ -29,6 +29,14 @@ module Annotations =
     let field (source: string) (key: string) (value: ArcValue) : ArcAnnotation =
         literal (sprintf "%sfield/%s/%s" baseIri (escaped source) (escaped key)) key source value
 
+    /// A scalar field assertion using a canonical structural ontology term.
+    let termField (term: Iri) (value: ArcValue) : ArcAnnotation =
+        ArcAnnotation.create term term (AnnotationValue.Literal value) None None
+
+    /// A canonical structural string field, or `None` when the value is absent or blank.
+    let stringTermField (term: Iri) (value: string) : ArcAnnotation option =
+        if System.String.IsNullOrWhiteSpace value then None else Some(termField term (ArcValue.String value))
+
     /// A string field as an annotation, or `None` when the value is absent/blank.
     let stringField (source: string) (key: string) (value: string) : ArcAnnotation option =
         if System.String.IsNullOrWhiteSpace value then None else Some(field source key (ArcValue.String value))

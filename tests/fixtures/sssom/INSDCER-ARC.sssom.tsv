@@ -1,0 +1,31 @@
+#sssom_version: 1.1
+#curie_map:
+#  INSDCER: https://github.com/nfdi4plants/ER_ontologies/tree/main/ontologies/INSDC?term=INSDCER_
+#  INVMSO: https://github.com/nfdi4plants/ER_ontologies/blob/main/ontologies/ARCSO/INVMSO.obo?term=INVMSO_
+#  STDMSO: https://github.com/nfdi4plants/ER_ontologies/blob/main/ontologies/ARCSO/STDMSO.obo?term=STDMSO_
+#  er: https://github.com/nfdi4plants/ER_ontologies/
+#  github: https://github.com/
+#  insdcarc: https://github.com/nfdi4plants/ER_ontologies/mappings/INSDCER-ARC-base/record/
+#mapping_set_id: https://github.com/nfdi4plants/ER_ontologies/mappings/INSDCER-ARC-base
+#mapping_set_version: "2026-08-27"
+#mapping_set_title: INSDCER to ARC base structural mappings
+#mapping_set_description: Conservative exact field mappings for the profile that represents the root INSDC BioProject as an ARC Investigation. Record placement, selectors, transformations, and process construction remain application policy.
+#creator_id:
+#  - github:nfdi4plants
+#creator_label:
+#  - DataPLANT
+#license: https://opensource.org/license/mit
+#mapping_provider: https://github.com/nfdi4plants/ER_ontologies
+#mapping_tool: PolyglotSSSOM
+#mapping_tool_version: 0.1.0-alpha.1
+#mapping_date: 2026-08-27
+#issue_tracker: https://github.com/nfdi4plants/ER_ontologies/issues
+#comment: This base mapping is intentionally incomplete; see mappings/INSDCER-ARC-review.md.
+record_id	subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	subject_source	object_source	confidence
+insdcarc:INSDCER_1000001-INVMSO_00000008	INSDCER:1000001	BioProject archive accession	skos:exactMatch	INVMSO:00000008	Investigation Identifier	semapv:ManualMappingCuration	er:blob/main/ontologies/INSDC/INSDC.BioProject.obo	er:blob/main/ontologies/ARCSO/INVMSO.obo	1
+insdcarc:INSDCER_1000014-INVMSO_00000009	INSDCER:1000014	BioProject title	skos:exactMatch	INVMSO:00000009	Investigation Title	semapv:ManualMappingCuration	er:blob/main/ontologies/INSDC/INSDC.BioProject.obo	er:blob/main/ontologies/ARCSO/INVMSO.obo	1
+insdcarc:INSDCER_1000015-INVMSO_00000010	INSDCER:1000015	BioProject description	skos:exactMatch	INVMSO:00000010	Investigation Description	semapv:ManualMappingCuration	er:blob/main/ontologies/INSDC/INSDC.BioProject.obo	er:blob/main/ontologies/ARCSO/INVMSO.obo	1
+insdcarc:INSDCER_1000017-INVMSO_00000012	INSDCER:1000017	BioProject first public date	skos:exactMatch	INVMSO:00000012	Investigation Public Release Date	semapv:ManualMappingCuration	er:blob/main/ontologies/INSDC/INSDC.BioProject.obo	er:blob/main/ontologies/ARCSO/INVMSO.obo	1
+insdcarc:INSDCER_2000001-STDMSO_00000003	INSDCER:2000001	Study archive accession	skos:exactMatch	STDMSO:00000003	Study Identifier	semapv:ManualMappingCuration	er:blob/main/ontologies/INSDC/INSDC.Study.obo	er:blob/main/ontologies/ARCSO/STDMSO.obo	1
+insdcarc:INSDCER_2000014-STDMSO_00000004	INSDCER:2000014	Study title	skos:exactMatch	STDMSO:00000004	Study Title	semapv:ManualMappingCuration	er:blob/main/ontologies/INSDC/INSDC.Study.obo	er:blob/main/ontologies/ARCSO/STDMSO.obo	1
+insdcarc:INSDCER_2000019-STDMSO_00000005	INSDCER:2000019	Study description	skos:exactMatch	STDMSO:00000005	Study Description	semapv:ManualMappingCuration	er:blob/main/ontologies/INSDC/INSDC.Study.obo	er:blob/main/ontologies/ARCSO/STDMSO.obo	1

@@ -20,10 +20,11 @@ module BioProjectConversion =
         let scalarAnnotations =
             [ Annotations.stringField source "Alias" project.Alias
               Annotations.stringField source "Name" project.Name
-              Annotations.stringField source "Title" project.Title
-              Annotations.stringField source "Description" project.Description
+              Annotations.stringTermField StructuralTerms.BioProject.archiveAccession project.Accession
+              Annotations.stringTermField StructuralTerms.BioProject.title project.Title
+              Annotations.stringTermField StructuralTerms.BioProject.description project.Description
               (ArcValueConversion.ofNullableDateTime project.FirstPublic
-               |> Option.map (Annotations.field source "FirstPublic")) ]
+               |> Option.map (Annotations.termField StructuralTerms.BioProject.firstPublicDate)) ]
             |> List.choose id
 
         let attrAnns = Annotations.attributeAnnotations project.ProjectAttributes

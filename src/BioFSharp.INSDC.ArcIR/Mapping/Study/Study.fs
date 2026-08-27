@@ -26,9 +26,9 @@ module StudyConversion =
                         Some(Annotations.field source "StudyType" (ArcValue.String st.NewStudyType))
                     | st -> Some(Annotations.field source "StudyType" (ArcValueConversion.ofEnum st.ExistingStudyType))
 
-                [ Annotations.stringField source "StudyTitle" d.StudyTitle
+                [ Annotations.stringTermField StructuralTerms.Study.title d.StudyTitle
                   Annotations.stringField source "StudyAbstract" d.StudyAbstract
-                  Annotations.stringField source "StudyDescription" d.StudyDescription
+                  Annotations.stringTermField StructuralTerms.Study.description d.StudyDescription
                   (if d.ProjectId.HasValue then
                        Some(Annotations.field source "ProjectId" (ArcValueConversion.ofInt64 d.ProjectId.Value))
                    else
@@ -38,8 +38,9 @@ module StudyConversion =
 
         let attrAnns = Annotations.attributeAnnotations study.StudyAttributes
         let idAnns, idEdges = Annotations.identifierAnnotations nodeId study.Identifiers
+        let accessionAnn = Annotations.stringTermField StructuralTerms.Study.archiveAccession study.Accession |> Option.toList
 
         let node =
-            GraphBuilder.object' nodeId ArcObjectKind.Collection [ Vocabulary.DType.study ] [] (descriptorAnns @ attrAnns @ idAnns)
+            GraphBuilder.object' nodeId ArcObjectKind.Collection [ Vocabulary.DType.study ] [] (accessionAnn @ descriptorAnns @ attrAnns @ idAnns)
 
         Convert.result node (Convert.institutionAgents nodeId study) idEdges

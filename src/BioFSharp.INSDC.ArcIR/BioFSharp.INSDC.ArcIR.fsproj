@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <Compile Include="Vocabulary.fs" />
+    <Compile Include="StructuralTerms.fs" />
+    <Compile Include="SssomMapping.fs" />
     <Compile Include="GraphBuilder.fs" />
     <Compile Include="GraphText.fs" />
     <Compile Include="GraphMl.fs" />
@@ -26,6 +28,7 @@
     <Compile Include="Mapping\Analysis\Analysis.fs" />
     <Compile Include="Mapping\Submission\Submission.fs" />
     <Compile Include="Mapping\Receipt\Receipt.fs" />
+    <Compile Include="Mapping\F1Accounting.fs" />
     <Compile Include="Mapping\INSDC.fs" />
     <Compile Include="Ingest\Types.fs" />
     <Compile Include="Ingest\Paper.fs" />
@@ -50,6 +53,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="PolyglotSSSOM" Version="0.1.0-alpha.1" />
     <ProjectReference Include="..\BioFSharp.ArcIR\BioFSharp.ArcIR.fsproj" />
     <ProjectReference Include="..\BioFSharp.FileFormats.INSDC\BioFSharp.FileFormats.INSDC.csproj" />
     <ProjectReference Include="..\BioFSharp.IO.INSDC\BioFSharp.IO.INSDC.fsproj" />

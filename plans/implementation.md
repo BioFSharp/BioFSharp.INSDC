@@ -34,7 +34,7 @@ source artifacts + SSSOM --F1 process--> ArcIR state 0 --curation process*--> se
 13. **The first workbench is read-only.** Editing and committing curation actions through the UI belong to a later phase after the curation library and native ARC process integration are stable.
 14. **Terms are shared graph-level definitions.** `ArcIR` owns a `Terms: Map<Iri, OntologyTerm>` registry. Types, predicates, term-valued assertions, annotation properties, and units reference a term by IRI rather than embedding repeated term records. The registry describes terms actually used by the graph; it is not a bundled ontology, and conflicting definitions are merge conflicts rather than last-writer-wins updates.
 15. **No parallel provenance serialization.** Any in-memory addressing or operation helpers must translate into the ARC's native process model. For an ISA-formatted ARC, transformations become ISA process rows with designated inputs and outputs and ontology-typed protocols or parameters; they are not persisted as BioFSharp-specific transformation records.
-16. **SSSOM is owned by the integrating application.** `BioFSharp.ArcIR` and the INSDC F1 adapter do not parse SSSOM or expose `PolyglotSSSOM` types. The top-level application loads versioned mapping artifacts, selects applicable records, supplies resolved mappings through a narrow format-neutral F1 seam, and later records mapping artifacts and records as native ARC process inputs.
+16. **ArcIR mapping is format-neutral; SSSOM loading is an adapter.** `BioFSharp.ArcIR` defines only neutral mapping claims and an additive graph-enrichment process. `BioFSharp.INSDC.ArcIR` may reference `PolyglotSSSOM` to parse and validate versioned SSSOM artifacts and project their rows into those neutral claims, but no `PolyglotSSSOM` type enters the ArcIR graph model or the neutral mapper API. The top-level application still owns claim selection, conflict policy, and recording used mapping artifacts and records as native ARC process inputs.
 
 ## Phase 1 — Stabilize the existing repository
 
@@ -303,16 +303,12 @@ Extraction itself remains explicit typed converter logic.
 
 ### Runtime ownership
 
-These assets do not introduce a `BioFSharp.ArcIR.SSSOM` package or a
-`PolyglotSSSOM` dependency in either the ArcIR core or the INSDC F1 adapter. The
-top-level integrating application owns SSSOM parsing, canonical writing, CURIE
-resolution, mapping-set selection, and conflict policy. It supplies only resolved,
-format-neutral mapping decisions to F1.
-
-The adjacent `PolyglotSSSOM` implementation is ready to be selected as that
-application dependency. Pin and acceptance-test one exact reproducible release in
-Phase 6. Generic SSSOM format fixes remain upstream; no fallback TSV parser or
-generic SSSOM validator is added here.
+These assets do not introduce a `PolyglotSSSOM` dependency in the ArcIR core.
+The INSDC integration layer may depend on one exact PolyglotSSSOM revision to
+load, validate, and resolve mapping rows into format-neutral claims. Generic SSSOM
+format fixes remain upstream; no fallback TSV parser or generic SSSOM validator is
+added here. Pin the published `PolyglotSSSOM` package to the exact reviewed
+version rather than depending on a mutable sibling checkout.
 
 ### Work sequence
 
@@ -348,10 +344,24 @@ generic SSSOM validator is added here.
   parser, writer, or conformance implementation is introduced.
 - Uncertain, contextual, value-level, and not-yet-mapped terms remain absent from
   the base mapping without making the ontology or a resulting ArcIR graph invalid.
-- Neither `BioFSharp.ArcIR` nor `BioFSharp.INSDC.ArcIR` references
-  `PolyglotSSSOM` or embeds the endpoint ontologies.
+- `BioFSharp.ArcIR` references neither `PolyglotSSSOM` nor the endpoint
+  ontologies. Phase 5 may add the parser dependency to the INSDC integration
+  layer, but ontology and mapping artifacts remain versioned external inputs
+  rather than embedded runtime vocabularies.
 
-## Phase 5 — Complete F1 accounting and unified diagnostics
+## Phase 5 — Additive semantic enrichment, complete F1 accounting, and unified diagnostics
+
+> **Status: IN PROGRESS (2026-08-27).** Begin with the neutral additive mapper,
+> the PolyglotSSSOM claim adapter, and an end-to-end BioProject/Study fixture using
+> the reviewed Phase 4 base mapping. Extend the same accounting model across all
+> supported F1 inputs after that boundary is stable.
+>
+> **Implemented slice:** the shared diagnostic and field-accounting core, neutral
+> additive mapper, PolyglotSSSOM adapter, and artifact-qualified BioProject/Study
+> accounting are implemented. Their tests resolve source XML XPointers and emitted
+> ArcIR JSON fragments, including the source-assertion handoff to an additive base
+> mapping. Accounting for the remaining six INSDC entities and supplementary
+> paper/count inputs is still outstanding.
 
 ### One result and diagnostic model
 
@@ -380,26 +390,53 @@ The producing ARC process establishes whether a report came from F1, curation, v
 
 Do not introduce `TransformationOperation`, `SourceOutputBinding`, `TransformationRecord`, or an intermediate `ProcessIntent` persistence contract. Effectful operations become ontology-typed native ARC processes when Phase 6 instruments the F1 execution path directly.
 
-### Application-supplied base mapping seam
+### Source-preserving additive mapping
 
-The INSDC F1 adapter accepts a small, read-only, format-neutral mapping context
-constructed by its caller. A resolved decision is keyed by the stable INSDC
-structural term and supplies the selected absolute target `Iri`; it may also carry
-the mapping record's `FragmentRef` so the Phase 6 application can designate the
-claim it used. The exact F# shape is finalized against the Phase 4 fixtures, but
-it must not expose `PolyglotSSSOM` types or SSSOM-version-specific fields.
+F1 first emits source-faithful assertions using stable INSDC structural terms. A
+separate format-neutral enrichment pass applies caller-selected mapping claims by
+adding companion assertions to the same owning object or relation. It never
+replaces or removes the source assertion and never rewrites its term in place.
+The graph term registry retains both the source and mapped definitions.
 
-- The top-level application loads the base SSSOM artifact, resolves its CURIEs,
-  selects applicable records, and constructs this context.
-- F1 consumes resolved decisions deterministically. It does not read mapping
-  files, expand prefixes, choose between conflicting mapping records, or write
-  SSSOM.
-- If no decision is supplied, F1 preserves the stable local INSDC term and emits
-  the appropriate diagnostic or accounting result; it never invents a target
-  mapping.
-- Phase 5 tests use an in-memory mapping context derived from the reviewed base
-  mapping fixture. Phase 6 supplies the production adapter from
-  `PolyglotSSSOM` and records actual mapping use in the native process graph.
+| Source term occurrence | Additive result |
+| --- | --- |
+| Object type | A second independently identified type assertion |
+| Property or annotation predicate | A companion assertion carrying the same value |
+| Relation predicate | A parallel relation with the same endpoints |
+| Term-valued assertion | A companion assertion carrying the mapped term value |
+
+The first implementation materializes only equivalence-safe claims such as the
+reviewed `skos:exactMatch` base rows. Broader, narrower, related, literal, and
+ambiguous claims remain explicit candidates until application policy authorizes a
+specific operation. A mapped assertion ID is deterministic from the source
+occurrence and target term, so applying the same claim repeatedly is idempotent.
+Generated companion IDs occupy a reserved ArcIR namespace and are not treated as
+fresh source occurrences by later mapper passes; replay therefore cannot derive
+companion-of-companion assertions.
+
+The neutral application result retains the mapping claim ID and the input/output
+locations of every added or already-present companion assertion. This is an
+in-memory execution result, not a persisted transformation log. Phase 6 combines
+those locations with immutable artifact revisions and the SSSOM record identity
+to emit native ARC process inputs and outputs.
+
+### PolyglotSSSOM claim adapter
+
+`BioFSharp.INSDC.ArcIR` uses PolyglotSSSOM for SSSOM decoding, validation, and
+declared CURIE expansion, then projects complete applicable rows into the neutral
+claim type. It does not implement another SSSOM parser and does not expose
+PolyglotSSSOM model types through the neutral mapper.
+
+- Preserve the stable mapping `record_id`, subject, predicate, object,
+  justification, labels, and source metadata needed by the neutral claim.
+- Return all valid candidate claims; do not silently select among conflicting
+  records or collapse them to a last-writer-wins `Iri -> Iri` map.
+- The top-level application selects the claims it authorizes. The initial profile
+  selects only the seven reviewed exact rows from the Phase 4 base artifact.
+- Missing mappings leave the source assertions untouched. Invalid, unsupported,
+  or ambiguous records produce diagnostics rather than invented expansions.
+- Canonical writing and mapping curation continue to use PolyglotSSSOM directly;
+  the graph mapper consumes claims and never writes SSSOM.
 
 ### F1 field accounting and resolvable designations
 
@@ -407,7 +444,7 @@ it must not expose `PolyglotSSSOM` types or SSSOM-version-specific fields.
 - Give every extraction/emission rule a stable ID.
 - For every present source leaf from `xpathEntries`, record exactly one field-accounting outcome: emitted, intentionally ignored with a rule and reason, unsupported with a diagnostic, or failed with a diagnostic.
 - Construct resolvable designations for each source fragment and emitted ArcIR fragment, including literal value occurrences. Keep them separate from diagnostics and do not turn selectors into graph nodes.
-- Identify meaning- or representation-changing steps such as trimming changed whitespace, parsing a date, splitting a value, or applying a semantic mapping so Phase 6 can type the corresponding native processes. Mere selection and copying must not be padded into artificial operation records.
+- Identify meaning- or representation-changing steps such as trimming changed whitespace, parsing a date, splitting a value, or adding a mapped companion assertion so Phase 6 can type the corresponding native processes. Mere selection and copying must not be padded into artificial operation records.
 
 F1 generates the initial immutable ArcIR state artifact and a diagnostic report. Phase 6 extends the execution path to collect the stable extraction rule, mapping-record designations, transformation terms, and parameters while emitting them directly into the native ARC process model; Phase 5 does not persist or expose an intermediate provenance document.
 
@@ -416,7 +453,9 @@ F1 generates the initial immutable ArcIR state artifact and a diagnostic report.
 - Every leaf in each committed eight-entity fixture is accounted for.
 - Tests resolve every candidate source and output designation against its declared artifact.
 - Repeated F1 execution with identical artifacts, recipe, and resolved mapping context produces semantically identical IR and deterministic IDs.
-- The reviewed base mapping fixture can configure exact administrative F1 terms through the format-neutral seam without a `PolyglotSSSOM` dependency in either shipped library.
+- The reviewed base mapping fixture loads through PolyglotSSSOM and produces neutral claims without introducing a PolyglotSSSOM dependency in `BioFSharp.ArcIR`.
+- Applying those claims preserves each original INSDC assertion, adds the expected ARC companion assertion on the same owner, and is deterministic and idempotent.
+- Conflicting target definitions or assertion identities are reported without returning a partially enriched graph; multiple applicable mapping claims are never resolved by silent precedence.
 - Missing mappings, lossy conversions, conflicts, and unsupported fields produce stable diagnostics while preserving usable source information.
 - No BioFSharp-specific transformation log or binding document is serialized.
 
@@ -426,12 +465,13 @@ Add the top-level integrating application layer that applies typed graph operati
 
 ### SSSOM ownership and initial F1 configuration
 
-Pin one exact reproducible `PolyglotSSSOM` release in the top-level application
-and run its upstream acceptance path at that revision. This application is the
-only layer that interprets SSSOM:
+Use the exact PolyglotSSSOM revision introduced by the Phase 5 INSDC adapter and
+run its upstream acceptance path at that revision. The top-level application owns
+selection and provenance even though the adapter supplies parsing and claim
+projection:
 
 - Load and validate the Phase 4 base mapping plus later ARC-owned curated mapping
-  sets through `PolyglotSSSOM`.
+  sets through the Phase 5 PolyglotSSSOM adapter.
 - Preserve complete mapping claims, including predicates, justifications,
   creators, provenance, modifiers, extension metadata, and original documents
   required for round trips; never collapse the stored claim to `Iri -> Iri`.
@@ -451,8 +491,10 @@ only layer that interprets SSSOM:
   designates the exact occurrence, while the mapping-set revision and record ID
   designate the reusable semantic claim.
 
-No ArcIR core or INSDC adapter package gains a `PolyglotSSSOM` dependency,
-registry client, remote prefix resolver, or duplicate SSSOM parser.
+The ArcIR core gains no `PolyglotSSSOM` dependency, registry client, remote prefix
+resolver, or duplicate SSSOM parser. The INSDC adapter uses only the pinned
+PolyglotSSSOM dependency and declared document prefix maps; it adds no remote
+resolver or fallback codec.
 
 ### Versioned transformation ontology
 
@@ -486,7 +528,9 @@ Do not prematurely require these to be one or two rows in every ARC representati
 ### Phase acceptance
 
 - Transformation ontology competency examples cover one-to-one, one-to-many, literal-to-term, creation, replacement, and deletion without defining a custom provenance document.
-- The Phase 4 base mapping is loaded by the top-level application through the pinned `PolyglotSSSOM` release and configures exact administrative mappings during initial F1 without entering the ArcIR or INSDC adapter dependency graphs.
+- The Phase 4 base mapping is loaded through the Phase 5 INSDC adapter at its
+  pinned `PolyglotSSSOM` revision and configures exact administrative mappings
+  during initial F1 without entering the ArcIR core dependency graph.
 - An ISA-formatted fixture ARC demonstrates F1, an assertion update, a one-to-many split, a literal-to-term mapping, mapping curation, and validation using native process rows.
 - Every input and output designation resolves in its declared immutable artifact; deleted or replaced IDs remain resolvable in the process input state.
 - Reverting a commit restores the exact set of ArcIR/SSSOM/diagnostic artifacts and native process metadata that preceded it.
