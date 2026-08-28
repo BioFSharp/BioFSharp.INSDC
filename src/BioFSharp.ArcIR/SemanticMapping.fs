@@ -1,8 +1,5 @@
 namespace BioFSharp.ArcIR
 
-open System.Security.Cryptography
-open System.Text
-
 /// A format-neutral, entity-to-entity semantic mapping claim.
 type MappingClaim =
     {
@@ -62,24 +59,6 @@ type MappingResult =
 [<RequireQualifiedAccess>]
 module SemanticMapping =
 
-    [<Literal>]
-    let private mappedIdentityBase = "urn:biofsharp:arcir:mapped:"
-
-    let private sha256 (value: string) =
-        use algorithm = SHA256.Create()
-
-        algorithm.ComputeHash(Encoding.UTF8.GetBytes value)
-        |> Array.map (fun byte -> byte.ToString("x2"))
-        |> String.concat ""
-
-    let private isMappedId (id: Iri) = id.Value.StartsWith(mappedIdentityBase)
-
-    let private mappedId (owner: Iri) (input: Iri) (role: string) (target: Iri) =
-        Iri.Create(
-            mappedIdentityBase
-            + sha256 (owner.Value + "\n" + input.Value + "\n" + role + "\n" + target.Value)
-        )
-
     let private statusAndMap (owner: Iri) (assertion: Iri) candidate values (conflicts: ResizeArray<MappingConflict>) =
         match Map.tryFind assertion values with
         | None ->
@@ -138,9 +117,9 @@ module SemanticMapping =
         let mutable result = annotations
 
         for annotation in annotations.Values do
-            if not (isMappedId annotation.Id) then
+            if not (SemanticCompanion.isId annotation.Id) then
                 if annotation.Property = claim.Subject then
-                    let outputId = mappedId owner annotation.Id "annotation-property" claim.Object
+                    let outputId = SemanticCompanion.id owner annotation.Id "annotation-property" claim.Object
 
                     let mapped =
                         { annotation with
@@ -154,7 +133,7 @@ module SemanticMapping =
                 match mapAnnotationValueTerm claim.Subject claim.Object annotation.Value with
                 | None -> ()
                 | Some(role, mappedValue) ->
-                    let outputId = mappedId owner annotation.Id role claim.Object
+                    let outputId = SemanticCompanion.id owner annotation.Id role claim.Object
 
                     let mapped =
                         { annotation with
@@ -185,7 +164,7 @@ module SemanticMapping =
         let mutable result = properties
 
         for property in properties.Values do
-            if not (isMappedId property.Id) then
+            if not (SemanticCompanion.isId property.Id) then
                 let annotations =
                     enrichAnnotations
                         claim
@@ -202,7 +181,7 @@ module SemanticMapping =
                     result <- Map.add property.Id { property with Annotations = annotations } result
 
                 if property.Predicate = claim.Subject then
-                    let outputId = mappedId owner property.Id "property-predicate" claim.Object
+                    let outputId = SemanticCompanion.id owner property.Id "property-predicate" claim.Object
 
                     let mapped =
                         { property with
@@ -216,7 +195,7 @@ module SemanticMapping =
                 let valueWasMapped, mappedValue = mapArcValueTerm claim.Subject claim.Object property.Value
 
                 if valueWasMapped then
-                    let outputId = mappedId owner property.Id "property-value" claim.Object
+                    let outputId = SemanticCompanion.id owner property.Id "property-value" claim.Object
 
                     let mapped =
                         { property with
@@ -242,8 +221,8 @@ module SemanticMapping =
                 let mutable types = object'.Types
 
                 for assertion in object'.Types.Values do
-                    if not (isMappedId assertion.Id) && assertion.Term = claim.Subject then
-                        let outputId = mappedId object'.Id assertion.Id "type" claim.Object
+                    if not (SemanticCompanion.isId assertion.Id) && assertion.Term = claim.Subject then
+                        let outputId = SemanticCompanion.id object'.Id assertion.Id "type" claim.Object
                         let mapped = { Id = outputId; Term = claim.Object }
                         let status, updated = statusAndMap object'.Id outputId mapped types conflicts
                         types <- updated
@@ -295,7 +274,7 @@ module SemanticMapping =
                             objects
 
             for relation in graph.Relations.Values do
-                if not (isMappedId relation.Id) then
+                if not (SemanticCompanion.isId relation.Id) then
                     let properties =
                         enrichProperties
                             claim
@@ -334,7 +313,7 @@ module SemanticMapping =
                                 relations
 
                     if relation.Predicate = claim.Subject then
-                        let outputId = mappedId relation.Id relation.Id "relation-predicate" claim.Object
+                        let outputId = SemanticCompanion.id relation.Id relation.Id "relation-predicate" claim.Object
 
                         let mapped =
                             { relation with

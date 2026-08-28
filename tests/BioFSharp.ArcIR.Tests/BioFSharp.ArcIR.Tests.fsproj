@@ -13,6 +13,7 @@
     <Compile Include="JsonPersistenceTests.fs" />
     <Compile Include="FragmentAddressingTests.fs" />
     <Compile Include="FieldAccountingTests.fs" />
+    <Compile Include="LiteralMappingTests.fs" />
     <Compile Include="SemanticMappingTests.fs" />
     <Compile Include="StateArtifactTests.fs" />
     <Compile Include="SchemaTests.fs" />

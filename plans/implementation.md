@@ -477,6 +477,22 @@ F1 generates the initial immutable ArcIR state artifact and a diagnostic report.
 
 Add the top-level integrating application layer that applies typed graph operations, configures F1 from mapping artifacts, and contributes to the ARC's native process model. The process graph, not an ArcIR file or BioFSharp-specific log, is the authority for lineage, agents, software versions, used/generated entities, and process relationships. Use the established representation library for each ARC realization; for an ISA-formatted ARC, emit ordinary ISA assay process rows rather than serializing a parallel provenance document.
 
+### Selected-literal core primitive
+
+> **Status: COMPLETE (2026-08-28).** `ArcIRJson.parseLocation` now round-trips
+> supported typed selectors, and `LiteralMapping.apply` performs the immutable,
+> source-preserving selected-literal transformation required by OverARC.
+
+The core accepts an `ArcJsonLocation`, exact source literal, and already
+registered target term. Object and relation string properties, direct literal
+annotations, and nested property annotations receive deterministic term-valued
+companions. Lists and non-string scalars are deliberately rejected. Compatible
+replay is idempotent; missing or changed inputs, unregistered targets, invalid
+graphs, and deterministic companion collisions return typed failures without a
+partial graph. The primitive has no SSSOM, CTRO, ProcessCore, HTTP, or OverARC
+dependency; the application remains responsible for parsing mapping artifacts,
+choosing claims, and recording native provenance.
+
 ### SSSOM ownership and initial F1 configuration
 
 Use the exact PolyglotSSSOM revision introduced by the Phase 5 INSDC adapter and

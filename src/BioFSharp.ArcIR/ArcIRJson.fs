@@ -866,6 +866,115 @@ module private ArcIRJsonInternal =
         |> String.concat "/"
         |> fun encoded -> "#/" + encoded
 
+    let parseTypedLocation (selectorConformsTo: Iri) (selector: FragmentSelector) =
+        if selector.ConformsTo <> selectorConformsTo then
+            Error
+                [ error
+                      "arcir.json.unsupported-selector"
+                      (sprintf "Selector conforms to '%s', not RFC 6901." selector.ConformsTo.Value) ]
+        else
+            try
+                let iri role value =
+                    match Iri.TryCreate value with
+                    | Some id -> id
+                    | None ->
+                        fail
+                            "arcir.json.invalid-location"
+                            (sprintf "ArcIR JSON selector contains invalid %s IRI '%s'." role value)
+
+                let location =
+                    match pointerTokens selector.Value with
+                    | [| "graph"; "terms"; termId |] -> ArcJsonLocation.Term(iri "term" termId)
+                    | [| "graph"; "objects"; objectId |] -> ArcJsonLocation.Object(iri "object" objectId)
+                    | [| "graph"; "objects"; objectId; "types"; assertionId |] ->
+                        ArcJsonLocation.TypeAssertion(iri "object" objectId, iri "assertion" assertionId)
+                    | [| "graph"; "objects"; objectId; "properties"; assertionId |] ->
+                        ArcJsonLocation.Property(iri "object" objectId, iri "assertion" assertionId)
+                    | [| "graph"; "objects"; objectId; "properties"; assertionId; "value" |] ->
+                        ArcJsonLocation.PropertyValue(iri "object" objectId, iri "assertion" assertionId)
+                    | [| "graph"; "objects"; objectId; "annotations"; annotationId |] ->
+                        ArcJsonLocation.ObjectAnnotation(iri "object" objectId, iri "annotation" annotationId)
+                    | [| "graph"; "objects"; objectId; "annotations"; annotationId; "value" |] ->
+                        ArcJsonLocation.ObjectAnnotationValue(iri "object" objectId, iri "annotation" annotationId)
+                    | [|
+                        "graph"
+                        "objects"
+                        objectId
+                        "properties"
+                        assertionId
+                        "annotations"
+                        annotationId
+                       |] ->
+                        ArcJsonLocation.PropertyAnnotation(
+                            iri "object" objectId,
+                            iri "assertion" assertionId,
+                            iri "annotation" annotationId
+                        )
+                    | [|
+                        "graph"
+                        "objects"
+                        objectId
+                        "properties"
+                        assertionId
+                        "annotations"
+                        annotationId
+                        "value"
+                       |] ->
+                        ArcJsonLocation.PropertyAnnotationValue(
+                            iri "object" objectId,
+                            iri "assertion" assertionId,
+                            iri "annotation" annotationId
+                        )
+                    | [| "graph"; "relations"; relationId |] -> ArcJsonLocation.Relation(iri "relation" relationId)
+                    | [| "graph"; "relations"; relationId; "properties"; assertionId |] ->
+                        ArcJsonLocation.RelationProperty(iri "relation" relationId, iri "assertion" assertionId)
+                    | [| "graph"; "relations"; relationId; "properties"; assertionId; "value" |] ->
+                        ArcJsonLocation.RelationPropertyValue(iri "relation" relationId, iri "assertion" assertionId)
+                    | [|
+                        "graph"
+                        "relations"
+                        relationId
+                        "properties"
+                        assertionId
+                        "annotations"
+                        annotationId
+                       |] ->
+                        ArcJsonLocation.RelationPropertyAnnotation(
+                            iri "relation" relationId,
+                            iri "assertion" assertionId,
+                            iri "annotation" annotationId
+                        )
+                    | [|
+                        "graph"
+                        "relations"
+                        relationId
+                        "properties"
+                        assertionId
+                        "annotations"
+                        annotationId
+                        "value"
+                       |] ->
+                        ArcJsonLocation.RelationPropertyAnnotationValue(
+                            iri "relation" relationId,
+                            iri "assertion" assertionId,
+                            iri "annotation" annotationId
+                        )
+                    | [| "graph"; "relations"; relationId; "annotations"; annotationId |] ->
+                        ArcJsonLocation.RelationAnnotation(iri "relation" relationId, iri "annotation" annotationId)
+                    | [| "graph"; "relations"; relationId; "annotations"; annotationId; "value" |] ->
+                        ArcJsonLocation.RelationAnnotationValue(
+                            iri "relation" relationId,
+                            iri "annotation" annotationId
+                        )
+                    | _ ->
+                        fail
+                            "arcir.json.unsupported-location"
+                            "JSON Pointer does not identify a supported typed ArcIR location."
+
+                Ok location
+            with DecodeFailure decodeError ->
+                Error [ decodeError ]
+
 /// Deterministic canonical JSON persistence and addressing for ArcIR state artifacts.
 [<RequireQualifiedAccess>]
 module ArcIRJson =
@@ -1078,6 +1187,9 @@ module ArcIRJson =
 
         { ConformsTo = JsonPointerConformsTo
           Value = ArcIRJsonInternal.pointer path }
+
+    /// Parses an RFC 6901 ArcIR selector into one supported typed location.
+    let parseLocation selector = ArcIRJsonInternal.parseTypedLocation JsonPointerConformsTo selector
 
     /// Creates an artifact-qualified reference for a typed ArcIR JSON location.
     let fragmentRef artifact location =

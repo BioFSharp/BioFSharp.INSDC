@@ -12,10 +12,12 @@
     <Compile Include="Designation.fs" />
     <Compile Include="Diagnostics.fs" />
     <Compile Include="Graph.fs" />
+    <Compile Include="SemanticCompanion.fs" />
     <Compile Include="Validation.fs" />
     <Compile Include="Persistence.fs" />
     <Compile Include="ArcIRJson.fs" />
     <Compile Include="FieldAccounting.fs" />
+    <Compile Include="LiteralMapping.fs" />
     <Compile Include="SemanticMapping.fs" />
     <None Include="schema\arcir-1.0.schema.json" Pack="true" PackagePath="schema\arcir-1.0.schema.json" />
     <None Include="..\..\docs\img\icon.png" Pack="true" PackagePath="" />

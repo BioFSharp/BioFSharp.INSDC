@@ -17,6 +17,7 @@ type FragmentAddressingTests() =
             "#/graph/terms/https:~1~1example.org~1a~1~0snow~1%E9%9B%AA%23part%252F",
             selector.Value
         )
+        Assert.Equal(ArcJsonLocation.Term id, ArcIRJson.parseLocation selector |> Phase3Fixtures.expectOk)
 
     [<Fact>]
     member _.``all sixteen typed location cases enumerate and resolve``() =
@@ -52,6 +53,7 @@ type FragmentAddressingTests() =
 
         for location in expected do
             Assert.Contains(location, enumerated)
+            Assert.Equal(location, ArcIRJson.selector location |> ArcIRJson.parseLocation |> Phase3Fixtures.expectOk)
             use stream = new MemoryStream(Phase3Fixtures.bytes graph, false)
 
             match ArcIRJson.resolveLocation location stream with
@@ -120,6 +122,26 @@ type FragmentAddressingTests() =
         use rawSpaceStream = new MemoryStream(bytes, false)
         ArcIRJson.resolve rawSpace rawSpaceStream
         |> Phase3Fixtures.expectErrorCode "arcir.json.invalid-selector"
+
+        ArcIRJson.parseLocation wrong
+        |> Phase3Fixtures.expectErrorCode "arcir.json.unsupported-selector"
+
+        ArcIRJson.parseLocation malformed
+        |> Phase3Fixtures.expectErrorCode "arcir.json.invalid-selector"
+
+    [<Fact>]
+    member _.``typed location parser rejects unsupported shapes and invalid identity tokens``() =
+        let selector value =
+            { ConformsTo = ArcIRJson.JsonPointerConformsTo
+              Value = value }
+
+        selector "#/graph/objects/urn:example:object/properties/urn:example:assertion/predicate"
+        |> ArcIRJson.parseLocation
+        |> Phase3Fixtures.expectErrorCode "arcir.json.unsupported-location"
+
+        selector "#/graph/objects/relative"
+        |> ArcIRJson.parseLocation
+        |> Phase3Fixtures.expectErrorCode "arcir.json.invalid-location"
 
     [<Fact>]
     member _.``resolver refuses ambiguous duplicate object members``() =
