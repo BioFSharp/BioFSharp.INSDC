@@ -36,6 +36,7 @@ let pack = BuildTask.create "Pack" [clean; buildSolution; runTests] {
                     p with 
                         MSBuildParams = msBuildParams
                         OutputPath = Some pkgDir
+                        NoBuild = true
                 }
                 |> DotNet.Options.withCustomParams (Some "-tl")
             ))
@@ -61,6 +62,7 @@ let packPrerelease = BuildTask.create "PackPrerelease" [setPrereleaseTag; clean;
                         VersionSuffix = Some prereleaseSuffix
                         OutputPath = Some pkgDir
                         MSBuildParams = msBuildParams
+                        NoBuild = true
                 }
                 |> DotNet.Options.withCustomParams (Some "-tl")
             ))

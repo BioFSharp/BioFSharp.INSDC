@@ -1,13 +1,18 @@
 ### 0.3.0 (Unreleased)
 
-Phase 1 repository stabilization, Phase 2 target-neutral ArcIR extraction, and Phase 3 immutable ArcIR state persistence.
+Repository stabilization, target-neutral ArcIR extraction, immutable ArcIR state persistence, additive semantic enrichment, complete F1 accounting, and the selected-literal curation primitive.
 
 - Added the packable, target-neutral `BioFSharp.ArcIR` `netstandard2.0` package with validated absolute IRI identities, normalized identity-keyed graph collections, shared term definitions, explicit add/upsert/merge operations, validation, and persistence contracts.
 - Added canonical `.arcir.json` 1.0 persistence with a packaged JSON Schema, deterministic UTF-8/LF output, strict versioned decoding, invariant tagged values, authoritative identity keys, atomic create-new state publication, and SHA-256 artifact revisions.
 - Added typed RFC 6901 fragment locations for every addressable graph entity and atomic value occurrence, including relation-property annotations, plus digest-verified resolution that keeps scalar values ID-less and provenance outside the graph state.
+- Added strict inverse parsing for supported ArcIR JSON selectors and the immutable `LiteralMapping.apply` transformation for mapping one exact string occurrence to an already registered term while preserving the source literal.
+- Added format-neutral additive semantic mapping and a `PolyglotSSSOM` adapter that preserves complete candidate claims, resolves only declared CURIEs, and leaves mapping selection and provenance to the integrating application.
+- Added deterministic occurrence-level F1 accounting and resolvable source/output designations for all eight supported INSDC entities plus supplementary paper and count metadata.
+- Removed the unused `BioFSharp` umbrella-package dependency and replaced the remaining preview dependency with stable `PolyglotSSSOM` `0.1.0`.
 - Converted `BioFSharp.INSDC.ArcIR` into an INSDC-specific F1 adapter. All eight entity converters and supplementary paper/count ingestion now mint deterministic assertion/relation identities and consume the neutral core without retaining the proof-of-concept model shapes.
 - Added a core-only test project and adapter regression coverage for conflict reporting, reference validation, deterministic identities, complete term resolution, and deterministic eight-entity fixture conversion.
 - Limited the nested FAKE solution build to one MSBuild node, preventing runaway worker fan-out and silent process-limit failures in captured Windows builds.
+- Made package creation reuse the already verified Release build outputs instead of rebuilding projects and risking locked output assemblies.
 - Added dependency-vulnerability and generated-artifact drift gates to the full FAKE test path; generators now produce deterministic committed output.
 - Added a versioned, forward-migrated SQLite schema with explicit foreign-key modes, transactional public writes, and exact fixture round-trip coverage for all five stored entities.
 - Hardened crawler cancellation, bounded retries, strict partial-failure handling, upstream parsing, atomic writes, validation, and resume behavior while preserving injectable offline fetch seams.

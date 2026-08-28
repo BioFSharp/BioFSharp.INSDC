@@ -1,6 +1,6 @@
 # BioFSharp.INSDC roadmap: persistent, curatable ArcIR
 
-> **Status: ACTIVE (2026-08-27).** This is the single authoritative implementation plan for the repository. Historical plans are retained in place and classified in the [plan registry](#historical-plan-registry). The state-artifact and ARC-native provenance model was clarified on 2026-08-27 before persistence work began.
+> **Status: ACTIVE (2026-08-28).** This is the single authoritative implementation plan for the repository. Historical plans are retained in place and classified in the [plan registry](#historical-plan-registry). Phases 1–5 and the selected-literal core primitive are included in the stable `0.3.0` local NuGet package set, verified by the FAKE package gate (235 tests, dependency audit, and generated-artifact drift check); publication is not part of this packaging pass.
 
 ## Purpose
 

@@ -54,7 +54,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="PolyglotSSSOM" Version="0.1.0-alpha.1" />
+    <PackageReference Include="PolyglotSSSOM" Version="0.1.0" />
     <ProjectReference Include="..\BioFSharp.ArcIR\BioFSharp.ArcIR.fsproj" />
     <ProjectReference Include="..\BioFSharp.FileFormats.INSDC\BioFSharp.FileFormats.INSDC.csproj" />
     <ProjectReference Include="..\BioFSharp.IO.INSDC\BioFSharp.IO.INSDC.fsproj" />
